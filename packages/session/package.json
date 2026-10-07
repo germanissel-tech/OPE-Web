@@ -1,0 +1,45 @@
+{
+  "name": "@cuarzo/session",
+  "version": "0.1.0",
+  "description": "La sesión de una aplicación de Tandilia. Autoriza pedidos, y no entrega tokens.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/gate.d.ts",
+      "import": "./dist/gate.js"
+    },
+    "./fake": {
+      "types": "./dist/fake.d.ts",
+      "import": "./dist/fake.js"
+    },
+    "./keycloak": {
+      "types": "./dist/keycloak.d.ts",
+      "import": "./dist/keycloak.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "node tests/gate.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "cuarzo": {
+    "generated": [
+      "dist"
+    ]
+  },
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://bitbucket.org/grupo-siempre/cuarzo.git",
+    "directory": "packages/session"
+  }
+}

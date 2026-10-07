@@ -1,0 +1,31 @@
+# Fin de línea: LF en el repositorio y en el disco.
+#
+# Sin esto, `core.autocrlf` de Windows convierte al guardar y al traer, y el
+# mismo archivo queda CRLF en una máquina y LF en otra. Dos consecuencias, y
+# ninguna es cosmética:
+#
+#   · El ritual de clonar copia `src/` entero entre repositorios de la familia,
+#     así que un `.tsx` puede quedar con un fin de línea de cada lado. Un diff
+#     de noventa archivos que no cambió ninguna línea es indistinguible de uno
+#     que sí — y ahí se revisa mal.
+#
+#   · Los emisores de artefactos comparan lo generado contra el disco. Con la
+#     conversión en el medio nunca coinciden, y eso ya se pagó una vez: había
+#     un normalizador en `tests/emit.mjs` puesto para tapar exactamente esto.
+#     Se sacó al poner este archivo.
+#
+# `eol=lf` y no sólo `text=auto`: `text=auto` normaliza lo que se guarda pero
+# deja que `core.autocrlf` decida qué se escribe en el disco, que es la mitad
+# del problema.
+* text=auto eol=lf
+
+# Lo que no es texto, dicho a mano: `text=auto` acierta casi siempre, y cuando
+# se equivoca corrompe el archivo en vez de dar un diff raro.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.tgz binary

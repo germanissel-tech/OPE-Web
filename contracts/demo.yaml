@@ -1,0 +1,747 @@
+openapi: 3.1.0
+
+info:
+  title: Demo — el contrato del hola mundo
+  version: 1.0.0
+  description: |
+    **No es un sistema de Tandilia: es el contrato del ejemplo**, y se borra al clonar junto con
+    `src/features/` y `src/api/demo/`.
+
+    Existe para que el esqueleto pueda probar lo suyo —tipos generados, cliente con autorización,
+    el sobre, los cuatro estados, filtro y paginado del servidor— **sin depender de otro
+    repositorio**. Ésa es la promesa de `CU-20`: clonar y que arranque, no clonar y conseguir el
+    repositorio de al lado.
+
+    Y de paso es donde se ven las convenciones que **sí** son de la familia, para que quien clone
+    las reconozca cuando lea el contrato de su backend:
+
+    | | |
+    |---|---|
+    | El sobre | Toda respuesta es `{ data, meta }`, incluso para un recurso solo |
+    | `meta.requestId` | Va en toda respuesta y en todo error. Es lo que un operador cita para pedir ayuda |
+    | `x-required-roles` | Qué habilita cada operación. De ahí sale la capacidad de una acción |
+    | `error.code` | Un enum cerrado. **Se ramifica sobre esto, nunca sobre `message`** |
+    | `error.fields` | Campo por campo, para marcarlos sin interpretar el texto |
+
+servers:
+  - url: http://localhost:4010
+    description: El simulado.
+
+tags:
+  - name: Catálogos
+    description: Datos de referencia que cambian poco.
+
+paths:
+  /articles:
+    get:
+      operationId: listArticles
+      summary: Listar artículos
+      description: |
+        Ordenado por nombre ascendente.
+
+        **`search` busca por nombre, parcial e insensible a mayúsculas.**
+      tags: [Catálogos]
+      x-required-roles: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Artículos.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+              example:
+                data:
+                  - id: 1
+                    name: Amoxicilina 500 mg
+                    price: '2450.00'
+                    active: true
+                  - id: 2
+                    name: Ibuprofeno 400 mg
+                    price: '1890.50'
+                    active: true
+                  - id: 3
+                    name: Paracetamol 1 g
+                    price: '1120.00'
+                    active: false
+                meta:
+                  requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+                  page: 1
+                  size: 20
+                  totalItems: 3
+                  totalPages: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      operationId: createArticle
+      summary: Crear un artículo
+      description: |
+        El nombre no puede repetirse: si ya existe otro con ese nombre, responde `409` con
+        `CATALOG_ENTRY_DUPLICATE`.
+
+        **Exige `Idempotency-Key`.** Con la misma clave y el mismo cuerpo devuelve lo que
+        devolvió la primera vez, sin crear otro artículo.
+      tags: [Catálogos]
+      x-required-roles: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreate'
+      responses:
+        '201':
+          description: Artículo creado.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /articles/{articleId}:
+    parameters:
+      - name: articleId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    get:
+      operationId: getArticle
+      summary: Ver un artículo
+      description: |
+        Devuelve el `ETag` del artículo. **Editarlo exige devolverlo**, así que esta lectura es
+        el paso previo obligado de `updateArticle` — y por eso la edición no puede ser un
+        diálogo que se abre sin haber pedido nada (`GR-42`).
+      tags: [Catálogos]
+      x-required-roles: [catalog:read]
+      responses:
+        '200':
+          description: El artículo, con su versión.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  id: 1
+                  name: Amoxicilina 500 mg
+                  price: '2450.00'
+                  active: true
+                meta:
+                  requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      operationId: updateArticle
+      summary: Editar un artículo
+      description: |
+        **Exige `If-Match`**, así que hay que haber leído el artículo antes. Sin eso responde
+        `428`: nunca se aplica un cambio a ciegas.
+
+        No exige `Idempotency-Key`: guardar dos veces el mismo cuerpo sobre la misma versión
+        deja el mismo estado, y la segunda vez el `If-Match` ya no coincide. La clave se reserva
+        para lo que aplicado dos veces cuenta dos veces.
+      tags: [Catálogos]
+      x-required-roles: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreate'
+            example:
+              name: Amoxicilina 500 mg
+              price: '2450.00'
+      responses:
+        '200':
+          description: El artículo, con su versión nueva.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  id: 1
+                  name: Amoxicilina 500 mg
+                  price: '2450.00'
+                  active: true
+                meta:
+                  requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /articles/{articleId}/deactivation:
+    parameters:
+      - name: articleId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    post:
+      operationId: deactivateArticle
+      summary: Desactivar un artículo
+      description: |
+        Lo saca de circulación sin borrarlo: sigue en el catálogo y en la historia, con
+        `active: false`.
+
+        **No exige `Idempotency-Key`**, y es la diferencia con dar de alta: desactivar dos veces
+        el mismo artículo deja el mismo estado, así que un reintento no puede duplicar nada.
+        La clave se reserva para lo que aplicado dos veces cuenta dos veces.
+      tags: [Catálogos]
+      x-required-roles: [catalog:write]
+      x-invariants:
+        - code: ARTICLE_ALREADY_INACTIVE
+          status: 409
+          rule: article(:articleId).active == true
+          description: |
+            Ya está fuera de circulación. Se contesta y no se aplica: no es un error del
+            operador, es que no hay nada que hacer.
+      responses:
+        '200':
+          description: El artículo, ya desactivado.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  id: 3
+                  name: Paracetamol 1 g
+                  price: '1120.00'
+                  active: false
+                meta:
+                  requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+
+  /articles/{articleId}/activation:
+    parameters:
+      - name: articleId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    post:
+      operationId: activateArticle
+      summary: Activar un artículo
+      description: |
+        Lo vuelve a poner en circulación.
+
+        **Tampoco exige `Idempotency-Key`**, por lo mismo que su inversa: aplicarla dos veces
+        deja el mismo estado.
+      tags: [Catálogos]
+      x-required-roles: [catalog:write]
+      x-invariants:
+        - code: ARTICLE_ALREADY_ACTIVE
+          status: 409
+          rule: article(:articleId).active == false
+          description: |
+            Ya está en circulación. Se contesta y no se aplica: no hay nada que hacer.
+      responses:
+        '200':
+          description: El artículo, ya activo.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  id: 3
+                  name: Paracetamol 1 g
+                  price: '1120.00'
+                  active: true
+                meta:
+                  requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+
+components:
+  parameters:
+    Search:
+      name: search
+      in: query
+      description: Busca por nombre, parcial e insensible a mayúsculas.
+      schema:
+        type: string
+        maxLength: 100
+    Page:
+      name: page
+      in: query
+      description: La primera es la 1.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        default: 1
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Una por intento lógico. **Reintentar el mismo intento reusa la misma clave** — generar
+        una nueva al reintentar anula la protección.
+
+        Si llega repetida con **otro cuerpo**, responde `409` con `IDEMPOTENCY_KEY_REUSE`.
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: |
+        Versión del recurso sobre la que el cliente cree estar operando, tal como la devolvió
+        el `ETag` del `GET` previo.
+
+        **Bloqueo optimista**: si el recurso cambió entre la lectura y la escritura, el servidor
+        responde `412` y **la operación no se aplica**. Dos operadores editando el mismo
+        artículo no se pisan.
+
+        Es **obligatorio**: omitirlo responde `428 · PRECONDITION_REQUIRED`, **sin `fields`**.
+        Nunca se aplica el cambio a ciegas.
+
+        Sin `fields` a propósito (`TAN-9`): un encabezado que falta es un defecto de quien
+        llama, no algo que el operador pueda corregir en un control de la pantalla. Nombrado
+        ahí, el formulario busca un control `If-Match`, no lo encuentra, y **el rechazo
+        desaparece entero** — ni aviso, ni campo marcado.
+      schema:
+        type: string
+      example: '"7"'
+    Size:
+      name: size
+      in: query
+      description: Cuántos por página.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  headers:
+    RequestId:
+      description: El identificador de la solicitud, para rastrearla.
+      required: true
+      schema:
+        type: string
+        example: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+
+    ETag:
+      description: |
+        Versión actual del recurso. El cliente la guarda y la reenvía en `If-Match` al
+        modificarlo.
+      required: true
+      schema:
+        type: string
+        example: '"7"'
+
+  schemas:
+    Amount:
+      description: |
+        Importe monetario, **como texto decimal**. Nunca como número: un flotante pierde
+        centavos, y el error se propaga a todo lo que se calcule con él.
+
+        Tiene nombre propio para que **de qué tipo es un campo salga del contrato**: quien
+        lo dibuja no elige cómo se ve un importe, lo deriva.
+      type: string
+      pattern: '^[0-9]+\.[0-9]{2}$'
+
+    Article:
+      type: object
+      additionalProperties: false
+      required: [id, name, price, active]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        price:
+          $ref: '#/components/schemas/Amount'
+        discountedPrice:
+          $ref: '#/components/schemas/Amount'
+        stock:
+          description: Cuántas unidades hay. Opcional — no todo artículo se cuenta.
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 99999
+        active:
+          description: Si se puede usar. Uno inactivo se ve pero no se elige.
+          type: boolean
+
+    ArticleCreate:
+      type: object
+      additionalProperties: false
+      required: [name, price]
+      x-invariants:
+        - code: DISCOUNT_ABOVE_PRICE
+          rule: discountedPrice <= price
+          description: |
+            El precio con descuento no puede superar al de lista.
+
+            **Es una invariante de schema y no de operación**: mira dos campos del mismo mensaje,
+            así que se contesta sin consultar nada. Un panel puede evaluarla antes de mandar.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        price:
+          $ref: '#/components/schemas/Amount'
+        discountedPrice:
+          $ref: '#/components/schemas/Amount'
+        stock:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 99999
+        active:
+          type: boolean
+          default: true
+
+    Meta:
+      type: object
+      additionalProperties: false
+      required: [requestId]
+      properties:
+        requestId:
+          description: Lo que se cita para rastrear la operación.
+          type: string
+
+    PageMeta:
+      description: |
+        Lo mismo que `Meta` más la paginación. **No compone con `allOf` sobre `Meta`** porque
+        `Meta` es un objeto cerrado y cada rama de un `allOf` se evalúa contra el objeto completo:
+        la rama de `Meta` rechazaría `page` y los totales. Se repite `requestId` a propósito.
+      type: object
+      additionalProperties: false
+      required: [requestId, page, size, totalItems, totalPages]
+      properties:
+        requestId:
+          type: string
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, requestId]
+          properties:
+            code:
+              $ref: '#/components/schemas/ErrorCode'
+            message:
+              description: |
+                Castellano, para una persona. **No ramificar sobre esto**: es texto de presentación
+                y puede cambiar sin que sea un cambio de contrato.
+              type: string
+            requestId:
+              type: string
+            fields:
+              description: Sólo en `VALIDATION_FAILED`. Va a los campos del formulario.
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [field, code, message]
+                properties:
+                  field:
+                    type: string
+                  code:
+                    type: string
+                  message:
+                    type: string
+
+    ErrorCode:
+      description: Enum cerrado. Es sobre esto que se ramifica.
+      type: string
+      enum:
+        - UNAUTHENTICATED
+        - FORBIDDEN
+        - NOT_FOUND
+        - VALIDATION_FAILED
+        - CATALOG_ENTRY_DUPLICATE
+        - ARTICLE_ALREADY_INACTIVE
+        - ARTICLE_ALREADY_ACTIVE
+        - DISCOUNT_ABOVE_PRICE
+        - STALE_VERSION
+        - IDEMPOTENCY_KEY_REUSE
+        - INTERNAL_ERROR
+
+  responses:
+    Unauthorized:
+      description: Sin sesión.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: UNAUTHENTICATED
+              message: Hay que volver a entrar.
+              requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+
+    Forbidden:
+      description: La sesión no habilita esta operación.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: FORBIDDEN
+              message: La sesión no habilita esta operación.
+              requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+
+    NotFound:
+      description: No existe.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: NOT_FOUND
+              message: No se encontró el artículo.
+              requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+
+    Conflict:
+      description: Ya existe otro con ese nombre.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: CATALOG_ENTRY_DUPLICATE
+              message: Ya existe un artículo con ese nombre.
+              requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+
+    PreconditionFailed:
+      description: |
+        El `If-Match` enviado no coincide con la versión actual del recurso: cambió entre la
+        lectura y esta escritura. **La operación no se aplicó.**
+
+        El cliente relee, le muestra al operador **qué cambió de lo que él tocó**, y lo deja
+        decidir (`CU-29`). Lo que no puede hacer es releer y guardar encima: eso es sobrescribir
+        el trabajo del otro con un paso más.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+        ETag:
+          $ref: '#/components/headers/ETag'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            versionVieja:
+              summary: El artículo cambió desde la lectura
+              value:
+                error:
+                  code: STALE_VERSION
+                  message: El registro cambió mientras lo editabas. Volvé a abrirlo.
+                  requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+
+    PreconditionRequired:
+      description: |
+        La escritura llegó **sin `If-Match`**, y esta operación exige que sea condicional. **No
+        se aplicó nada.**
+
+        Es el caso que RFC 6585 nombra al definir el `428`: el servidor exige un pedido
+        condicional para evitar la actualización perdida. Tiene código propio y no comparte el
+        `422` con los campos mal llenados porque **no lo arregla la misma persona**: esto lo
+        arregla quien escribió la pantalla.
+
+        **No lleva `fields`** (`TAN-9`), y **no devuelve el `ETag`** (`TAN-10`): darlo invitaría a
+        reenviarlo tal cual, que es guardar a ciegas sobre lo que el otro dejó — lo mismo que
+        `CU-29` descarta. Quien llegó sin testigo tiene que leer el recurso.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: PRECONDITION_REQUIRED
+              message: Esta operación exige el testigo de la versión (If-Match).
+              requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+
+    ValidationFailed:
+      description: El pedido no pasó la validación.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: VALIDATION_FAILED
+              message: Hay campos con problemas.
+              requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y
+              fields:
+                - field: name
+                  code: REQUIRED
+                  message: El nombre es obligatorio.
+
+    InternalServerError:
+      description: No se pudo.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: No se pudo completar la operación.
+              requestId: 01JBQ2X8N4K3M7P9R2T5V8W1Y

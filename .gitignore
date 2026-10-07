@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+*.tsbuildinfo
+
+# La copia de los documentos que el paquete publica. La fuente vive en docs/.
+packages/core/docs/
