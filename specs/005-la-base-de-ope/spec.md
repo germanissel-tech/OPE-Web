@@ -170,12 +170,32 @@ un arreglo del núcleo les llega a las dos en el mismo commit.
 - Los nombres de las dos aplicaciones son `admin` y `portal`, el vocabulario cerrado de piezas de
   Tandilia que OPE adopta para sus carpetas.
 
+## Lo que se cerró con el dueño (2026-10-07)
+
+Tres puntos quedaron abiertos al escribir la spec y se decidieron antes del plan:
+
+- **Cómo llega el contrato de OPE al frontend: como artefacto generado y sincronizado.** El backend emite
+  una carpeta `generated/contract/` para consumidores (bundle, tipos, módulo de capacidades, catálogo de
+  problemas, identidad del contrato) y el frontend la copia a `contracts/ope/` con `npm run contract:sync`,
+  desde la ruta hermana cuando está o desde un release del backend cuando no. La copia se versiona: CI y un
+  clon arrancan sin el vecino, y `ope-check` compara la identidad del módulo con la del contrato para
+  decir cuándo hay que sincronizar. Se descartaron la ruta hermana al vuelo (un clon sin vecino no
+  verifica) y la dependencia git al backend (instala el repositorio entero por tres archivos).
+- **El operador tiene nombre, y la constitución VII del backend se acota a las personas observadas.**
+  «OPE observa comportamiento, no personas» protege al visitante y al comprador, que son totalmente
+  anónimos; los operadores de OPE —y mañana la gente del merchant en el portal— son quienes operan,
+  están identificados y auditados. El lint `ope-no-pii` sigue prohibiendo todo en los consumidores
+  `public`, `sdk`, `platform` y `portal` y gana una excepción acotada, con nombre y razón, para el esquema
+  del operador bajo `admin`. `OPE_ADMIN_OPERATORS` gana `displayName` opcional, `getOperator` lo devuelve
+  con `operatorId` y `scope`, y la barra de usuario lo muestra; el registro de administración sigue
+  indexado por `operatorId`. Todo entra en la feature 040 del backend. (El supuesto de arriba sobre la
+  barra con `operatorId` queda como respaldo para un operador sin nombre.)
+- **La telemetría del frontend no tiene destino todavía, y se dice.** El puerto heredado (`CU-35`) se
+  conserva con la implementación de consola; el destino se decide cuando OPE elija su pila de
+  observabilidad, backend incluido (`01 §11` define qué se observa, no con qué). Se descartó un endpoint
+  en el backend para un dato que hoy nadie lee.
+
 ## Lo que queda abierto
 
-- **Cómo llega el contrato de OPE al frontend**: por ruta hermana al repositorio del backend
-  (`../backend/contracts/dist/openapi.yaml`) o publicado como artefacto. Abierto; el plan lo resuelve o lo
-  deja escrito.
-- **Si el operador tendrá nombre** (un campo en `OPE_ADMIN_OPERATORS`) — es del backend, y se pregunta
-  cuando el panel lo necesite.
-- **El registro (telemetría) del frontend**: cuarzo lo deja como puerto sin destino, y OPE tampoco tiene
-  uno todavía.
+- **El destino de la telemetría**, en los términos de arriba: abierto hasta que exista la pila de
+  observabilidad de OPE.
