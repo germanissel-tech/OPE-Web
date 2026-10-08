@@ -60,7 +60,7 @@ const failingWith = (code: string, status = 403) =>
     id: 'article.create',
     operations: {
       create: operation('createArticle', fake, writes, async () => {
-        throw new RequestFailed(status, code, 'req-1', 'No se pudo.')
+        throw new RequestFailed({ status, type: code, title: 'No se pudo.', requestId: 'req-1' })
       }),
     },
     /* **`void` acá es funcional, no un descuido**: es lo que deja llamar la
@@ -77,19 +77,20 @@ describe('un error que es defecto nuestro', () => {
   it('deja rastro, con el pedido y la pantalla', async () => {
     /* `CU-3` dice que lo que un permiso no habilita no se muestra, así que un
        `403` significa que la pantalla ofreció algo que no correspondía. */
-    const { result } = renderHook(() => useAction(failingWith('FORBIDDEN')), { wrapper })
+    const { result } = renderHook(() => useAction(failingWith('capability-missing')), { wrapper })
 
     await act(async () => {
       result.current.run()
     })
 
     expect(failures()).toHaveLength(1)
-    expect(failures()[0]).toMatchObject({ code: 'FORBIDDEN', requestId: 'req-1' })
+    expect(failures()[0]).toMatchObject({ code: 'capability-missing', requestId: 'req-1' })
   })
 
-  it('reusar una clave de idempotencia también', async () => {
-    /* Significa que la puerta la ató mal (`CU-34`). */
-    const { result } = renderHook(() => useAction(failingWith('IDEMPOTENCY_KEY_REUSE', 409)), {
+  it('un merchant fuera del alcance también', async () => {
+    /* La pantalla ofreció operar sobre un merchant que la sesión no alcanza:
+       `CU-3` dice que eso no se dibuja. */
+    const { result } = renderHook(() => useAction(failingWith('merchant-out-of-scope')), {
       wrapper,
     })
 
@@ -100,12 +101,11 @@ describe('un error que es defecto nuestro', () => {
     expect(failures()).toHaveLength(1)
   })
 
-  it('y escribir sin el testigo, también', async () => {
-    /* Un `428` dice que la escritura tenía que ser condicional y no lo era: la
-       pantalla leyó el registro y guardó sin lo que había leído (`CU-49`). El
-       operador no puede hacer nada con eso, así que lo único útil es que quede
-       registrado del lado de quien sí puede. */
-    const { result } = renderHook(() => useAction(failingWith('PRECONDITION_REQUIRED', 428)), {
+  it('y un alcance más angosto que lo pedido, también', async () => {
+    /* `operator-scope-too-narrow`: el operador pidió algo sobre más merchants
+       de los que su alcance cubre. El operador no puede hacer nada con eso, así
+       que lo único útil es que quede registrado del lado de quien sí puede. */
+    const { result } = renderHook(() => useAction(failingWith('operator-scope-too-narrow')), {
       wrapper,
     })
 
@@ -121,7 +121,7 @@ describe('un rechazo de negocio', () => {
   it('**no** deja rastro de defecto: el sistema funcionó', async () => {
     /* Registrarlo como defecto nuestro llenaría el tablero de reglas de negocio
        y taparía los que sí lo son. */
-    const { result } = renderHook(() => useAction(failingWith('ENTRY_NOT_REVERSIBLE', 409)), {
+    const { result } = renderHook(() => useAction(failingWith('merchant-deactivated', 409)), {
       wrapper,
     })
 
@@ -135,7 +135,7 @@ describe('un rechazo de negocio', () => {
   it('y se cuenta aparte de una falla', async () => {
     /* Sin separarlos, un tablero cuenta reglas de negocio como errores del
        sistema y el número deja de decir nada. */
-    const { result } = renderHook(() => useAction(failingWith('ENTRY_NOT_REVERSIBLE', 409)), {
+    const { result } = renderHook(() => useAction(failingWith('merchant-deactivated', 409)), {
       wrapper,
     })
 

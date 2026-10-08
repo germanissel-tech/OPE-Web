@@ -52,10 +52,9 @@ type ScreenFailed = {
 /**
  * **Un error que es defecto nuestro, no del operador** (`CU-25`, `CU-34`).
  *
- * Son dos y las dos significan lo mismo: la pantalla ofreció algo que no
- * correspondía. Un `403` porque `CU-3` dice que lo que un permiso no habilita
- * **no se muestra**, y un `IDEMPOTENCY_KEY_REUSE` porque la puerta ató mal la
- * clave.
+ * Son los `403` de OPE y todos significan lo mismo: la pantalla ofreció algo
+ * que no correspondía, porque `CU-3` dice que lo que un permiso no habilita
+ * **no se muestra**.
  *
  * **Se deja rastro y por eso existe este evento**: sin él, tratarlos como un
  * fallo cualquiera esconde un defecto nuestro atrás de un cartel amable, y
@@ -63,9 +62,15 @@ type ScreenFailed = {
  */
 type RequestFailed = {
   readonly kind: 'requestFailed'
-  /** El del pedido. Es lo que correlaciona con el otro lado, donde está el dato. */
-  readonly requestId: string
-  /** Del enum cerrado del contrato. Es sobre esto que se ramifica. */
+  /**
+   * El del pedido. Es lo que correlaciona con el otro lado, donde está el dato.
+   *
+   * **Opcional porque OPE no lo manda todavía** (su feature 040), y un rastro
+   * sin identificador sigue diciendo qué pantalla y qué tipo — que es lo que
+   * permite encontrar la que está mal.
+   */
+  readonly requestId?: string | undefined
+  /** El slug del tipo de problema, del catálogo del contrato. Es sobre esto que se ramifica. */
   readonly code: string
   /** Desde cuál se pidió — que es lo que permite encontrar la que está mal. */
   readonly screen: string

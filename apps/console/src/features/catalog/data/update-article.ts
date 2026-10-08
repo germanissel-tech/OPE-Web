@@ -41,7 +41,7 @@ export const updateArticle = defineAction({
 
   announces: (article) => ({
     title: catalogStrings.articleUpdated,
-    description: catalogStrings.articleUpdatedDetail(String(article.data.id), article.data.name),
+    description: catalogStrings.articleUpdatedDetail(String(article.id), article.name),
   }),
 
   /* Sólo la lista por ahora. **La ficha individual todavía no es una consulta**:

@@ -69,7 +69,12 @@ function accionQueChoca(veces = 1) {
     recibidos.push(body)
     if (restantes > 0) {
       restantes -= 1
-      throw new RequestFailed(412, 'STALE_VERSION', '01JBQ', 'El registro cambió.')
+      throw new RequestFailed({
+        status: 412,
+        type: 'stale-version',
+        title: 'El registro cambió.',
+        requestId: '01JBQ',
+      })
     }
     return body.name
   })

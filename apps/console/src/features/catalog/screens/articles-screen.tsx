@@ -4,7 +4,6 @@ import {
   defineScreen,
   type GridStates,
   resultOf,
-  TablePagination,
   useActionColumn,
   useFlow,
   useOutcome,
@@ -47,10 +46,10 @@ function ArticlesScreen() {
      nombres fijos se pisarían en silencio, y la dirección dice de cuál es cada
      cosa — `?articles.q=ibu&articles.row=7`. */
   const table = useTableQuery('articles')
-  /* **No se manda `size`**: cuántos por página lo decide el servidor, que lo
-     declara en el contrato y lo devuelve en `meta`. Mandarlo sería una decisión
-     de esta pantalla —una lista compacta— y no el valor por omisión copiado. */
-  const articles = useArticles({ search: table.query || undefined, page: table.page })
+  /* **Sin página ni tamaño**: el núcleo ya pagina por cursor (`ADR-020`) y el
+     hola mundo de las-animas paginaba por número. Se queda en la primera hasta
+     que el tramo 5 de la 005 lo reemplace por `features/merchants`. */
+  const articles = useArticles({ search: table.query || undefined })
 
   /* De las acciones sale **si la columna existe**: sin ningún permiso, los
      controles escondidos dejarían un encabezado vacío (`CU-46`). Son varias
@@ -124,7 +123,7 @@ function ArticlesScreen() {
                 </Field>
               </FilterBar>
             }
-            {...resultOf(articles, emptyStates, strings)}
+            {...resultOf({ ...articles, items: articles.data ?? [] }, emptyStates, strings)}
             rowId={(article) => String(article.id)}
             columns={[
               /* **El ancho es el reparto, no el ancho final** (`granito#PED-3`).
@@ -164,7 +163,6 @@ function ArticlesScreen() {
               },
               ...actions,
             ]}
-            totalCount={articles.data?.meta.totalItems}
             /* **Dónde está parado el operador, y vive en la dirección**
                (`CU-47`, `granito#PED-12`). Con estado local se pierde al abrir
                la ficha, que es exactamente cuando hace falta.
@@ -185,8 +183,6 @@ function ArticlesScreen() {
             }
             caption={catalogStrings.articles}
           />
-
-          <TablePagination meta={articles.data?.meta} onPageChange={table.setPage} />
         </Block>
       </Region>
 

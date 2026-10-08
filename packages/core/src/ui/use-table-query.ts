@@ -8,7 +8,7 @@ import { useDebounced } from '../base/use-debounced'
  *
  * Lo que filtra y pagina es el servidor, así que toda grilla de todas las
  * aplicaciones necesita exactamente esto: un texto que se ve en el acto, una
- * consulta que espera, y una página que vuelve a la primera cuando el filtro
+ * consulta que espera, y un cursor que vuelve al principio cuando el filtro
  * cambia. Repetido en cada pantalla son quince líneas que se copian —y una de
  * ellas se copia mal.
  *
@@ -27,17 +27,24 @@ import { useDebounced } from '../base/use-debounced'
  *
  * Porque **el lugar es dónde estás**, y de eso se ocupa la URL: cerrar una
  * ficha vuelve al escalón anterior, y ese escalón es una dirección que ya traía
- * su filtro y su página. Sin esto, volver deja al operador en la página uno sin
- * filtro — el problema con el que arrancó `CU-47`.
+ * su filtro y su tramo. Sin esto, volver deja al operador en el primer tramo
+ * sin filtro — el problema con el que arrancó `CU-47`.
  *
  * De paso se gana algo que no se buscaba: **un enlace con el filtro puesto se
  * comparte**.
  *
+ * ## El cursor, y qué reproduce un enlace
+ *
+ * OPE pagina por cursor opaco y sin total (`ADR-020` del backend), así que no
+ * hay número de página que llevar. Lo que viaja es **el cursor del último tramo
+ * cargado**: un enlace con cursor reproduce ese tramo —que es lo que el servidor
+ * puede dar—, no la acumulación de los anteriores.
+ *
  * ## Y por qué reemplaza la entrada en vez de apilarla
  *
- * Filtrar y paginar **no son escalones**. Si apilaran, «atrás» dejaría de ser
- * «cerrar» y pasaría a ser «la página anterior», y salir de una grilla después
- * de mirar cinco páginas serían cinco apretadas. La pila es del recorrido; el
+ * Filtrar y cargar más **no son escalones**. Si apilaran, «atrás» dejaría de ser
+ * «cerrar» y pasaría a ser «el tramo anterior», y salir de una grilla después
+ * de cargar cinco tramos serían cinco apretadas. La pila es del recorrido; el
  * lugar viaja al lado.
  */
 export type TableQuery = {
@@ -47,8 +54,10 @@ export type TableQuery = {
   readonly query: string
   /** Si hay filtro puesto. Lo consume el vacío, para elegir cuál de los dos es. */
   readonly filtered: boolean
-  readonly page: number
-  readonly setPage: (page: number) => void
+  /** El cursor del último tramo cargado, o ninguno: el principio. */
+  readonly cursor: string | undefined
+  /** Anota el cursor del tramo que acaba de llegar. Con `undefined`, vuelve al principio. */
+  readonly setCursor: (next: string | undefined) => void
   /**
    * **Dónde está parado el operador** (`GR-47`, `granito#PED-12`).
    *
@@ -56,24 +65,24 @@ export type TableQuery = {
    * todas; ésta es una y dice **de cuál fila salí**. Confundirlas es el error
    * caro, y granito lo dice en su propia API.
    *
-   * Vive en la dirección como el filtro y la página: con estado local se pierde
+   * Vive en la dirección como el filtro y el cursor: con estado local se pierde
    * al abrir una ficha, que es exactamente cuando hace falta.
    */
   readonly currentRow: string | null
   readonly setCurrentRow: (id: string | null) => void
   /**
-   * Cambiar el filtro **vuelve a la primera página**.
+   * Cambiar el filtro **vuelve al principio**.
    *
-   * Quedarse en la cuatro de un resultado que ahora tiene una es una pantalla
-   * vacía sin explicación, y el operador no tiene cómo saber que le alcanza con
-   * retroceder.
+   * Quedarse en el tramo cinco de un resultado que ahora tiene uno es una
+   * pantalla vacía sin explicación, y el operador no tiene cómo saber que le
+   * alcanza con volver.
    */
   readonly filter: (value: string) => void
 }
 
 /** Cómo se llaman en la dirección. Cortos porque se ven. */
 const QUERY = 'q'
-const PAGE = 'p'
+const CURSOR = 'c'
 const ROW = 'row'
 
 /**
@@ -87,7 +96,7 @@ const ROW = 'row'
  * equivoca. La forma opcional ya se eligió mal una vez en este repositorio.
  *
  * De paso la dirección se vuelve autodescriptiva, que importa porque se
- * comparte: `?articles.q=ibu&articles.row=7` dice de qué es cada cosa.
+ * comparte: `?merchants.q=tienda&merchants.row=mrc_7f` dice de qué es cada cosa.
  */
 export function useTableQuery(grid: string): TableQuery {
   const [params, setParams] = useSearchParams()
@@ -96,8 +105,8 @@ export function useTableQuery(grid: string): TableQuery {
    * **El estado de la entrada se vuelve a poner en cada escritura** (`CU-47`).
    *
    * `setSearchParams` arma una entrada nueva y **descarta el `state`**: sin
-   * esto, filtrar o paginar borra la pila del flujo. Y no falla — sin estado, el
-   * marco reconstruye una pila plausible con la regla del enlace pegado, así
+   * esto, filtrar o cargar más borra la pila del flujo. Y no falla — sin estado,
+   * el marco reconstruye una pila plausible con la regla del enlace pegado, así
    * que con dos escalones no se nota y con tres cerrar cae a la raíz.
    */
   const { state } = useLocation()
@@ -118,20 +127,16 @@ export function useTableQuery(grid: string): TableQuery {
   const currentRow = params.get(key(ROW))
 
   /**
-   * **La página se lee de la dirección, así que puede venir cualquier cosa.**
+   * **El cursor es opaco, así que no se interpreta** (`ADR-020`).
    *
-   * `?articles.p=abc` daba `NaN`, y `NaN` viajaba al servidor. Lo que se ve
-   * entonces no es un error: es la grilla diciendo **«todavía no hay
-   * artículos»** con el catálogo lleno — y sin salida, porque la paginación no
-   * se dibuja sin resultados y el filtro está vacío. Hay que editar la URL a
-   * mano.
-   *
-   * Un valor que no es una página **no es una página**, así que se cae en la
-   * primera. Es lo mismo que hace el marco con cualquier dato de la dirección
-   * que no corresponde: seguir, en vez de propagar la basura.
+   * Lo que venga en la dirección se le da al servidor tal cual. Si es viejo o
+   * inventado, el servidor responde `400 validation-failed` con el puntero
+   * `/query/cursor`, la grilla lo muestra como error con «reintentar», y
+   * reintentar es `setCursor(undefined)`: volver al principio. No queda una
+   * grilla vacía sin salida, que era lo que pasaba con un número de página que
+   * no era un número.
    */
-  const asked = Number(params.get(key(PAGE)))
-  const page = Number.isInteger(asked) && asked > 0 ? asked : 1
+  const cursor = params.get(key(CURSOR)) ?? undefined
 
   /**
    * Lo que se está escribiendo **sí es local**, y arranca de la dirección.
@@ -182,8 +187,10 @@ export function useTableQuery(grid: string): TableQuery {
     write((next) => {
       if (debounced === '') next.delete(key(QUERY))
       else next.set(key(QUERY), debounced)
-      next.delete(key(PAGE))
-      /* La fila actual es de la página que se estaba mirando: con otro filtro
+      /* Otro filtro es otra colección: el cursor del tramo anterior no le
+         pertenece, y mandárselo al servidor es un `400` seguro. */
+      next.delete(key(CURSOR))
+      /* La fila actual es del tramo que se estaba mirando: con otro filtro
          puede no existir, y una marca que apunta a nada confunde más que
          ninguna. */
       next.delete(key(ROW))
@@ -195,11 +202,11 @@ export function useTableQuery(grid: string): TableQuery {
     search: typing,
     query: settledQuery,
     filtered: settledQuery !== '',
-    page,
-    setPage: (next) => {
+    cursor,
+    setCursor: (next) => {
       write((params) => {
-        if (next <= 1) params.delete(key(PAGE))
-        else params.set(key(PAGE), String(next))
+        if (next === undefined) params.delete(key(CURSOR))
+        else params.set(key(CURSOR), next)
         params.delete(key(ROW))
         return params
       })

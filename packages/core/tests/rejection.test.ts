@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { RequestFailed } from '../src/data/envelope'
+import { RequestFailed, unwrap } from '../src/data/envelope'
 import { failureNotice, isBusinessRejection } from '../src/data/notice'
+import { failing, problems } from './fixtures/ope/responses'
 
 /**
  * **Un rechazo de negocio no es una falla** (`CU-25`).
@@ -14,47 +15,51 @@ const strings = {
   actionFailed: 'No se pudo completar',
   actionRejected: 'No se puede hacer eso',
   requestIdLabel: 'Identificador del pedido',
+  noRequestId: 'sin identificador',
   serverUnreachable: 'No se pudo hablar con el servidor.',
 }
 
-const failed = (status: number, code: string, message: string) =>
-  new RequestFailed(status, code, 'req-1', message)
+const failed = (problem: (typeof problems)[keyof typeof problems], requestId?: string) => {
+  try {
+    unwrap(failing(problem, requestId ? { 'X-Request-Id': requestId } : {}))
+  } catch (error) {
+    return error as RequestFailed
+  }
+  throw new Error('no tiró')
+}
 
 describe('lo que el servidor contesta', () => {
-  it('un 409 de una regla es una respuesta, no una falla', () => {
-    /* `ENTRY_NOT_REVERSIBLE` es una invariante del contrato: el sistema
-       funcionó y contestó que no. */
-    const rejected = failed(
-      409,
-      'ENTRY_NOT_REVERSIBLE',
-      'Sólo se anulan los que carga el operador.',
-    )
-
-    expect(isBusinessRejection(rejected)).toBe(true)
+  it('un 409 de una invariante es una respuesta, no una falla', () => {
+    /* `merchant-deactivated`: el sistema funcionó y contestó que no. */
+    expect(isBusinessRejection(failed(problems.merchantDeactivated))).toBe(true)
   })
 
-  it('pero reusar una clave de idempotencia sí es defecto nuestro', () => {
-    /* También vuelve 409, y `CU-34` ya decidió que significa que la puerta ató
-       mal la clave. Al operador no se le muestra como si fuera cosa suya. */
-    const ours = failed(409, 'IDEMPOTENCY_KEY_REUSE', 'Esa clave ya se usó con otro cuerpo.')
-
-    expect(isBusinessRejection(ours)).toBe(false)
+  it('un 422 también: el pedido era válido y una regla dijo que no', () => {
+    expect(isBusinessRejection(failed(problems.originAlreadyRegistered))).toBe(true)
   })
 
-  it('una falla del servidor no es un rechazo', () => {
-    expect(isBusinessRejection(failed(500, 'INTERNAL_ERROR', 'Algo se rompió.'))).toBe(false)
+  it('un 403 no es un rechazo: es defecto nuestro', () => {
+    /* `CU-3`: lo que un permiso no habilita no se muestra. Si el servidor dijo
+       que no por alcance, la pantalla ofreció lo que no correspondía. */
+    expect(isBusinessRejection(failed(problems.merchantOutOfScope))).toBe(false)
+  })
+
+  it('ni un 400, ni una falla del servidor', () => {
+    expect(isBusinessRejection(failed(problems.validationFailed))).toBe(false)
+    expect(
+      isBusinessRejection(
+        new RequestFailed({ status: 500, type: 'internal-error', title: 'Internal error' }),
+      ),
+    ).toBe(false)
   })
 })
 
 describe('el aviso de un rechazo', () => {
-  const notice = failureNotice(
-    failed(409, 'ENTRY_NOT_REVERSIBLE', 'Sólo se anulan los que carga el operador.'),
-    strings,
-  )
+  const notice = failureNotice(failed(problems.merchantDeactivated, 'req-1'), strings)
 
   it('no lleva el identificador del pedido, porque no hay nada que reportar', () => {
     expect(notice.description).not.toContain('req-1')
-    expect(notice.description).toBe('Sólo se anulan los que carga el operador.')
+    expect(notice.description).toBe('The merchant is deactivated')
   })
 
   it('se va sola: es una respuesta, y no hay nada que anotar', () => {
@@ -70,11 +75,19 @@ describe('el aviso de una falla', () => {
   it('lleva el identificador y no se va sola', () => {
     /* El operador tiene que poder anotarlo, y uno que se desvanece mientras
        busca con qué no sirve de nada. */
-    const notice = failureNotice(failed(500, 'INTERNAL_ERROR', 'Algo se rompió.'), strings)
+    const notice = failureNotice(failed(problems.merchantOutOfScope, 'req-1'), strings)
 
     expect(notice.tone).toBe('error')
     expect(notice.description).toContain('req-1')
     expect(notice.duration).toBeUndefined()
+  })
+
+  it('dice que no hay identificador cuando no vino, en vez de inventarlo', () => {
+    /* Hoy OPE no lo manda (lo agrega su 040). Un hueco se lee como un olvido
+       nuestro; un texto inventado se cita como si sirviera. */
+    const notice = failureNotice(failed(problems.merchantOutOfScope), strings)
+
+    expect(notice.description).toContain('Identificador del pedido: sin identificador')
   })
 
   it('sin servidor lo dice el marco, y nunca el error crudo', () => {
@@ -83,5 +96,14 @@ describe('el aviso de una falla', () => {
     const notice = failureNotice(undefined, strings)
 
     expect(notice.description).toBe(strings.serverUnreachable)
+  })
+
+  it('las violaciones que no son de ningún campo se dicen con su puntero', () => {
+    /* Un cursor viejo en `/query` no tiene control donde dibujarse. Callarlo
+       sería perder el rechazo entero (`CU-49`). */
+    const rejected = failed(problems.validationFailed)
+    const notice = failureNotice(rejected, strings, rejected.errors)
+
+    expect(notice.description).toContain('/query/cursor: must match pattern')
   })
 })

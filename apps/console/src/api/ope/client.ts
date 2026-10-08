@@ -1,4 +1,4 @@
-import { createOpeClient, defineService, type Page, type SessionHooks, unwrap } from '@ope/core'
+import { createOpeClient, defineService, type SessionHooks, unwrap } from '@ope/core'
 import type { operations, paths } from '../../../../../contracts/ope/api'
 
 /**
@@ -24,7 +24,7 @@ export type Merchant = MerchantPage['items'][number]
 
 export type OpeClient = {
   /** Los merchants del alcance del operador, por cursor. */
-  readonly listMerchants: (query: MerchantQuery) => Promise<Page<MerchantPage>>
+  readonly listMerchants: (query: MerchantQuery) => Promise<MerchantPage>
 }
 
 /**
@@ -39,9 +39,6 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
   const client = createOpeClient<paths>(baseUrl, session)
 
   return {
-    /* `unwrap` todavía espera el sobre `{ data, meta }` de las-animas; el que
-       lee cuerpos pelados y Problem Details llega en el tramo 3 de la 005. Hasta
-       entonces esta llamada compila y tipa, y no se ejecuta contra el backend. */
     async listMerchants(query) {
       return unwrap<MerchantPage>(await client.GET('/v1/admin/merchants', { params: { query } }))
     },

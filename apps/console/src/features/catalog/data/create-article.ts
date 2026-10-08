@@ -50,7 +50,7 @@ export const createArticle = defineAction({
      Un texto pelado también vale, y es sólo el título. */
   announces: (article) => ({
     title: catalogStrings.articleCreated,
-    description: catalogStrings.articleCreatedDetail(String(article.data.id), article.data.name),
+    description: catalogStrings.articleCreatedDetail(String(article.id), article.name),
   }),
 
   /* Qué consultas quedan viejas. Acá sólo las listas: un alta no cambia los

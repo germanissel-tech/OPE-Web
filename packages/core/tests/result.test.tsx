@@ -60,12 +60,12 @@ describe('los cuatro estados', () => {
 
   it('el error muestra el identificador del pedido', () => {
     /* Es lo único que convierte «no anda» en algo diagnosticable (`CU-4`). */
-    const error = new RequestFailed(
-      500,
-      'INTERNAL_ERROR',
-      '01JBQ2X8N4K3M7P9R2T5V8W1Y',
-      'No se pudo',
-    )
+    const error = new RequestFailed({
+      status: 500,
+      type: 'internal-error',
+      title: 'No se pudo',
+      requestId: '01JBQ2X8N4K3M7P9R2T5V8W1Y',
+    })
     render(
       <Result query={{ ...base, error, data: undefined }} {...vacios}>
         {() => null}
@@ -76,7 +76,7 @@ describe('los cuatro estados', () => {
 
   it('el error deja una salida', () => {
     let reintentos = 0
-    const error = new RequestFailed(500, 'INTERNAL_ERROR', '01JBQ', 'No se pudo')
+    const error = new RequestFailed({ status: 500, type: 'internal-error', title: 'No se pudo' })
     render(
       <Result
         query={{

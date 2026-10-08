@@ -1,6 +1,6 @@
 import type { Notice } from '../base/notices'
 import type { Announcement } from './action'
-import type { RequestFailed } from './envelope'
+import type { FieldError, RequestFailed } from './envelope'
 
 /**
  * **Qué dice el aviso de una acción** (`CU-25`).
@@ -47,20 +47,20 @@ export function successNotice(
 /**
  * **Un rechazo de negocio no es una falla** (`CU-25`).
  *
- * «Sólo se anulan los comprobantes que carga el operador» es una respuesta, no
- * un error: el sistema funcionó y contestó que no. Mostrarlo como falla, con un
- * identificador de pedido al lado, le dice al operador que hay algo que
- * reportar cuando lo único que hay es una regla.
+ * «El merchant está desactivado» es una respuesta, no un error: el sistema
+ * funcionó y contestó que no. Mostrarlo como falla, con un identificador de
+ * pedido al lado, le dice al operador que hay algo que reportar cuando lo único
+ * que hay es una regla.
  *
- * **El `409` es el que el contrato usa para sus invariantes**, y de ahí sale la
- * distinción. Con una excepción, que ya estaba decidida: reusar una clave de
- * idempotencia con otro cuerpo también vuelve `409` y **sí es defecto nuestro**
- * (`CU-34`) — significa que la puerta ató mal la clave.
+ * **El `422` y el `409` son los que OPE usa para sus invariantes**, y de ahí
+ * sale la distinción: `origin-already-registered` es `422`;
+ * `merchant-deactivated`, `configuration-frozen` e `idempotency-conflict` —que
+ * en OPE es «mismo cuerpo, otro contenido», un rechazo y no una clave mal
+ * atada— son `409`. Ninguno es defecto nuestro: ésos son los `403`, y los
+ * reconoce la puerta por su `type`.
  */
-const REUSED_KEY = 'IDEMPOTENCY_KEY_REUSE'
-
 export function isBusinessRejection(failed: RequestFailed): boolean {
-  return failed.status === 409 && failed.code !== REUSED_KEY
+  return failed.status === 422 || failed.status === 409
 }
 
 /**
@@ -76,8 +76,16 @@ export function failureNotice(
     actionFailed: string
     actionRejected: string
     requestIdLabel: string
+    noRequestId: string
     serverUnreachable: string
   },
+  /**
+   * Las violaciones que **no son de ningún campo** —un puntero bajo `/query` o
+   * `/headers`— y que por eso no tienen dónde dibujarse. Se dicen acá, con su
+   * puntero, en vez de perderse: un rechazo que no se ve en ningún lado es el
+   * modo de falla que `CU-49` nombra.
+   */
+  offForm: readonly FieldError[] = [],
 ): Notice {
   /* Sin servidor no hay mensaje ni identificador: no llegó a haber pedido, así
      que el texto lo pone el marco (`CU-43`). */
@@ -85,23 +93,28 @@ export function failureNotice(
     return { tone: 'error', title: strings.actionFailed, description: strings.serverUnreachable }
   }
 
-  /* El texto es del servidor: el contrato lo escribe en castellano y apto para
-     mostrar, así que uno nuestro sería una segunda fuente. */
+  const violations = offForm.map((each) => `${each.pointer}: ${each.message}`)
+  const said = [failed.message, ...violations].join(' · ')
+
+  /* El texto es del servidor: el contrato lo escribe apto para mostrar, así que
+     uno nuestro sería una segunda fuente. */
   if (isBusinessRejection(failed)) {
     /* **Sin identificador y se va sola**: no hay nada que reportar. */
     return {
       tone: 'warning',
       title: strings.actionRejected,
-      description: failed.message,
+      description: said,
       duration: 6000,
     }
   }
 
   /* **Sin `duration`**: lleva el identificador, y uno que se va solo mientras el
-     operador busca con qué anotarlo no sirve de nada. */
+     operador busca con qué anotarlo no sirve de nada. Y si el identificador no
+     vino, **se dice que no vino**: un hueco se lee como un olvido nuestro, y un
+     texto inventado se cita como si sirviera. */
   return {
     tone: 'error',
     title: strings.actionFailed,
-    description: `${failed.message} · ${strings.requestIdLabel}: ${failed.requestId}`,
+    description: `${said} · ${strings.requestIdLabel}: ${failed.requestId ?? strings.noRequestId}`,
   }
 }

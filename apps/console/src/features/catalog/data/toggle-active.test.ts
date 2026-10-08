@@ -66,11 +66,7 @@ describe('lo que se anuncia', () => {
    * segundo, porque un texto solo dejaría el aviso sin decir de cuál fila es.
    */
   const announced = (returned: Article, given: Article) => {
-    const envelope = {
-      data: returned,
-      meta: { requestId: '01J', page: 1, size: 1, totalItems: 1, totalPages: 1 },
-    }
-    const result = toggleArticleActive.announces?.(envelope, given)
+    const result = toggleArticleActive.announces?.(returned, given)
     if (typeof result !== 'object') throw new Error('el aviso tiene que llevar descripción')
     return result
   }

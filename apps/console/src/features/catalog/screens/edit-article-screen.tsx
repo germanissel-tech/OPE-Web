@@ -2,7 +2,6 @@ import { Block, Button, Region, Page as Sheet } from '@granito/ui'
 import {
   ConflictDialog,
   defineScreen,
-  type Page,
   Result,
   useAction,
   useForm,
@@ -127,17 +126,21 @@ const articleLabels: Record<keyof Compared, string> = {
  * Un componente aparte se monta **con el dato ya en la mano**, así que no hay
  * instante en que los valores iniciales sean los equivocados.
  */
-function ArticleForm({ article }: { readonly article: Page<Article> }) {
+function ArticleForm({ article }: { readonly article: Article }) {
   const { id } = useScreenParams(editArticleScreen)
   const { emit } = useOutcome()
   const reread = useRereadArticle()
 
   /* **La referencia y el testigo, congelados al montar** (`CU-29`). Leídos de la
      consulta viva se corren solos, y por qué eso saltea la protección entera
-     está en `useLoadedOnce`, que es donde se puede verificar. */
+     está en `useLoadedOnce`, que es donde se puede verificar.
+
+     **El testigo va vacío**: OPE no emite `ETag` y el núcleo ya no lo lee del
+     sobre. La ruta de `CU-29` queda dormida; el hola mundo se retira en el
+     tramo 5 de la 005. */
   const original = useLoadedOnce({
-    values: comoRegistro(article.data),
-    version: article.meta.version ?? '',
+    values: comoRegistro(article),
+    version: '',
   })
 
   /**
@@ -184,20 +187,16 @@ function ArticleForm({ article }: { readonly article: Page<Article> }) {
       reread: async () => {
         const fresh = await reread(Number(id))
 
-        /* **Sin testigo no se reintenta.** Escribir con uno vacío es guardar a
-           ciegas sobre lo que el otro acaba de dejar, que es exactamente lo que
-           `CU-29` descarta. Se rechaza, y la puerta avisa sin guardar. */
-        if (fresh.meta.version === undefined) {
-          throw new Error('El artículo volvió sin testigo: no hay con qué reintentar.')
-        }
-
-        return { values: comoRegistro(fresh.data), version: fresh.meta.version }
+        /* Sin testigo del transporte (OPE no emite `ETag`), la relectura
+           devuelve el registro con la versión vacía. La puerta nunca llega acá
+           hoy: ningún problema del catálogo despierta `stale-version`. */
+        return { values: comoRegistro(fresh), version: '' }
       },
     },
   })
 
   const form = useForm<ArticleValues>(
-    comoFormulario(article.data),
+    comoFormulario(article),
     articleConstraints,
     catalogStrings.shape,
     /* **Lo que el servidor rechazó, campo por campo.** Sin esto, un rechazo de
@@ -276,9 +275,9 @@ function EditArticleScreen() {
           empty={{ title: catalogStrings.articleNotFound }}
           noMatches={{ title: catalogStrings.articleNotFound }}
           filtered={false}
-          isEmpty={(page) => page.data === undefined}
+          isEmpty={(loaded) => loaded === undefined}
         >
-          {(page) => <ArticleForm article={page} />}
+          {(loaded) => <ArticleForm article={loaded} />}
         </Result>
       </Region>
     </Sheet>

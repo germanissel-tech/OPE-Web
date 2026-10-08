@@ -1,4 +1,4 @@
-import { defineService, type Page, unwrap } from '@ope/core'
+import { defineService, unwrap } from '@ope/core'
 import createClient, { type Middleware } from 'openapi-fetch'
 import type { paths } from './types'
 
@@ -37,20 +37,20 @@ export type ArticleCreate = NonNullable<
 
 export type DemoClient = {
   /** Los artículos, filtrados y paginados **por el servidor** (`CU-14`). */
-  readonly listArticles: (query: ArticleQuery) => Promise<Page<Article[]>>
-  readonly getArticle: (articleId: number) => Promise<Page<Article>>
+  readonly listArticles: (query: ArticleQuery) => Promise<Article[]>
+  readonly getArticle: (articleId: number) => Promise<Article>
   /**
    * **No lleva clave de idempotencia**, y el contraste con `createArticle` es
    * el punto: desactivar dos veces deja el mismo estado, así que un reintento
    * no puede duplicar nada (`CU-34`).
    */
-  readonly deactivateArticle: (articleId: number) => Promise<Page<Article>>
-  readonly activateArticle: (articleId: number) => Promise<Page<Article>>
+  readonly deactivateArticle: (articleId: number) => Promise<Article>
+  readonly activateArticle: (articleId: number) => Promise<Article>
   /**
    * **Exige la clave de idempotencia** porque el contrato la declara requerida
    * (`CU-34`). Quien la genera es la puerta de acciones.
    */
-  readonly createArticle: (body: ArticleCreate, idempotencyKey: string) => Promise<Page<Article>>
+  readonly createArticle: (body: ArticleCreate, idempotencyKey: string) => Promise<Article>
   /**
    * **Exige el testigo** porque el contrato declara `If-Match` requerido
    * (`CU-29`). Sale de `meta.version` de la lectura, y por eso editar obliga a
@@ -60,7 +60,7 @@ export type DemoClient = {
     articleId: number,
     body: ArticleCreate,
     version: string,
-  ) => Promise<Page<Article>>
+  ) => Promise<Article>
 }
 
 /**

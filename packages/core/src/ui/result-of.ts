@@ -1,6 +1,5 @@
 import type { TableEmpty, TableState } from '@granito/ui'
 import type { Strings } from '../base/strings'
-import type { Page } from '../data/envelope'
 import { RequestFailed } from '../data/envelope'
 import type { QueryLike, ResultState } from './result'
 
@@ -51,12 +50,22 @@ export type GridResult<T> = {
   readonly error: TableEmpty
 }
 
+/**
+ * Lo que una grilla necesita de su consulta: los cuatro campos de `QueryLike`
+ * y **las filas ya aplanadas**. Una colección por cursor las acumula tramo a
+ * tramo (`useCollection`); una lista entera las trae de una. A la grilla le da
+ * igual, y por eso se pide así.
+ */
+export type GridQuery<T> = QueryLike<unknown> & {
+  readonly items: readonly T[]
+}
+
 export function resultOf<T>(
-  query: QueryLike<Page<T[]>>,
+  query: GridQuery<T>,
   states: GridStates,
   strings: Strings,
 ): GridResult<T> {
-  const rows = [...(query.data?.data ?? [])]
+  const rows = [...query.items]
   const failed = query.error instanceof RequestFailed ? query.error : undefined
 
   return {
@@ -71,8 +80,9 @@ export function resultOf<T>(
        * **El identificador del pedido, hasta la pantalla** (`CU-4`, `CU-25`).
        *
        * granito lo dibuja en mono y con botón de copiar, porque uno que hay que
-       * transcribir a mano se transcribe mal. Es lo que se gana usando su
-       * estado en vez de uno nuestro.
+       * transcribir a mano se transcribe mal. Y **cuando no vino, no se dibuja**:
+       * granito recibe `undefined` y no muestra el botón de copiar nada. OPE lo
+       * agrega en su feature 040; hasta entonces es lo que hay.
        */
       requestId: failed?.requestId,
     },

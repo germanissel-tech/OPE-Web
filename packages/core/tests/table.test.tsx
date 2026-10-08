@@ -3,23 +3,23 @@ import { act, cleanup, render, renderHook, screen } from '@testing-library/react
 import type { ReactNode } from 'react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { TablePagination } from '../src/ui/table-pagination'
+import { StringsProvider } from '../src/base/use-strings'
+import { LoadMoreCursor } from '../src/ui/load-more'
 import { useTableQuery } from '../src/ui/use-table-query'
 
 /**
  * **Lo mecánico de una grilla servida** (`CU-14`, `CU-46`).
  *
- * Se prueba porque son las tres piezas que antes se copiaban en cada pantalla,
- * y lo que se copia mal acá no se ve: una paginación que se queda en la página
- * cuatro de un resultado de una, o un vacío que dice «no hay nada» cuando hay
- * una búsqueda puesta.
+ * Se prueba porque son las piezas que antes se copiaban en cada pantalla, y lo
+ * que se copia mal acá no se ve: un cursor que sobrevive a cambiar el filtro y
+ * manda al servidor un tramo de otra colección, o un vacío que dice «no hay
+ * nada» cuando hay una búsqueda puesta.
  */
 
 afterEach(() => {
   vi.useRealTimers()
   /* Sin esto el DOM de la prueba anterior sigue montado, y una consulta por
-     texto encuentra de más. Pasa desapercibido mientras cada prueba busca algo
-     distinto — que es cómo estaba antes de agregar la segunda paginación. */
+     texto encuentra de más. */
   cleanup()
 })
 
@@ -30,16 +30,16 @@ afterEach(() => {
  * memoria. Con `useState` esto corría sin nada alrededor, y volver de una ficha
  * perdía el filtro.
  */
-function inRouter(entry = '/catalog') {
+function inRouter(entry = '/merchants') {
   let seen = ''
 
   function useIt() {
     seen = useLocation().search
-    return useTableQuery('articles')
+    return useTableQuery('merchants')
   }
 
   const wrapper = ({ children }: { children: ReactNode }) => {
-    const router = createMemoryRouter([{ path: '/catalog', element: <>{children}</> }], {
+    const router = createMemoryRouter([{ path: '/merchants', element: <>{children}</> }], {
       initialEntries: [entry],
     })
     return <RouterProvider router={router} />
@@ -49,6 +49,8 @@ function inRouter(entry = '/catalog') {
   return { result, url: () => seen }
 }
 
+const CURSOR = 'eyJhZnRlciI6Im1yY183ZjNrNWQycTRtNngifQ'
+
 describe('el estado de una grilla', () => {
   it('separa lo que se escribe de lo que se consulta', () => {
     /* El control no se frena: lo que se demora es la consulta. Si fueran el
@@ -56,34 +58,34 @@ describe('el estado de una grilla', () => {
     vi.useFakeTimers()
     const { result } = inRouter()
 
-    act(() => result.current.filter('amox'))
+    act(() => result.current.filter('tienda'))
 
-    expect(result.current.search).toBe('amox')
+    expect(result.current.search).toBe('tienda')
     expect(result.current.query).toBe('')
 
     act(() => vi.advanceTimersByTime(500))
 
-    expect(result.current.query).toBe('amox')
+    expect(result.current.query).toBe('tienda')
   })
 
-  it('cambiar el filtro vuelve a la primera página, **cuando la consulta se asienta**', () => {
-    /* Quedarse en la cuatro de un resultado que ahora tiene una es una pantalla
-       vacía sin explicación, y el operador no sabe que le alcanza con volver.
+  it('cambiar el filtro vuelve al principio, **cuando la consulta se asienta**', () => {
+    /* Otro filtro es otra colección: el cursor del tramo anterior no le
+       pertenece, y mandárselo al servidor es un `400` seguro.
 
-       **Vuelve al asentarse y no al teclear**, que es lo que cambió al mudar el
-       lugar a la URL: adelantarlo mostraría la página uno del resultado
-       *anterior* por un cuarto de segundo, porque la consulta todavía no salió. */
+       **Vuelve al asentarse y no al teclear**: adelantarlo mostraría el primer
+       tramo del resultado *anterior* por un cuarto de segundo, porque la
+       consulta todavía no salió. */
     vi.useFakeTimers()
     const { result } = inRouter()
 
-    act(() => result.current.setPage(4))
-    expect(result.current.page).toBe(4)
+    act(() => result.current.setCursor(CURSOR))
+    expect(result.current.cursor).toBe(CURSOR)
 
-    act(() => result.current.filter('amox'))
-    expect(result.current.page).toBe(4)
+    act(() => result.current.filter('tienda'))
+    expect(result.current.cursor).toBe(CURSOR)
 
     act(() => vi.advanceTimersByTime(500))
-    expect(result.current.page).toBe(1)
+    expect(result.current.cursor).toBeUndefined()
   })
 
   it('«hay filtro» se decide con lo asentado, no con lo que se está tecleando', () => {
@@ -93,7 +95,7 @@ describe('el estado de una grilla', () => {
     vi.useFakeTimers()
     const { result } = inRouter()
 
-    act(() => result.current.filter('amox'))
+    act(() => result.current.filter('tienda'))
     expect(result.current.filtered).toBe(false)
 
     act(() => vi.advanceTimersByTime(500))
@@ -102,33 +104,44 @@ describe('el estado de una grilla', () => {
 })
 
 describe('el lugar viaja en la dirección', () => {
-  it('el filtro y la página se leen de la URL, así que un enlace los trae puestos', () => {
-    const { result } = inRouter('/catalog?articles.q=amox&articles.p=4')
+  it('el filtro y el cursor se leen de la URL, así que un enlace los trae puestos', () => {
+    /* **Un enlace con cursor reproduce ese tramo**, que es lo que el servidor
+       puede dar (`CU-47`, `ADR-020`). */
+    const { result } = inRouter(`/merchants?merchants.q=tienda&merchants.c=${CURSOR}`)
 
-    expect(result.current.query).toBe('amox')
-    expect(result.current.search).toBe('amox')
-    expect(result.current.page).toBe(4)
+    expect(result.current.query).toBe('tienda')
+    expect(result.current.search).toBe('tienda')
+    expect(result.current.cursor).toBe(CURSOR)
   })
 
   it('y se escriben en ella, que es lo que hace que cerrar los recupere', () => {
     vi.useFakeTimers()
     const { result, url } = inRouter()
 
-    act(() => result.current.filter('amox'))
+    act(() => result.current.filter('tienda'))
     act(() => vi.advanceTimersByTime(500))
-    act(() => result.current.setPage(4))
+    act(() => result.current.setCursor(CURSOR))
 
-    expect(url()).toContain('articles.q=amox')
-    expect(url()).toContain('articles.p=4')
+    expect(url()).toContain('merchants.q=tienda')
+    expect(url()).toContain(`merchants.c=${CURSOR}`)
   })
 
-  it('la primera página y el filtro vacío no ensucian la dirección', () => {
-    /* Un `?q=&p=1` pegado en un enlace dice lo mismo que nada, y se ve peor. */
-    const { result, url } = inRouter('/catalog?articles.q=amox&articles.p=4')
+  it('el principio y el filtro vacío no ensucian la dirección', () => {
+    /* Un `?q=&c=` pegado en un enlace dice lo mismo que nada, y se ve peor. */
+    const { result, url } = inRouter(`/merchants?merchants.q=tienda&merchants.c=${CURSOR}`)
 
-    act(() => result.current.setPage(1))
+    act(() => result.current.setCursor(undefined))
 
-    expect(url()).not.toContain('articles.p=')
+    expect(url()).not.toContain('merchants.c=')
+  })
+
+  it('el cursor es opaco: viaja tal cual, sin interpretarlo', () => {
+    /* Lo que venga se le da al servidor. Si es viejo, el servidor lo dice con
+       un `400` y la salida es volver al principio — no hay nada que validar
+       de este lado (`ADR-020`). */
+    const { result } = inRouter('/merchants?merchants.c=lo-que-sea')
+
+    expect(result.current.cursor).toBe('lo-que-sea')
   })
 })
 
@@ -144,11 +157,11 @@ describe('dos grillas en una pantalla', () => {
 
     function useBoth() {
       seen = useLocation().search
-      return { articles: useTableQuery('articles'), lines: useTableQuery('lines') }
+      return { merchants: useTableQuery('merchants'), experiments: useTableQuery('experiments') }
     }
 
     const wrapper = ({ children }: { children: ReactNode }) => {
-      const router = createMemoryRouter([{ path: '/catalog', element: <>{children}</> }], {
+      const router = createMemoryRouter([{ path: '/merchants', element: <>{children}</> }], {
         initialEntries: [entry],
       })
       return <RouterProvider router={router} />
@@ -159,36 +172,38 @@ describe('dos grillas en una pantalla', () => {
   }
 
   it('cada una lee lo suyo de la misma dirección', () => {
-    const { result } = two('/catalog?articles.q=ibu&articles.p=4&lines.q=caja&lines.row=9')
+    const { result } = two(
+      `/merchants?merchants.q=tienda&merchants.c=${CURSOR}&experiments.q=caja&experiments.row=9`,
+    )
 
-    expect(result.current.articles.query).toBe('ibu')
-    expect(result.current.articles.page).toBe(4)
-    expect(result.current.lines.query).toBe('caja')
-    expect(result.current.lines.currentRow).toBe('9')
-    expect(result.current.articles.currentRow).toBeNull()
+    expect(result.current.merchants.query).toBe('tienda')
+    expect(result.current.merchants.cursor).toBe(CURSOR)
+    expect(result.current.experiments.query).toBe('caja')
+    expect(result.current.experiments.currentRow).toBe('9')
+    expect(result.current.merchants.currentRow).toBeNull()
   })
 
-  it('y paginar una no toca a la otra', () => {
-    const { result, url } = two('/catalog?lines.p=3')
+  it('y cargar más en una no toca a la otra', () => {
+    const { result, url } = two('/merchants?experiments.c=xyz')
 
-    act(() => result.current.articles.setPage(2))
+    act(() => result.current.merchants.setCursor(CURSOR))
 
-    expect(url()).toContain('articles.p=2')
-    expect(url()).toContain('lines.p=3')
+    expect(url()).toContain(`merchants.c=${CURSOR}`)
+    expect(url()).toContain('experiments.c=xyz')
   })
 })
 
 describe('la fila actual', () => {
   it('viaja en la dirección, así que volver de una ficha la encuentra', () => {
-    const { result } = inRouter('/catalog?articles.row=7')
+    const { result } = inRouter('/merchants?merchants.row=7')
 
     expect(result.current.currentRow).toBe('7')
   })
 
-  it('se suelta al cambiar de página: está en otra', () => {
-    const { result, url } = inRouter('/catalog?articles.row=7')
+  it('se suelta al cambiar de tramo: está en otro', () => {
+    const { result, url } = inRouter('/merchants?merchants.row=7')
 
-    act(() => result.current.setPage(2))
+    act(() => result.current.setCursor(CURSOR))
 
     expect(url()).not.toContain('row=')
   })
@@ -196,9 +211,9 @@ describe('la fila actual', () => {
   it('y al cambiar el filtro, porque con otro filtro puede no existir', () => {
     /* Una marca que apunta a nada confunde más que ninguna. */
     vi.useFakeTimers()
-    const { result, url } = inRouter('/catalog?articles.row=7')
+    const { result, url } = inRouter('/merchants?merchants.row=7')
 
-    act(() => result.current.filter('amox'))
+    act(() => result.current.filter('tienda'))
     act(() => vi.advanceTimersByTime(500))
 
     expect(url()).not.toContain('row=')
@@ -210,8 +225,9 @@ describe('escribir en la dirección no puede borrar la pila', () => {
    * **La comprobación que faltaba** (`CU-47`).
    *
    * `setSearchParams` arma una entrada nueva y descarta el `state`, así que
-   * filtrar o paginar borraba la pila del flujo. **Y no fallaba**: sin estado el
-   * marco reconstruye una pila plausible, y con dos escalones se ve igual.
+   * filtrar o cargar más borraba la pila del flujo. **Y no fallaba**: sin
+   * estado el marco reconstruye una pila plausible, y con dos escalones se ve
+   * igual.
    *
    * Las pruebas de acá miraban la URL, que seguía bien. Ésta mira el estado.
    */
@@ -220,15 +236,17 @@ describe('escribir en la dirección no puede borrar la pila', () => {
 
     function useIt() {
       visto = useLocation().state
-      return useTableQuery('articles')
+      return useTableQuery('merchants')
     }
 
     const wrapper = ({ children }: { children: ReactNode }) => {
-      const router = createMemoryRouter([{ path: '/catalog', element: <>{children}</> }], {
+      const router = createMemoryRouter([{ path: '/merchants', element: <>{children}</> }], {
         initialEntries: [
           {
-            pathname: '/catalog',
-            state: { cuarzoFlow: { flow: 'catalog', stack: [{ screen: 'articles', params: {} }] } },
+            pathname: '/merchants',
+            state: {
+              cuarzoFlow: { flow: 'merchants', stack: [{ screen: 'merchants', params: {} }] },
+            },
           },
         ],
       })
@@ -239,12 +257,12 @@ describe('escribir en la dirección no puede borrar la pila', () => {
     return { result, state: () => visto }
   }
 
-  it('paginar conserva el flujo', () => {
+  it('cargar más conserva el flujo', () => {
     const { result, state } = conFlujo()
 
-    act(() => result.current.setPage(3))
+    act(() => result.current.setCursor(CURSOR))
 
-    expect(state()).toMatchObject({ cuarzoFlow: { flow: 'catalog' } })
+    expect(state()).toMatchObject({ cuarzoFlow: { flow: 'merchants' } })
   })
 
   it('marcar una fila conserva el flujo', () => {
@@ -252,100 +270,65 @@ describe('escribir en la dirección no puede borrar la pila', () => {
 
     act(() => result.current.setCurrentRow('7'))
 
-    expect(state()).toMatchObject({ cuarzoFlow: { flow: 'catalog' } })
+    expect(state()).toMatchObject({ cuarzoFlow: { flow: 'merchants' } })
   })
 
   it('y filtrar también', () => {
     vi.useFakeTimers()
     const { result, state } = conFlujo()
 
-    act(() => result.current.filter('amox'))
+    act(() => result.current.filter('tienda'))
     act(() => vi.advanceTimersByTime(500))
 
-    expect(state()).toMatchObject({ cuarzoFlow: { flow: 'catalog' } })
+    expect(state()).toMatchObject({ cuarzoFlow: { flow: 'merchants' } })
   })
 })
 
-describe('la paginación de una grilla', () => {
-  it('no se dibuja con una sola página', () => {
-    /* «1 de 1» ocupa lugar para no informar nada. */
-    const { container } = render(
-      <TablePagination
-        meta={{ requestId: 'r', page: 1, size: 20, totalItems: 3, totalPages: 1 }}
-        onPageChange={() => {}}
-      />,
-    )
-
-    expect(container.innerHTML).toBe('')
-  })
-
-  it('no se dibuja mientras la consulta no volvió', () => {
-    const { container } = render(<TablePagination meta={undefined} onPageChange={() => {}} />)
-
-    expect(container.innerHTML).toBe('')
-  })
-
-  it('no se dibuja con un sobre a medias, en vez de inventar los que faltan', () => {
-    /* El contrato da los cuatro o ninguno. Rellenar el que falte con un valor
-       por omisión **es donde se copia el tamaño de página**: un 20 de este lado
-       sobrevive al día que el servidor cambie el suyo, y nadie los compara. */
-    const { container } = render(
-      <TablePagination meta={{ requestId: 'r', page: 2, totalPages: 3 }} onPageChange={() => {}} />,
-    )
-
-    expect(container.innerHTML).toBe('')
-  })
-
-  it('usa el tamaño que el servidor dice que usó, y no uno propio', () => {
-    /* `meta.size` es obligatorio en una respuesta paginada. Que llegue un 50 y
-       se dibuje un 20 sería una paginación que miente sobre lo que muestra. */
-    render(
-      <TablePagination
-        meta={{ requestId: 'r', page: 1, size: 50, totalItems: 120, totalPages: 3 }}
-        onPageChange={() => {}}
-      />,
-    )
-
-    expect(screen.getByText(/50/)).toBeDefined()
-  })
-
-  it('se dibuja cuando hay más de una', () => {
-    render(
-      <TablePagination
-        meta={{ requestId: 'r', page: 2, size: 20, totalItems: 60, totalPages: 3 }}
-        onPageChange={() => {}}
-      />,
-    )
-
-    expect(screen.getByText(/3/)).toBeDefined()
-  })
-})
-
-describe('la página viene de la dirección, así que puede venir cualquier cosa', () => {
+describe('«cargar más» de una colección por cursor', () => {
   /**
-   * **Lo que se veía no era un error**: la grilla decía «todavía no hay
-   * artículos» con el catálogo lleno, porque `NaN` viajaba al servidor y volvía
-   * una lista vacía. Y sin salida: la paginación no se dibuja sin resultados, y
-   * el filtro estaba vacío. Había que editar la URL a mano.
+   * **Sin total, y por eso compuesto acá** (`GR-17`, `OW-4`): el `LoadMore` de
+   * granito dice «N de M», y OPE no da M. Lo que se verifica es que diga lo que
+   * puede decir, y que no ofrezca más cuando no hay.
    */
-  it.each([
-    ['abc', 'no es un número'],
-    ['0', 'no hay página cero'],
-    ['-3', 'ni negativa'],
-    ['', 'ni vacía'],
-    ['1.5', 'ni con decimales'],
-  ])('«%s» cae en la primera: %s', (raw) => {
-    const { result } = inRouter(`/catalog?articles.p=${raw}`)
+  const dibujar = (props: Parameters<typeof LoadMoreCursor>[0]) =>
+    render(
+      <StringsProvider>
+        <LoadMoreCursor {...props} />
+      </StringsProvider>,
+    )
 
-    expect(result.current.page).toBe(1)
+  it('dice cuántos hay, sin inventar un total', () => {
+    dibujar({ loaded: 20, hasMore: true, onLoadMore: () => {} })
+
+    expect(screen.getByText('20 cargados')).toBeDefined()
+    expect(screen.queryByText(/de/)).toBeNull()
   })
 
-  it('y una página de verdad se respeta', () => {
-    /* La otra mitad: una regla que arregla todo también arregla lo que estaba
-       bien, y eso no se nota hasta que alguien pagina. */
-    const { result } = inRouter('/catalog?articles.p=4')
+  it('ofrece cargar más mientras el último tramo trajo cursor', () => {
+    let pedidos = 0
+    dibujar({
+      loaded: 20,
+      hasMore: true,
+      onLoadMore: () => {
+        pedidos++
+      },
+    })
 
-    expect(result.current.page).toBe(4)
+    screen.getByRole('button', { name: 'Cargar más' }).click()
+    expect(pedidos).toBe(1)
+  })
+
+  it('y cuando no hay más, lo dice en vez de dejar un botón que no hace nada', () => {
+    dibujar({ loaded: 23, hasMore: false, onLoadMore: () => {} })
+
+    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.getByText('No hay más')).toBeDefined()
+  })
+
+  it('mientras llega el tramo, el botón no se vuelve a apretar', () => {
+    dibujar({ loaded: 20, hasMore: true, loading: true, onLoadMore: () => {} })
+
+    expect(screen.getByRole('button').getAttribute('aria-disabled')).toBe('true')
   })
 })
 
@@ -358,17 +341,13 @@ describe('cuando la dirección cambia por afuera, el filtro no vuelve solo', () 
    * sincroniza y el rebote **todavía trae lo que se había escrito antes**. El
    * efecto que asienta lo escribía de vuelta: el filtro reaparecía solo, y de
    * paso pisaba la entrada del historial recién creada.
-   *
-   * Estuvo tapado mientras el menú lateral recargaba la página, porque la grilla
-   * se remontaba entera y no había nada viejo que reescribir. Apareció al
-   * arreglar aquello, que es la forma en que un defecto espera a otro.
    */
   function externally(from: string, to: string) {
     let seen = ''
 
     function useIt() {
       seen = useLocation().search
-      return useTableQuery('articles')
+      return useTableQuery('merchants')
     }
 
     /* **El ruteador se arma una sola vez, y afuera del dibujo.** Adentro se
@@ -378,7 +357,7 @@ describe('cuando la dirección cambia por afuera, el filtro no vuelve solo', () 
     let mounted: ReturnType<typeof createMemoryRouter> | undefined
 
     const wrapper = ({ children }: { children: ReactNode }) => {
-      mounted ??= createMemoryRouter([{ path: '/catalog', element: <>{children}</> }], {
+      mounted ??= createMemoryRouter([{ path: '/merchants', element: <>{children}</> }], {
         initialEntries: [from],
       })
       return <RouterProvider router={mounted} />
@@ -394,9 +373,9 @@ describe('cuando la dirección cambia por afuera, el filtro no vuelve solo', () 
 
   it('no se reescribe el filtro viejo sobre la dirección nueva', async () => {
     vi.useFakeTimers()
-    const { result, url, go } = externally('/catalog?articles.q=ibu', '/catalog')
+    const { result, url, go } = externally('/merchants?merchants.q=tienda', '/merchants')
 
-    expect(result.current.search).toBe('ibu')
+    expect(result.current.search).toBe('tienda')
 
     await act(async () => {
       await go()
@@ -409,13 +388,16 @@ describe('cuando la dirección cambia por afuera, el filtro no vuelve solo', () 
 
   it('y el control queda mostrando lo que dice la dirección, no lo anterior', async () => {
     vi.useFakeTimers()
-    const { result, go } = externally('/catalog?articles.q=ibu', '/catalog?articles.q=amox')
+    const { result, go } = externally(
+      '/merchants?merchants.q=tienda',
+      '/merchants?merchants.q=otra',
+    )
 
     await act(async () => {
       await go()
     })
     act(() => vi.advanceTimersByTime(500))
 
-    expect(result.current.search).toBe('amox')
+    expect(result.current.search).toBe('otra')
   })
 })

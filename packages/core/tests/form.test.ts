@@ -2,7 +2,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
-import type { FieldError } from '../src/data/envelope'
+import type { RejectedField } from '../src/data/envelope'
 import { shapeErrorOf, useForm } from '../src/ui/use-form'
 import { NoticesProvider, useNoticeHost } from '../src/ui/use-notices'
 
@@ -170,7 +170,7 @@ describe('lo que rechazó el servidor', () => {
     const { result } = renderHook(
       () =>
         useForm({ name: 'Ibup', price: '12.50', note: '' }, constraints, strings, [
-          { field: 'name', code: 'DUPLICATE', message: 'Ya existe uno con ese nombre.' },
+          { field: 'name', message: 'Ya existe uno con ese nombre.' },
         ]),
       { wrapper },
     )
@@ -184,7 +184,7 @@ describe('lo que rechazó el servidor', () => {
     const { result } = renderHook(
       () =>
         useForm({ name: 'Ibuprofeno', price: '12.50', note: '' }, constraints, strings, [
-          { field: 'name', code: 'DUPLICATE', message: 'Ya existe uno con ese nombre.' },
+          { field: 'name', message: 'Ya existe uno con ese nombre.' },
         ]),
       { wrapper },
     )
@@ -211,7 +211,7 @@ describe('lo que rechazó el servidor y esta pantalla no muestra', () => {
     const { result } = renderHook(
       () => ({
         form: useForm({ name: 'Ibup', price: '12.50', note: '' }, constraints, strings, [
-          { field: 'If-Match', code: 'REQUIRED', message: 'Es obligatorio.' },
+          { field: 'If-Match', message: 'Es obligatorio.' },
         ]),
         avisos: useNoticeHost().notifications,
       }),
@@ -232,7 +232,7 @@ describe('lo que rechazó el servidor y esta pantalla no muestra', () => {
     const { result } = renderHook(
       () => ({
         form: useForm({ name: 'Ibup', price: '12.50', note: '' }, constraints, strings, [
-          { field: 'name', code: 'REQUIRED' } as unknown as FieldError,
+          { field: 'name' } as unknown as RejectedField,
         ]),
         avisos: useNoticeHost().notifications,
       }),
@@ -249,7 +249,7 @@ describe('lo que rechazó el servidor y esta pantalla no muestra', () => {
     const { result } = renderHook(
       () => ({
         form: useForm({ name: 'Ibup', price: '12.50', note: '' }, constraints, strings, [
-          { field: 'name', code: 'DUPLICATE', message: 'Ya existe uno con ese nombre.' },
+          { field: 'name', message: 'Ya existe uno con ese nombre.' },
         ]),
         avisos: useNoticeHost().notifications,
       }),

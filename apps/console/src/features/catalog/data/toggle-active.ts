@@ -39,10 +39,8 @@ export const toggleArticleActive = defineAction({
   /* Lo que pasó lo dice **lo que volvió**, no lo que se pidió: si el servidor
      contestó otra cosa, el aviso dice la verdad y no la intención. */
   announces: (updated) => ({
-    title: updated.data.active
-      ? catalogStrings.articleActivated
-      : catalogStrings.articleDeactivated,
-    description: updated.data.name,
+    title: updated.active ? catalogStrings.articleActivated : catalogStrings.articleDeactivated,
+    description: updated.name,
   }),
 
   invalidates: () => [allArticles],

@@ -7,7 +7,7 @@ import { useTelemetry } from '../base/telemetry'
 import { useStrings } from '../base/use-strings'
 import type { Action, Operations, Resolved } from './action'
 import { type Clash, clashBetween, mergedOnto } from './conflict'
-import { type FieldError, RequestFailed } from './envelope'
+import { type FieldError, fieldNameOf, type RejectedField, RequestFailed } from './envelope'
 import { failureNotice, isBusinessRejection, successNotice } from './notice'
 import { useServices } from './service'
 
@@ -20,7 +20,7 @@ import { useServices } from './service'
  * | | |
  * |---|---|
  * | Sale bien | Un aviso, y se invalida **lo que la acción declaró** |
- * | Vuelve `error.fields` | Los mensajes van **a los campos** que los pidieron (`CU-5`) |
+ * | Vuelve `errors[]` del cuerpo | Los mensajes van **a los campos** que los pidieron (`CU-5`); los que no son del cuerpo, al aviso |
  * | Cualquier otro error | Un aviso con el **identificador del pedido** |
  * | Siempre | **No se reintenta.** Reejecutar algo que nadie volvió a pedir es peor que fallar |
  */
@@ -42,9 +42,10 @@ export type ActionResult<Input> = {
    * Lo que el servidor rechazó, campo por campo.
    *
    * **Lo consume el formulario**, que es el único que sabe qué control
-   * corresponde a cada nombre.
+   * corresponde a cada nombre. Llegan ya traducidos de puntero a campo
+   * (`fieldNameOf`): sólo los del cuerpo del pedido.
    */
-  readonly fields: readonly FieldError[]
+  readonly fields: readonly RejectedField[]
   /**
    * **Qué cambió de lo que el operador tocó**, si hubo choque (`CU-29`).
    *
@@ -187,24 +188,35 @@ export function forgetAttempt(attempts: Attempts, input: unknown): Attempts {
 }
 
 /**
- * Los códigos que significan que **la pantalla está mal, no el operador**.
+ * Los tipos de problema que significan que **la pantalla está mal, no el
+ * operador**.
  *
- * Los tres dejan rastro, porque los tres son defectos nuestros que el operador
- * no puede corregir: un `403` dice que la interfaz ofreció algo que no
- * correspondía, un reuso de clave que la puerta la ató mal, y un pedido que
- * tenía que ser condicional y no lo era, que la pantalla escribió sin el testigo
- * que había leído (`CU-49`).
+ * Los tres son `403` de OPE y los tres dejan rastro, porque son defectos
+ * nuestros que el operador no puede corregir: `CU-3` dice que lo que un permiso
+ * no habilita **no se muestra**, así que si el servidor rechazó por capacidad,
+ * por un merchant fuera del alcance o por un alcance más angosto que el pedido,
+ * la interfaz ofreció algo que no correspondía.
+ *
+ * El `409 idempotency-conflict` **no está**: en OPE es «mismo cuerpo, otro
+ * contenido», un rechazo del negocio y no una clave que la puerta ató mal —
+ * la puerta ya no ata ninguna.
  */
-const OURS = new Set(['FORBIDDEN', 'IDEMPOTENCY_KEY_REUSE', 'PRECONDITION_REQUIRED'])
+const OURS = new Set(['capability-missing', 'merchant-out-of-scope', 'operator-scope-too-narrow'])
 
 /**
- * **El rechazo por versión vieja, reconocido por su código** (`CU-14`, `CU-29`).
+ * **El rechazo por versión vieja, reconocido por su tipo** (`CU-14`, `CU-29`).
  *
- * Nunca por el mensaje: es castellano para una persona y cambia sin que eso sea
- * un cambio de contrato. Y **nunca por el `412` a secas**: el estado de HTTP no
- * alcanza para saber qué hacer, y el enum del contrato sí.
+ * Nunca por el mensaje: es texto para una persona y cambia sin que eso sea un
+ * cambio de contrato. Y **nunca por el `412` a secas**: el estado de HTTP no
+ * alcanza para saber qué hacer, y el catálogo del contrato sí.
+ *
+ * **Dormido**: OPE no tiene testigo (`If-Match`) ni un tipo de problema para
+ * esto, así que ninguna respuesta del backend lo despierta hoy. La ruta de
+ * `CU-29` —releer, comparar, fusionar— se conserva entera y con sus pruebas,
+ * porque el testigo se evaluará como feature posterior del backend (`TAN-10`
+ * como referencia) y entonces esto cambia de valor y nada más.
  */
-const STALE = 'STALE_VERSION'
+const STALE = 'stale-version'
 
 /** Lo que la pantalla le dice a la puerta, todo opcional. */
 export type ActionOptions<Output> = {
@@ -300,15 +312,14 @@ export function useAction<Input, Output, Ops extends Operations>(
     onError: (error) => {
       const failed = error instanceof RequestFailed ? error : undefined
 
-      /* **Los dos que son defecto nuestro dejan rastro** (`CU-25`, `CU-34`): un
-         `403` significa que la interfaz ofreció algo que no correspondía, y un
-         reuso de clave que la puerta la ató mal. Sin esto se los trata como un
-         fallo cualquiera y **nadie se entera nunca**. */
-      if (failed && OURS.has(failed.code)) {
+      /* **Los que son defecto nuestro dejan rastro** (`CU-25`): un `403` de
+         OPE significa que la interfaz ofreció algo que no correspondía. Sin esto
+         se los trata como un fallo cualquiera y **nadie se entera nunca**. */
+      if (failed && OURS.has(failed.type)) {
         telemetry.record({
           kind: 'requestFailed',
           requestId: failed.requestId,
-          code: failed.code,
+          code: failed.type,
           screen,
         })
       }
@@ -325,13 +336,16 @@ export function useAction<Input, Output, Ops extends Operations>(
        * **Lo que se muestra lo resuelve el efecto de abajo**, porque releer es
        * asíncrono y esto no puede esperar.
        */
-      if (failed?.code === STALE) return
+      if (failed?.type === STALE) return
 
       /* Los que vuelven a los campos no llevan aviso: el formulario los muestra
-         donde se corrigen, y un aviso encima sería decirlo dos veces. */
-      if (failed && failed.fields.length > 0) return
+         donde se corrigen, y un aviso encima sería decirlo dos veces. **Los que
+         no son de ningún campo sí**: un puntero bajo `/query` o `/headers` no
+         tiene control donde dibujarse, y callarlo sería perderlo. */
+      const { toForm, offForm } = failed ? splitErrors(failed.errors) : { toForm: [], offForm: [] }
+      if (toForm.length > 0 && offForm.length === 0) return
 
-      notify(failureNotice(failed, strings))
+      notify(failureNotice(failed, strings, offForm))
     },
   })
 
@@ -403,7 +417,7 @@ export function useAction<Input, Output, Ops extends Operations>(
       (error: unknown) => (error instanceof RequestFailed ? error : undefined),
     )
 
-    if (rejected?.code !== STALE) return
+    if (rejected?.type !== STALE) return
 
     if (afterMerge) {
       notify(failureNotice(rejected, strings))
@@ -418,8 +432,31 @@ export function useAction<Input, Output, Ops extends Operations>(
   return {
     run,
     running: mutation.isPending,
-    fields: failed?.fields ?? [],
+    fields: failed ? splitErrors(failed.errors).toForm : [],
     clash,
     dismissClash: () => setClash([]),
   }
+}
+
+/**
+ * **Qué violación va a un campo y cuál al aviso** (`CU-38`, `CU-49`).
+ *
+ * Sólo las del cuerpo del pedido tienen un control donde corregirse; las demás
+ * —un cursor viejo en `/query`, un encabezado— no las escribió el operador. Lo
+ * decide `fieldNameOf`, que es lo único que sabe la forma del puntero.
+ */
+export function splitErrors(errors: readonly FieldError[]): {
+  readonly toForm: readonly RejectedField[]
+  readonly offForm: readonly FieldError[]
+} {
+  const toForm: RejectedField[] = []
+  const offForm: FieldError[] = []
+
+  for (const each of errors) {
+    const field = fieldNameOf(each.pointer)
+    if (field === undefined) offForm.push(each)
+    else toForm.push({ field, message: each.message })
+  }
+
+  return { toForm, offForm }
 }

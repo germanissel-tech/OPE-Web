@@ -719,7 +719,11 @@ if (!existsSync(GATE)) {
      verificada allá. Se dice, en vez de aprobar en silencio. */
   laPuerta = '  --     sin packages/: que la puerta trate el conflicto se verifica en cuarzo'
 } else {
-  const falta = ['STALE_VERSION', 'clashBetween'].filter(
+  /* En OPE el tipo de problema es un slug y hoy ningún backend lo emite: la
+     ruta queda **dormida con su constante**, no borrada. Lo que se verifica es
+     que la constante siga nombrando el slug y que el cálculo del choque siga
+     ahí: borrar cualquiera de los dos «porque no se usa» es lo que esto impide. */
+  const falta = ["const STALE = 'stale-version'", 'clashBetween'].filter(
     (each) => !readFileSync(GATE, 'utf8').includes(each),
   )
 

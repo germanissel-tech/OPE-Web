@@ -59,6 +59,19 @@ export type Strings = {
   retry: string
   /** Precede al identificador del pedido. Es lo que el operador cita (`CU-25`). */
   requestIdLabel: string
+  /**
+   * Cuando el servidor no mandó identificador.
+   *
+   * **Se dice, no se rellena**: un hueco se lee como un olvido nuestro, y un
+   * texto inventado se cita como si sirviera. OPE lo agrega en su feature 040.
+   */
+  noRequestId: string
+
+  /* Una colección por cursor — `ADR-020` del backend, `OW-4` */
+  loadMore: string
+  /** «N cargados». Sin total, porque el contrato no lo da. */
+  loadedCount: (loaded: number) => string
+  noMore: string
 
   /* Salir con trabajo sin guardar — `CU-47` */
   /**
@@ -188,6 +201,11 @@ export const DEFAULT_STRINGS: Strings = {
   loadFailed: 'No se pudieron traer los datos',
   retry: 'Reintentar',
   requestIdLabel: 'Identificador del pedido',
+  noRequestId: 'sin identificador',
+
+  loadMore: 'Cargar más',
+  loadedCount: (loaded: number) => (loaded === 1 ? '1 cargado' : `${loaded} cargados`),
+  noMore: 'No hay más',
 
   conflictTitle: 'El registro cambió mientras lo editabas',
   conflictDescription:
