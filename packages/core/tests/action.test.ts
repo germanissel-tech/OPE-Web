@@ -11,7 +11,7 @@ const SERVICES = new Map<string, unknown>([['fake', { ping: () => 'pong' }]])
 const create = operation(
   'createArticle',
   fake,
-  { roles: ['catalog:write'], idempotent: false, versioned: false },
+  { capabilities: ['catalog:write'] },
   async (_service, body: { name: string }) => ({
     id: 7,
     ...body,
@@ -20,7 +20,7 @@ const create = operation(
 const attach = operation(
   'attachFile',
   fake,
-  { roles: ['files:write'], idempotent: false, versioned: false },
+  { capabilities: ['files:write'] },
   async () => undefined,
 )
 
@@ -101,7 +101,7 @@ describe('una acción', () => {
 })
 
 describe('la capacidad que exige', () => {
-  it('es la unión de los roles de sus operaciones, no la de la principal', () => {
+  it('es la unión de las capacidades de sus operaciones, no la de la principal', () => {
     /* Una acción que empieza y no puede terminar deja el sistema a medias
        (`CU-37`, `CU-34`). */
     const action = defineAction({
@@ -113,7 +113,7 @@ describe('la capacidad que exige', () => {
     expect(action.requires).toEqual(['catalog:write', 'files:write'])
   })
 
-  it('no se ofrece si falta uno solo de los roles', () => {
+  it('no se ofrece si falta una sola de las capacidades', () => {
     const action = defineAction({
       id: 'article.create',
       operations: { create, attach },
@@ -126,15 +126,10 @@ describe('la capacidad que exige', () => {
     expect(isEnabled(action, new Set())).toBe(false)
   })
 
-  it('falla al declararse si ninguna operación exige roles', () => {
-    /* Sin roles el botón se dibujaría para cualquiera, que es lo contrario de
+  it('falla al declararse si ninguna operación exige una capacidad', () => {
+    /* Sin capacidades el botón se dibujaría para cualquiera, que es lo contrario de
        lo que `CU-3` garantiza. */
-    const libre = operation(
-      'free',
-      fake,
-      { roles: [], idempotent: false, versioned: false },
-      async () => undefined,
-    )
+    const libre = operation('free', fake, { capabilities: [] }, async () => undefined)
     let caught: unknown
     try {
       defineAction({ id: 'suelta', operations: { libre }, run: async () => undefined })

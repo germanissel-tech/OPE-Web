@@ -10,7 +10,7 @@ import type { ServiceKey } from './service'
  * |---|---|
  * | **Qué operaciones invoca** | De ahí sale la capacidad que exige, y **sólo ésas tiene a mano** |
  * | **Qué queda viejo** cuando sale bien | El marco invalida eso, y nada más (`CU-25`) |
- * | **Si mueve saldo** | El contrato exige clave de idempotencia en esas seis (`CU-34`) |
+ * | **Si repite sin duplicar** | El contrato lo declara por operación (`x-idempotency`): OPE repite por cuerpo idéntico, sin clave (`CU-34`) |
  *
  * Lo demás lo pone el marco: el aviso, la invalidación, los campos que vuelven
  * rechazados, y **que no se reintente nunca**.
@@ -26,19 +26,22 @@ import type { ServiceKey } from './service'
 export type Operation<Input, Output> = {
   readonly id: string
   /**
-   * Los `x-required-roles` de **esta** operación, salidos del contrato.
+   * Las `x-required-capabilities` de **esta** operación, salidas del contrato.
    *
-   * No se escriben: se generan al lado de los tipos (`npm run tipos`). Una
-   * copia a mano es la desincronización que `CU-37` existe para cerrar — el
-   * panel ofreciendo un botón que la API rechaza.
+   * No se escriben: llegan en el módulo que el backend emite por consumidor
+   * (`TAN-7`, `contracts/ope/capabilities`). Una copia a mano es la
+   * desincronización que `CU-37` existe para cerrar — el panel ofreciendo un
+   * botón que la API rechaza.
    */
-  readonly roles: readonly string[]
+  readonly capabilities: readonly string[]
   /**
-   * Si el contrato le exige clave de idempotencia (`CU-34`).
+   * Si el contrato la declara idempotente (`CU-34`).
    *
-   * **Sale del contrato, igual que los roles**: se genera al lado de los tipos.
-   * Escribirlo a mano sería una tercera fuente —el contrato, los tipos, y una
-   * casilla— y la que se olvida es siempre la casilla.
+   * En OPE la repetición es **por cuerpo idéntico** (`x-idempotency`): no hay
+   * clave que la puerta ponga, y el mismo pedido dos veces responde lo mismo.
+   * Sale del contrato, igual que las capacidades: escribirlo a mano sería una
+   * tercera fuente —el contrato, los tipos, y una casilla— y la que se olvida
+   * es siempre la casilla.
    */
   readonly idempotent: boolean
   /**
@@ -78,20 +81,26 @@ export function operation<Service, Input, Output>(
   id: string,
   /** Contra cuál habla. La misma clave con la que la raíz lo registró. */
   service: ServiceKey<Service>,
-  /** Lo que el contrato le exige. Se genera; no se escribe (`CU-37`, `CU-34`). */
+  /**
+   * Lo que el contrato le exige. Se genera; no se escribe (`CU-37`, `CU-34`).
+   *
+   * `idempotent` y `versioned` se omiten cuando el contrato no los declara:
+   * OPE no tiene testigo (`If-Match`) todavía, y obligar a escribir
+   * `versioned: false` treinta veces es la casilla que se copia sin mirar.
+   */
   requires: {
-    readonly roles: readonly string[]
-    readonly idempotent: boolean
-    readonly versioned: boolean
+    readonly capabilities: readonly string[]
+    readonly idempotent?: boolean
+    readonly versioned?: boolean
   },
   run: (service: Service, input: Input, idempotencyKey?: string) => Promise<Output>,
 ): Operation<Input, Output> {
   return {
     id,
     serviceId: service.id,
-    roles: requires.roles,
-    idempotent: requires.idempotent,
-    versioned: requires.versioned,
+    capabilities: requires.capabilities,
+    idempotent: requires.idempotent ?? false,
+    versioned: requires.versioned ?? false,
     /* La costura del tipo: lo que la puerta resuelve por esta clave es el
        `Service` por construcción, porque se registró con ella. Es la misma que
        `useService` y `route()` (`CU-44`). */
@@ -179,7 +188,7 @@ export type Action<Input, Output, Ops extends Operations = Operations> = ActionS
   /**
    * Lo que la sesión tiene que habilitar para que esta acción se pueda ofrecer.
    *
-   * **La unión de los roles de sus operaciones, no la de la principal**: una
+   * **La unión de las capacidades de sus operaciones, no la de la principal**: una
    * acción que empieza y no puede terminar deja el sistema a medias, que es lo
    * que `CU-34` existe para evitar.
    */
@@ -221,12 +230,12 @@ export function defineAction<Input, Output, Ops extends Operations>(
     )
   }
 
-  const requires = [...new Set(Object.values(spec.operations).flatMap((each) => each.roles))]
+  const requires = [...new Set(Object.values(spec.operations).flatMap((each) => each.capabilities))]
 
   if (requires.length === 0) {
     throw new Failure(
       'declaration.actionWithoutOperations',
-      `Ninguna operación de "${spec.id}" declara roles, así que su botón se dibujaría para cualquiera.`,
+      `Ninguna operación de "${spec.id}" exige una capacidad, así que su botón se dibujaría para cualquiera.`,
     )
   }
 
@@ -238,7 +247,7 @@ export function defineAction<Input, Output, Ops extends Operations>(
 /**
  * Si la sesión habilita una acción.
  *
- * **Por rol no se muestra; por estado se deshabilita** (`CU-3`, `CU-37`). Esto
+ * **Por capacidad no se muestra; por estado se deshabilita** (`CU-3`, `CU-37`). Esto
  * decide lo primero: lo que un permiso no habilita **no se dibuja**, y no queda
  * un botón gris permanente que nunca se va a poder usar.
  */
@@ -248,5 +257,5 @@ export function isEnabled(
   action: { readonly requires: readonly string[] },
   capabilities: ReadonlySet<string>,
 ): boolean {
-  return action.requires.every((role) => capabilities.has(role))
+  return action.requires.every((capability) => capabilities.has(capability))
 }

@@ -31,6 +31,9 @@ const APP_ROOTS = apps.map((app) => join(ROOT, ...app.split('/'), 'src'))
 /** A qué aplicación pertenece un archivo, o `undefined` si a ninguna. */
 const rootOf = (path) => APP_ROOTS.find((root) => path.startsWith(root + sep) || path === root)
 
+const CONTRACT_ARTIFACT = join(ROOT, 'contracts', 'ope')
+const isContractArtifact = (path) => path.startsWith(CONTRACT_ARTIFACT + sep)
+
 /**
  * Quién puede importar a quién. `lib` y `components` alimentan a `features`,
  * que alimenta a `app`, y nunca al revés.
@@ -109,6 +112,18 @@ for (const file of allFiles) {
   for (const specifier of importsIn(text)) {
     checkedCount++
     const target = resolve(dirname(file), specifier)
+
+    /* **El artefacto del contrato es la única salida de `src/`, y sólo `api/`
+       la toma.** `contracts/ope/` lo deja `contract:sync` y es de las dos
+       aplicaciones; vive en la raíz porque no es de ninguna. Una pantalla que lo
+       importe directo se saltea el servicio, que es donde la sesión se cose. */
+    if (isContractArtifact(target)) {
+      if (from.zone !== 'api') {
+        fail('Sólo api/ lee contracts/ope/', `${shortPath}  ->  ${specifier}`)
+      }
+      continue
+    }
+
     if (rootOf(target) !== rootOf(file)) {
       fail('Importa fuera del src/ de su aplicación', `${shortPath}  ->  ${specifier}`)
       continue

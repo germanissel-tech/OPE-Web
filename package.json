@@ -12,6 +12,7 @@
     "avance": "node tests/progress.mjs",
     "build": "npm run build:paquetes && tsc -p tsconfig.json && npm run build --workspaces --if-present",
     "build:paquetes": "npm run build -w @ope/session -w @ope/core",
+    "contract:sync": "node scripts/contract-sync.mjs",
     "dev": "npm run build:paquetes && npm run dev -w apps/console",
     "iconos": "node tests/icons.mjs",
     "revisar": "biome check .",
@@ -35,7 +36,8 @@
     "jsdom": "^29.1.1",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "yaml": "^2.9.1"
   },
   "ope": {
     "apps": [

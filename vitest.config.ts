@@ -29,5 +29,8 @@ export default defineConfig({
       'apps/*/src/**/*.test.{ts,tsx}',
       'tests/**/*.test.mjs',
     ],
+    /* El artefacto del contrato se sincroniza, no se prueba: lo vigila
+       `ope-check conformity`. */
+    exclude: ['**/node_modules/**', 'contracts/ope/**'],
   },
 })

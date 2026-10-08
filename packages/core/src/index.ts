@@ -147,7 +147,9 @@ export {
   type Operations,
   operation,
 } from './data/action'
+export { createOpeClient, type OpeClient, type SessionHooks } from './data/client'
 export { type Clash, clashBetween } from './data/conflict'
+export type { ContractModule, OperationRequirement } from './data/contract'
 export {
   type FieldError,
   failedWith,

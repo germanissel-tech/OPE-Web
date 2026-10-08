@@ -29,3 +29,7 @@
 *.woff binary
 *.woff2 binary
 *.tgz binary
+
+# El artefacto del contrato lo deja `npm run contract:sync`: en una revisión se
+# pliega, porque lo que hay que leer es el commit del backend que lo produjo.
+contracts/ope/* linguist-generated

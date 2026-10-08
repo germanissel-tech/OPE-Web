@@ -15,7 +15,8 @@
       "*.json",
       "!apps/*/src/api/*/types.ts",
       "!apps/*/src/api/*/roles.ts",
-      "!apps/*/src/api/*/constraints.ts"
+      "!apps/*/src/api/*/constraints.ts",
+      "!contracts/ope"
     ]
   },
   "formatter": {

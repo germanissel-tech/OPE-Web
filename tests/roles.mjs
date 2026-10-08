@@ -80,7 +80,7 @@ const entries = found
       .map((role) => role.trim())
       .filter(Boolean)
     return (
-      `  ${id}: { roles: [${list.map((role) => `'${role}'`).join(', ')}], ` +
+      `  ${id}: { capabilities: [${list.map((role) => `'${role}'`).join(', ')}], ` +
       `idempotent: ${idempotent.has(id)}, versioned: ${versioned.has(id)} },`
     )
   })
@@ -92,11 +92,12 @@ emit(
  * Generado por \`npm run tipos\` desde \`contracts/demo.yaml\` — no editar a mano.
  * This file was auto-generated. Do not make direct changes to the file.
  *
- * Qué le exige el contrato a cada operación: sus roles, si pide clave de
- * idempotencia, y si exige el testigo del recurso. De acá salen la capacidad de
- * una acción (\`CU-37\`), su clave (\`CU-34\`) y la versión sobre la que escribe
- * (\`CU-29\`), y por eso se genera: escribirlo a mano sería la copia que un día
- * no coincide con lo que la API permite.
+ * Qué le exige el contrato a cada operación: sus capacidades (los
+ * \`x-required-roles\` del hola mundo), si pide clave de idempotencia, y si
+ * exige el testigo del recurso. De acá salen la capacidad de una acción
+ * (\`CU-37\`), su clave (\`CU-34\`) y la versión sobre la que escribe (\`CU-29\`),
+ * y por eso se genera: escribirlo a mano sería la copia que un día no coincide
+ * con lo que la API permite.
  */
 
 export const contractRequires = {

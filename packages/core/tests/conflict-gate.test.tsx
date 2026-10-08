@@ -47,7 +47,7 @@ function wrapper({ children }: { readonly children: ReactNode }) {
   )
 }
 
-const writes = { roles: ['catalog:write'], idempotent: false, versioned: true }
+const writes = { capabilities: ['catalog:write'], versioned: true }
 
 type Body = { readonly name: string; readonly price: string; readonly version: string }
 

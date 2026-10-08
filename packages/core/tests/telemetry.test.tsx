@@ -52,7 +52,7 @@ function wrapper({ children }: { readonly children: ReactNode }) {
   )
 }
 
-const writes = { roles: ['catalog:write'], idempotent: false, versioned: false }
+const writes = { capabilities: ['catalog:write'] }
 
 /** Una acción que falla con el código que se le pida. */
 const failingWith = (code: string, status = 403) =>
