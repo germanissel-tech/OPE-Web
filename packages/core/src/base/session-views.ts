@@ -1,3 +1,4 @@
+import type { SignInOutcome } from '@ope/session'
 import type { ReactNode } from 'react'
 import type { Strings } from './strings'
 
@@ -38,6 +39,13 @@ export type SessionViewContext = {
   readonly application: ReactNode
   /** Volver a entrar, para el diálogo de `CU-9`. */
   readonly reenter: () => void
+  /**
+   * Entrar con una credencial, **cuando el adaptador tiene entrada**.
+   *
+   * `undefined` con uno que entra solo (redirección): la vista de `anonymous`
+   * lo sabe por esto, y dibuja el aviso de «no hay sesión» en vez del ingreso.
+   */
+  readonly signIn: ((credential?: string) => Promise<SignInOutcome>) | undefined
   /**
    * Lo que dice el marco, ya resuelto contra lo que la aplicación reemplazó.
    *

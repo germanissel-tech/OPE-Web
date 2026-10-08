@@ -93,9 +93,12 @@ export type BootstrapOptions<Config extends BaseConfig> = {
   /**
    * **Dónde la aplicación inyecta lo suyo**: sus servicios contra cada sistema.
    *
-   * Recibe `authorize` porque **el árbol no puede pedirla** — `useSessionControl`
-   * expone `signOut` y `reenter` y nada más, que es lo que `CU-10` garantiza. El
-   * único lugar donde existe es acá, después de armar la sesión.
+   * Recibe la sesión —`authorize` y `observe`, **juntas**— porque el árbol no
+   * puede pedirlas: `useSessionControl` expone `signOut`, `reenter` y `signIn`
+   * y nada más, que es lo que `CU-10` garantiza. El único lugar donde existen es
+   * acá, después de armar la sesión. Y van juntas para que un servicio no
+   * pueda cablear una sin la otra: con `authorize` sola, un `401` en vuelo no
+   * lo escucharía nadie.
    *
    * **Se llama una vez, al armar el árbol**, no en un dibujo: lo que devuelva
    * envuelve a la aplicación entera y por lo tanto tiene ciclo de vida
@@ -103,7 +106,10 @@ export type BootstrapOptions<Config extends BaseConfig> = {
    */
   readonly provide?: (props: {
     readonly config: Config
-    readonly authorize: (request: Request) => Promise<Request>
+    readonly session: {
+      readonly authorize: (request: Request) => Promise<Request>
+      readonly observe: (response: Response) => void
+    }
     readonly children: ReactNode
   }) => ReactNode
 }
@@ -137,12 +143,10 @@ export async function bootstrapApplication<Config extends BaseConfig>(
 
   const manifest = options.manifest(config)
   const gate = await configureSession(
-    {
-      issuer: config.issuer,
-      clientId: config.clientId,
-      toCapabilities: manifest.toCapabilities,
-    },
-    /* El proveedor se construye **con la configuración**, así que no puede
+    /* Sólo lo que la puerta puede honrar: lo que un adaptador necesita de un
+       proveedor lo recibe el adaptador en `buildProvider`, tipado como suyo. */
+    { toCapabilities: manifest.toCapabilities },
+    /* El adaptador se construye **con la configuración**, así que no puede
        quedarse sin la traducción de capacidades. */
     (session) => options.buildProvider(session, config),
   )
@@ -188,7 +192,11 @@ export async function bootstrapApplication<Config extends BaseConfig>(
     <StrictMode>
       <StringsProvider strings={manifest.strings}>
         {options.provide
-          ? options.provide({ config, authorize: gate.authorize, children: application_ })
+          ? options.provide({
+              config,
+              session: { authorize: gate.authorize, observe: gate.observe },
+              children: application_,
+            })
           : application_}
       </StringsProvider>
     </StrictMode>,
@@ -237,7 +245,7 @@ function SessionAwareApplication({
   waitThresholdMs: number
 }) {
   const session = useSession()
-  const { reenter } = useSessionControl()
+  const { reenter, signIn } = useSessionControl()
   /* Las preferencias y los contextos van adentro de la sesión porque **se
      estampan con el sujeto** (`CU-26`): antes de resolverla no se sabe de quién
      son, y lo guardado siempre pertenece a alguien. */
@@ -252,6 +260,7 @@ function SessionAwareApplication({
           capabilities={session.capabilities}
           endReason={session.reason}
           reenter={() => void reenter()}
+          signIn={signIn}
           userCaption={manifest.userCaption?.(session.claims ?? {})}
           waitThresholdMs={waitThresholdMs}
         />

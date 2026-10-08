@@ -36,7 +36,17 @@ export type Strings = {
   /** Cuando volvió otra persona: se descarta todo lo anterior (`CU-26`). */
   sessionEndedOtherSubject: string
   sessionEndedDetail: string
+  /** El backend dejó de reconocer la credencial en vuelo (`token-rejected`). */
+  sessionEndedTokenRejected: string
   reload: string
+
+  /* El ingreso con credencial — la vista de `anonymous` cuando el adaptador tiene entrada */
+  signInTitle: string
+  signInDetail: string
+  credentialLabel: string
+  signIn: string
+  /** El backend no reconoció la credencial. No hubo pedido con texto del servidor: lo dice el marco. */
+  signInRejected: string
   resolvingSession: string
   reenterTitle: string
   reenterWaitingDetail: string
@@ -179,7 +189,15 @@ export const DEFAULT_STRINGS: Strings = {
   sessionEnded: 'La sesión terminó',
   sessionEndedOtherSubject: 'Volvió otra persona, así que se descarta todo lo anterior.',
   sessionEndedDetail: 'Hay que recargar para volver a empezar.',
+  sessionEndedTokenRejected:
+    'El sistema dejó de reconocer la credencial. Hay que volver a entrar con una vigente.',
   reload: 'Recargar',
+
+  signInTitle: 'Entrar',
+  signInDetail: 'Escribí la credencial de operador que te entregaron.',
+  credentialLabel: 'Credencial',
+  signIn: 'Entrar',
+  signInRejected: 'El sistema no reconoce esa credencial.',
   resolvingSession: 'Resolviendo la sesión',
   reenterTitle: 'Hay que volver a entrar',
   reenterWaitingDetail:

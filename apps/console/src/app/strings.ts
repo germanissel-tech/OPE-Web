@@ -8,6 +8,8 @@
  * Los mensajes de `throw` tampoco: los lee un desarrollador, no un operador.
  */
 export const appStrings = {
-  /* El rótulo de abajo en la barra de usuario (`CU-27`). */
+  /* El rótulo de abajo en la barra de usuario (`CU-27`): el alcance del operador. */
   devMode: 'Modo desarrollo',
+  allMerchants: 'Todos los merchants',
+  someMerchants: (count: number) => (count === 1 ? '1 merchant' : `${count} merchants`),
 } as const

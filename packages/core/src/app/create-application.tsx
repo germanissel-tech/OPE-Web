@@ -7,7 +7,7 @@ import type { ApplicationManifest, UserMenuEntry } from '../base/manifest'
 import { createRegistry } from '../base/registry'
 import { AuthorizationProvider, buildRoutes, useCapabilities } from '../base/routes'
 import type { NavigationPort } from '../base/services'
-import type { SessionStatusName, SessionViews } from '../base/session-views'
+import type { SessionStatusName, SessionViewContext, SessionViews } from '../base/session-views'
 import { type OutcomePort, OutcomeProvider } from '../base/use-outcome'
 import { useStrings } from '../base/use-strings'
 import { verifyFlows } from '../base/verify-flows'
@@ -233,6 +233,7 @@ export function ApplicationView({
   capabilities,
   endReason,
   reenter,
+  signIn,
   userCaption,
   waitThresholdMs,
 }: {
@@ -241,6 +242,7 @@ export function ApplicationView({
   readonly capabilities: ReadonlySet<string>
   readonly endReason: string | undefined
   readonly reenter: () => void
+  readonly signIn: SessionViewContext['signIn']
   readonly userCaption: string | undefined
   readonly waitThresholdMs: number
 }) {
@@ -256,6 +258,7 @@ export function ApplicationView({
               {view({
                 endReason,
                 reenter,
+                signIn,
                 waitThresholdMs,
                 strings,
                 application: <RouterProvider router={application.router} />,

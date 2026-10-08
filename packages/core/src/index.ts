@@ -102,6 +102,7 @@ export {
   useCapabilities,
 } from './base/routes'
 export {
+  baseUrl,
   because,
   type Field,
   mapOf,
@@ -196,6 +197,7 @@ export {
   defaultSessionViews,
   Forbidden,
 } from './ui/session-views'
+export { SignIn, type SignInProps } from './ui/sign-in'
 export { useUnsavedWork } from './ui/unsaved-work'
 export { useActionColumn } from './ui/use-action-column'
 export {

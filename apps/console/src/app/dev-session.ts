@@ -1,6 +1,6 @@
-import type { BaseConfig } from '@ope/core'
 import type { SessionConfig } from '@ope/session'
 import { createFakeSession } from '@ope/session/fake'
+import { ADMIN_CAPABILITIES, READ_CAPABILITIES } from '../api/ope/identity'
 
 /**
  * **La sesión de desarrollo, y sus datos de mentira.**
@@ -10,8 +10,8 @@ import { createFakeSession } from '@ope/session/fake'
  * forma diferida, así que **no entra en el artefacto de producción** (`CU-36`).
  * Lo verifica `packages/core/checks/artifact.mjs` sobre la compilación.
  *
- * Los claims los arma la aplicación y no la falsa: el `clientId` es de acá, y la
- * falsa no tiene por qué conocerlo.
+ * Los claims los arma la aplicación y no la falsa: qué capacidades existen lo
+ * dice el módulo del contrato, y la falsa no tiene por qué conocerlo.
  */
 
 /**
@@ -24,20 +24,22 @@ import { createFakeSession } from '@ope/session/fake'
  * había que editar este archivo para ver el otro caso, así que no lo veía nadie.
  *
  * **Se elige el papel y se vuelve a entrar**, y eso no es una limitación: es lo
- * que pasa de verdad. Las capacidades llegan en el token, así que conceder o
+ * que pasa de verdad. Las capacidades llegan con la sesión, así que conceder o
  * revocar una tiene efecto **con la sesión siguiente** (`TAN-7`). Un cambiador
  * que las alterara en vivo mostraría algo que en producción no puede pasar.
  */
 const PAPELES = {
-  todo: ['catalog:read', 'catalog:write'],
-  lectura: ['catalog:read'],
+  todo: [...ADMIN_CAPABILITIES],
+  lectura: [...READ_CAPABILITIES],
   ninguno: [],
-} as const
+} as const satisfies Record<string, readonly string[]>
 
 type Papel = keyof typeof PAPELES
 
 const RECUERDO = 'ope.dev.papel'
 const EN_LA_URL = 'dev.papel'
+/** `?dev.entrada=1` arranca en `anonymous`, para mirar la vista de ingreso sin backend. */
+const CON_ENTRADA = 'dev.entrada'
 
 const esPapel = (valor: string | null): valor is Papel => valor !== null && valor in PAPELES
 
@@ -60,27 +62,27 @@ function papelElegido(): Papel {
   return esPapel(recordado) ? recordado : 'todo'
 }
 
-export default function devSession(session: SessionConfig, config: BaseConfig) {
+export default function devSession(session: SessionConfig) {
   const papel = papelElegido()
+  const conEntrada = new URLSearchParams(globalThis.location.search).has(CON_ENTRADA)
 
   /* **Se dice cuál está puesto y cómo cambiarlo.** Una forma de mirar la
      aplicación con menos permisos que hay que descubrir leyendo el código es una
      que no se usa nunca. */
   console.info(
-    `[cuarzo] sesión de desarrollo con el papel «${papel}»: ${PAPELES[papel].join(', ') || 'sin capacidades'}\n` +
-      `         los otros: ${Object.keys(PAPELES).join(' · ')} — se eligen con ?${EN_LA_URL}=lectura`,
+    `[ope] sesión de desarrollo con el papel «${papel}»: ${PAPELES[papel].join(', ') || 'sin capacidades'}\n` +
+      `      los otros: ${Object.keys(PAPELES).join(' · ')} — se eligen con ?${EN_LA_URL}=lectura · la vista de ingreso, con ?${CON_ENTRADA}=1`,
   )
 
   return createFakeSession({
     /* La traducción llega en la configuración: no se vuelve a armar acá. */
     toCapabilities: session.toCapabilities,
+    noSession: conEntrada,
     claims: {
       sub: 'fake-1',
       name: 'Ana Operadora',
       preferred_username: 'aoperadora',
-      resource_access: {
-        [config.clientId]: { roles: [...PAPELES[papel]] },
-      },
+      capabilities: [...PAPELES[papel]],
     },
   })
 }

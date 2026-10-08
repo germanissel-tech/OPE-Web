@@ -31,6 +31,22 @@ export default defineConfig({
    * Vite lo resuelve solo al servir; Vitest no.
    */
   resolve: { dedupe: ['react', 'react-dom'] },
-  server: { port: 5173 },
+  server: {
+    port: 5173,
+    /**
+     * **La consola habla con su propio origen**, y Vite reenvía `/api` al
+     * backend quitándole el prefijo: `/api/v1/admin/merchants` llega como
+     * `/v1/admin/merchants` a `localhost:3000`. Así no hay CORS que pedirle al
+     * backend —que hoy sólo lo abre por merchant y para el SDK— y en
+     * producción el servidor que publica hace el mismo reenvío.
+     */
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
   build: { outDir: 'dist', sourcemap: true },
 })

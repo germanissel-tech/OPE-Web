@@ -57,6 +57,17 @@ En el navegador, `http://localhost:5173`:
    reconocer el token», con el botón para volver al ingreso.
 9. **Recargar**: vuelve al ingreso. Es el costo del token en memoria y no un defecto.
 
+> **Corrido el 2026-10-08, tramo 4**, con el token de desarrollo del backend (`ope_dev_admin_token`,
+> el de `config/dev-operators.json`; no hizo falta acuñar) y la consola con `?dev.bearer=1`, que en
+> desarrollo elige el bearer en vez de la falsa. Por curl a través del reenvío de Vite:
+> `/api/v1/admin/merchants?limit=1` responde `200` con el token, y `401 operator-unknown` con uno
+> inventado o sin ninguno. En el navegador, pasos 1 y 2: entrar muestra la consola con `operator ·
+> TODOS LOS MERCHANTS` en la barra; un token inventado deja el aviso «El sistema no reconoce esa
+> credencial» y vacía el campo. **El paso 8 no se corrió en vivo** (exige editar el backend y
+> reiniciarlo); lo cubre `packages/session/tests/bearer.test.ts`. Lo que difiere: la vista de
+> ingreso se dibuja **sin el shell de granito** (tipografía por omisión), igual que las vistas de
+> `anonymous` y `ended` que cuarzo ya tenía fuera de `active`; es cosmético y queda para el tramo 6.
+
 ## Sin backend
 
 ```bash

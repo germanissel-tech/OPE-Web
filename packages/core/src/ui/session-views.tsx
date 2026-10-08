@@ -1,7 +1,9 @@
 import { Alert, Button, Dialog, Spinner } from '@granito/ui'
 import { useEffect, useState } from 'react'
 import type { SessionViews } from '../base/session-views'
+import type { Strings } from '../base/strings'
 import { useStrings } from '../base/use-strings'
+import { SignIn } from './sign-in'
 
 /**
  * **Qué se ve en cada uno de los siete estados de sesión** (`001`), como
@@ -26,11 +28,17 @@ import { useStrings } from '../base/use-strings'
 export const defaultSessionViews: SessionViews = {
   resolving: ({ waitThresholdMs }) => <Resolving thresholdMs={waitThresholdMs} />,
 
-  anonymous: ({ strings }) => (
-    <Alert severity="info" title={strings.noSession}>
-      {strings.noSessionDetail}
-    </Alert>
-  ),
+  /* Con entrada, la vista de ingreso; sin ella, el aviso de siempre: el
+     adaptador entra solo y lo único que hay que decir es que todavía no hay
+     sesión. */
+  anonymous: ({ strings, signIn }) =>
+    signIn ? (
+      <SignIn signIn={signIn} strings={strings} />
+    ) : (
+      <Alert severity="info" title={strings.noSession}>
+        {strings.noSessionDetail}
+      </Alert>
+    ),
 
   active: ({ application }) => application,
 
@@ -58,17 +66,26 @@ export const defaultSessionViews: SessionViews = {
     </>
   ),
 
+  /* Recargar es volver al ingreso: `ended` es terminal, y la credencial no
+     sobrevive a la recarga, así que lo que sigue es `anonymous`. */
   ended: ({ endReason, strings }) => (
     <Alert
       severity="info"
       title={strings.sessionEnded}
       actions={<Button onClick={() => window.location.reload()}>{strings.reload}</Button>}
     >
-      {endReason === 'other-subject'
-        ? strings.sessionEndedOtherSubject
-        : strings.sessionEndedDetail}
+      {endedDetail(endReason, strings)}
     </Alert>
   ),
+}
+
+function endedDetail(reason: string | undefined, strings: Strings): string {
+  if (reason === 'other-subject') return strings.sessionEndedOtherSubject
+  /* El backend dejó de reconocer la credencial en vuelo: se dice, porque el
+     operador no apretó nada y una sesión que termina sola sin explicación se
+     lee como una falla nuestra. */
+  if (reason === 'token-rejected') return strings.sessionEndedTokenRejected
+  return strings.sessionEndedDetail
 }
 
 /**

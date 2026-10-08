@@ -13,9 +13,9 @@
       "types": "./dist/fake.d.ts",
       "import": "./dist/fake.js"
     },
-    "./keycloak": {
-      "types": "./dist/keycloak.d.ts",
-      "import": "./dist/keycloak.js"
+    "./bearer": {
+      "types": "./dist/bearer.d.ts",
+      "import": "./dist/bearer.js"
     }
   },
   "files": [

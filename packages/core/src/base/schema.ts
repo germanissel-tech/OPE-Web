@@ -57,6 +57,20 @@ export const url: Field<string> = (raw, path) => {
   }
 }
 
+/**
+ * La base de un sistema: una URL absoluta, **o una ruta desde la raíz**.
+ *
+ * `/api` vale, y es el caso corriente: la aplicación habla con su propio origen
+ * y un reenvío —Vite en desarrollo, el servidor que publica en producción— la
+ * lleva al backend. `api` sin barra no vale: se resolvería relativo a la
+ * pantalla actual, y una grilla en `/merchants` pediría `/merchants/api`.
+ */
+export const baseUrl: Field<string> = (raw, path) => {
+  if (typeof raw === 'string' && /^\/(?!\/)/.test(raw)) return ok(raw.replace(/\/+$/, '') || '/')
+  const absolute = url(raw, path)
+  return absolute.ok ? absolute : fail(`${path} — no es una URL http(s) ni una ruta desde /`)
+}
+
 export const milliseconds: Field<number> = (raw, path) =>
   typeof raw === 'number' && Number.isFinite(raw) && raw > 0
     ? ok(raw)
