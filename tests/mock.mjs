@@ -48,7 +48,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
  * Por omisión sigue siendo el 4010, que es lo que dice `config.json`.
  */
 const PORT = Number(process.env.PORT ?? 4010)
-const CONTRACT = join(ROOT, 'contracts', 'demo.yaml')
+const CONTRACT = join(ROOT, 'apps', 'console', 'contracts', 'demo.yaml')
 
 /**
  * Los artículos del ejemplo del contrato.

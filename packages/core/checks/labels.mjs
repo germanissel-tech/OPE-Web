@@ -26,14 +26,24 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { ROOT } from './context.mjs'
-
-const FEATURES = join(ROOT, 'src', 'features')
-const API = join(ROOT, 'src', 'api')
+import { apps, ROOT } from './context.mjs'
 
 console.log('')
 
-if (!existsSync(FEATURES) || !existsSync(API)) {
+/**
+ * Se mira cada aplicación del monorepo. Los rótulos se comparan **adentro de
+ * cada una**: dos aplicaciones pueden llamar distinto al mismo campo porque
+ * hablan con operadores distintos, y eso no es una falla.
+ */
+const roots = apps
+  .map((app) => ({
+    app,
+    features: join(ROOT, ...app.split('/'), 'src', 'features'),
+    api: join(ROOT, ...app.split('/'), 'src', 'api'),
+  }))
+  .filter(({ features, api }) => existsSync(features) && existsSync(api))
+
+if (roots.length === 0) {
   console.log('  --     no hay funcionalidades ni contratos: nada que comparar todavía')
   console.log('')
   process.exit(0)
@@ -41,14 +51,20 @@ if (!existsSync(FEATURES) || !existsSync(API)) {
 
 /** Los nombres de campo que el contrato declara, de todo lo generado. */
 const fields = new Set()
-for (const system of readdirSync(API)) {
-  const generated = join(API, system, 'constraints.ts')
-  /* sin sujeto: un sistema sin restricciones generadas no aporta campos, y que
-     no haya ninguno lo dice el corte de abajo con su renglón. */
-  if (!existsSync(generated)) continue
+/** Las carpetas de funcionalidades de todas las aplicaciones, con su aplicación. */
+const FEATURE_DIRS = []
+for (const { app, features, api } of roots) {
+  for (const feature of readdirSync(features)) FEATURE_DIRS.push({ app, feature, dir: features })
 
-  for (const [, name] of readFileSync(generated, 'utf8').matchAll(/^ {6}(\w+): \{/gm)) {
-    fields.add(name)
+  for (const system of readdirSync(api)) {
+    const generated = join(api, system, 'constraints.ts')
+    /* sin sujeto: un sistema sin restricciones generadas no aporta campos, y que
+       no haya ninguno lo dice el corte de abajo con su renglón. */
+    if (!existsSync(generated)) continue
+
+    for (const [, name] of readFileSync(generated, 'utf8').matchAll(/^ {6}(\w+): \{/gm)) {
+      fields.add(name)
+    }
   }
 }
 
@@ -60,8 +76,9 @@ if (fields.size === 0) {
 
 /** Los rótulos de cada funcionalidad, por clave. */
 const byKey = new Map()
-for (const feature of readdirSync(FEATURES)) {
-  const catalog = join(FEATURES, feature, 'strings.ts')
+for (const { app, feature: name, dir } of FEATURE_DIRS) {
+  const feature = `${app}:${name}`
+  const catalog = join(dir, name, 'strings.ts')
   /* sin sujeto: una funcionalidad sin catálogo de textos no tiene rótulos que
      comparar. Que **ninguna** lo tenga se ve en el número que se informa. */
   if (!existsSync(catalog)) continue

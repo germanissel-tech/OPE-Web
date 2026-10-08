@@ -5,7 +5,7 @@
  * `resource_access.<client>.roles`, que existe porque **OIDC estándar no tiene
  * claim de roles**.
  *
- * Vive en `@cuarzo/session/keycloak` y no en la superficie principal por la
+ * Vive en `@ope/session/keycloak` y no en la superficie principal por la
  * misma razón que la falsa vive en `/fake`: **lo específico de un proveedor se
  * pide por su nombre**. La superficie principal no nombra a ninguno, y `TAN-2`
  * dice que hoy usamos Keycloak y se puede cambiar — cambiarlo es cambiar este

@@ -1,5 +1,5 @@
 /**
- * Verifica **la regla que gobierna el contrato de `@cuarzo/session`**: que nada
+ * Verifica **la regla que gobierna el contrato de `@ope/session`**: que nada
  * de lo que se exporta permita obtener un token (`CU-10`).
  *
  * Es una comprobación sobre el **texto** de la superficie pública y no sobre su

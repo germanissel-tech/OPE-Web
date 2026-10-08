@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
-import { cuarzoBuild } from '../build/index.mjs'
+import { opeBuild } from '../build/index.mjs'
 
 /**
  * **Qué compilación es ésta** (`CU-35`).
@@ -18,12 +18,12 @@ import { cuarzoBuild } from '../build/index.mjs'
  * se usa la de función, que es la que el complemento implementa.
  */
 const idOf = (command: 'build' | 'serve'): string => {
-  const config = cuarzoBuild().config as unknown as (
+  const config = opeBuild().config as unknown as (
     config: unknown,
     env: { command: string },
-  ) => { define: { __CUARZO_BUILD__: string } }
+  ) => { define: { __OPE_BUILD__: string } }
 
-  return JSON.parse(config({}, { command }).define.__CUARZO_BUILD__)
+  return JSON.parse(config({}, { command }).define.__OPE_BUILD__)
 }
 
 describe('lo que identifica una compilación', () => {

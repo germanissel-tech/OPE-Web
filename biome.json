@@ -7,14 +7,15 @@
   },
   "files": {
     "includes": [
-      "src/**",
+      "apps/**",
       "packages/**",
       "tests/**",
+      "scripts/**",
       "*.ts",
       "*.json",
-      "!src/api/*/types.ts",
-      "!src/api/*/roles.ts",
-      "!src/api/*/constraints.ts"
+      "!apps/*/src/api/*/types.ts",
+      "!apps/*/src/api/*/roles.ts",
+      "!apps/*/src/api/*/constraints.ts"
     ]
   },
   "formatter": {

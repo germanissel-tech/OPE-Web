@@ -35,16 +35,15 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 
-import { ROOT } from './context.mjs'
+import { apps, ROOT } from './context.mjs'
 
 /**
  * **Se miran las que estén, y no las que deberían estar.**
  *
- * Un clon borra `packages/` en el paso 2 del ritual, así que exigir esas dos
- * carpetas haría fallar a toda aplicación nueva por no ser cuarzo. Que no haya
+ * El `src/` de cada aplicación declarada, y el de cada paquete. Que no haya
  * **ninguna** sí es una falla, y se trata abajo.
  */
-const CANDIDATAS = ['src', 'packages/core/src', 'packages/session/src']
+const CANDIDATAS = [...apps.map((app) => `${app}/src`), 'packages/core/src', 'packages/session/src']
 
 function filesIn(dir) {
   const out = []
@@ -117,7 +116,7 @@ console.log('')
  */
 if (raices.length === 0) {
   console.log('  FALLA  no encontré ninguna carpeta de fuentes, y esto existe para revisarlas')
-  console.log(`         buscadas: ${CANDIDATAS.join(', ')} — ¿se renombró src/?`)
+  console.log(`         buscadas: ${CANDIDATAS.join(', ')} — ¿se renombró alguna?`)
   console.log('')
   process.exit(1)
 }

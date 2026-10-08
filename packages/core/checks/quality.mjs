@@ -23,7 +23,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { config, ROOT } from './context.mjs'
+import { apps, config, ROOT } from './context.mjs'
 
 /**
  * **La capa de composición**, exenta de las reglas 1 y 6 (`CU-36`).
@@ -83,7 +83,10 @@ const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/
  */
 const isGenerated = (file) => readFileSync(file, 'utf8').slice(0, 200).includes('auto-generated')
 
-const todos = [...filesIn(join(ROOT, 'src')), ...filesIn(join(ROOT, 'packages'))]
+const todos = [
+  ...apps.flatMap((app) => filesIn(join(ROOT, ...app.split('/'), 'src'))),
+  ...filesIn(join(ROOT, 'packages')),
+]
 const generated = todos.filter(isGenerated)
 const checked = todos.filter((file) => !generated.includes(file))
 
@@ -797,16 +800,20 @@ for (const file of checked) {
  * Es la mitad estática de `CU-49`. La otra es el respaldo de `useForm`, que
  * atrapa en tiempo de ejecución lo que ningún contrato nuestro puede impedir.
  */
-const CONTRACTS = join(ROOT, 'contracts')
+/** El contrato del ejemplo vive con la aplicación que lo consume: `apps/<x>/contracts/`. */
+const CONTRACTS = apps
+  .map((app) => join(ROOT, ...app.split('/'), 'contracts'))
+  .filter((dir) => existsSync(dir))
 const MOCK = join(ROOT, 'tests', 'mock.mjs')
 
 let losCampos = '  --     sin simulado ni contrato: qué puede ir en fields se verifica donde estén'
 
-if (existsSync(MOCK) && existsSync(CONTRACTS)) {
-  const yaml = readdirSync(CONTRACTS)
-    .filter((name) => /\.ya?ml$/.test(name))
-    .map((name) => readFileSync(join(CONTRACTS, name), 'utf8'))
-    .join('\n')
+if (existsSync(MOCK) && CONTRACTS.length > 0) {
+  const yaml = CONTRACTS.flatMap((dir) =>
+    readdirSync(dir)
+      .filter((name) => /\.ya?ml$/.test(name))
+      .map((name) => readFileSync(join(dir, name), 'utf8')),
+  ).join('\n')
 
   /* Las propiedades de los esquemas, por sangría: lo que cuelga de un
      `properties:` un nivel más adentro, hasta que la sangría vuelve. */

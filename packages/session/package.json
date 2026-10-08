@@ -1,7 +1,8 @@
 {
-  "name": "@cuarzo/session",
+  "name": "@ope/session",
   "version": "0.1.0",
-  "description": "La sesión de una aplicación de Tandilia. Autoriza pedidos, y no entrega tokens.",
+  "description": "La sesión de una aplicación de OPE-Web. Autoriza pedidos, y no entrega tokens.",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -28,18 +29,10 @@
     "build": "tsc -p tsconfig.build.json",
     "test": "node tests/gate.mjs"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "cuarzo": {
+  "ope": {
     "generated": [
       "dist"
     ]
   },
-  "license": "UNLICENSED",
-  "repository": {
-    "type": "git",
-    "url": "git+https://bitbucket.org/grupo-siempre/cuarzo.git",
-    "directory": "packages/session"
-  }
+  "license": "UNLICENSED"
 }

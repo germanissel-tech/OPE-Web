@@ -10,8 +10,8 @@ import { join } from 'node:path'
  * entera**. Acá lo decide cuarzo, una vez.
  *
  * ```ts
- * import { cuarzoBuild } from '@cuarzo/core/build'
- * export default defineConfig({ plugins: [react(), cuarzoBuild()] })
+ * import { opeBuild } from '@ope/core/build'
+ * export default defineConfig({ plugins: [react(), opeBuild()] })
  * ```
  *
  * ## Qué identifica una compilación, y por qué no alcanza el `package.json`
@@ -59,9 +59,9 @@ function versionOf(root) {
   }
 }
 
-export function cuarzoBuild() {
+export function opeBuild() {
   return {
-    name: 'cuarzo-build',
+    name: 'ope-build',
     config(_config, { command }) {
       const root = process.cwd()
       const version = versionOf(root) ?? 'sin-version'
@@ -71,7 +71,7 @@ export function cuarzoBuild() {
          ruido: alcanza con saber que es el de trabajo. */
       const id = command === 'serve' ? `${version}+dev` : `${version}+${commit}`
 
-      return { define: { __CUARZO_BUILD__: JSON.stringify(id) } }
+      return { define: { __OPE_BUILD__: JSON.stringify(id) } }
     },
   }
 }

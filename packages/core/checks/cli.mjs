@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * `cuarzo-check` — las comprobaciones del marco, corriendo sobre el repositorio
+ * `ope-check` — las comprobaciones del marco, corriendo sobre el repositorio
  * que las llama.
  *
  * Se publican por la misma razón que el cableado (`CU-42`): son **idénticas en

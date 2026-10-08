@@ -6,7 +6,7 @@ import {
   SessionProvider,
   useSession,
   useSessionControl,
-} from '@cuarzo/session'
+} from '@ope/session'
 import { Failure } from '../base/failure'
 /* El núcleo dibuja con granito, así que **el núcleo trae sus estilos**. Pedirle
    a cada aplicación que los importe sería repartir una dependencia nuestra. */
@@ -78,7 +78,7 @@ export type BootstrapOptions<Config extends BaseConfig> = {
    * cualquiera y **nadie se enteraba de que el tablero había dejado de poder
    * decir de qué build venía cada cosa**.
    *
-   * Sale del complemento `cuarzoBuild()` de `@cuarzo/core/build`, que la arma
+   * Sale del complemento `opeBuild()` de `@ope/core/build`, que la arma
    * con la versión y el commit. Se pasa y no se lee de la configuración porque
    * **es del artefacto, no del despliegue**.
    */

@@ -37,7 +37,7 @@ import { NoticesProvider } from '../src/ui/use-notices'
  * La sesión se sustituye porque la barra de usuario la pide y acá no se prueba:
  * lo que importa es que el `Frame` de verdad esté en el medio.
  */
-vi.mock('@cuarzo/session', () => ({
+vi.mock('@ope/session', () => ({
   useSession: () => ({ claims: { name: 'Ana Operadora' }, capabilities: new Set<string>() }),
   useSessionControl: () => ({ signOut: () => {}, reenter: () => {} }),
 }))

@@ -1,5 +1,5 @@
 /**
- * Los tipos de `@cuarzo/session`.
+ * Los tipos de `@ope/session`.
  *
  * **No hay ningún tipo para el token, y no es un olvido.** La puerta autoriza
  * pedidos, así que nada fuera del proveedor necesita verlo — y no exponerlo es

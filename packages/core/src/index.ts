@@ -1,5 +1,5 @@
 /**
- * La superficie pública de `@cuarzo/core`.
+ * La superficie pública de `@ope/core`.
  *
  * **No es un archivo barril de los que prohíbe `CU-15`**: aquéllos re-exportan
  * una carpeta entera con `export *` y rompen el sacudido de árbol. Acá cada

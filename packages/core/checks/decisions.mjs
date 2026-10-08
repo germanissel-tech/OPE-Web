@@ -208,8 +208,8 @@ const FAMILIES = [
     /* Las propias van primero: en cuarzo, `decisionDocs` **son** las CU. */
     candidates: config.cuarzoDocs ?? [
       ...config.decisionDocs,
-      'node_modules/@cuarzo/core/docs/arquitectura.md',
-      'node_modules/@cuarzo/core/docs/seguridad.md',
+      'node_modules/@ope/core/docs/arquitectura.md',
+      'node_modules/@ope/core/docs/seguridad.md',
       '../cuarzo/docs/arquitectura.md',
     ],
     read: (text) => [...text.matchAll(/^### (CU-\d+) · /gm)].map((m) => m[1]),

@@ -1,6 +1,6 @@
 /**
  * Verifica que **la implementación falsa de la sesión no esté en el artefacto
- * de producción** (CU-36).
+ * de producción** (CU-36), aplicación por aplicación.
  *
  * La razón está escrita en la decisión: si la falsa se pudiera encender desde
  * `config.json`, **el archivo de configuración sería una puerta trasera de
@@ -25,36 +25,26 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 
-import { ROOT } from './context.mjs'
-
-const DIST = join(ROOT, 'dist')
+import { apps, ROOT } from './context.mjs'
 
 /**
  * La marca que la falsa exporta. Es una constante y no un nombre de función
  * para que **sobreviva a la minificación**: un nombre se renombra, una cadena
  * de texto no.
  */
-export const FAKE_SESSION_MARKER = 'CUARZO_FAKE_SESSION_NOT_FOR_PRODUCTION'
+export const FAKE_SESSION_MARKER = 'OPE_FAKE_SESSION_NOT_FOR_PRODUCTION'
 
-if (!existsSync(DIST)) {
-  console.log('')
-  console.log('  --     no hay dist/ todavía: la falsa no se verificó')
-  console.log('         (corré npm run build antes, o esperá al tramo 2)')
-  console.log('')
-  process.exit(0)
-}
-
-function filesIn(dir, pattern) {
+function filesIn(dir, pattern, dist) {
   const out = []
   for (const name of readdirSync(dir)) {
     /* `dist/` y `node_modules/` quedan afuera al buscar fuentes: lo compilado
        lleva `.d.ts`, y contarlo como código haría que el artefacto se viera
        viejo cada vez que se compila — un aviso que aparece siempre no informa
        nada. Sobre `dist/` mismo no aplica: ahí se entra por su propia raíz. */
-    if (dir !== DIST && (name === 'dist' || name === 'node_modules')) continue
+    if (dir !== dist && (name === 'dist' || name === 'node_modules')) continue
 
     const path = join(dir, name)
-    if (statSync(path).isDirectory()) out.push(...filesIn(path, pattern))
+    if (statSync(path).isDirectory()) out.push(...filesIn(path, pattern, dist))
     else if (pattern.test(name)) out.push(path)
   }
   return out
@@ -73,46 +63,70 @@ const shortPath = (a) => relative(ROOT, a).split(sep).join('/')
  * No se falla, porque no compilar es legítimo. Se **dice**, que es lo que
  * distingue un aprobado de un silencio.
  */
-function newest(dir, pattern) {
+function newest(dir, pattern, dist) {
   let last = 0
-  for (const file of filesIn(dir, pattern)) {
+  for (const file of filesIn(dir, pattern, dist)) {
     const at = statSync(file).mtimeMs
     if (at > last) last = at
   }
   return last
 }
 
-const SOURCES = [join(ROOT, 'src'), join(ROOT, 'packages')]
-const sourcesAt = Math.max(...SOURCES.filter(existsSync).map((d) => newest(d, /\.(ts|tsx)$/)), 0)
-const distAt = newest(DIST, /\.(js|mjs|cjs|html|css)$/)
 const hasMarker = (a) => readFileSync(a, 'utf8').includes(FAKE_SESSION_MARKER)
 
-if (distAt > 0 && sourcesAt > distAt) {
-  console.log('')
-  console.log(
-    '  --     dist/ es más viejo que el código: la falsa se verificó contra otra compilación',
-  )
-  console.log('         (corré npm run build para que este ok hable de lo de ahora)')
-}
-
-/** Lo que se ejecuta. Acá una marca es la falsa corriendo, y es una falla. */
-const executables = filesIn(DIST, /\.(js|mjs|cjs)$/)
-const offenders = executables.filter(hasMarker)
-
-/**
- * Los mapas de fuente **no se ejecutan**, así que una marca ahí no es una
- * puerta trasera. Pero **se informa igual, en vez de ignorarse en silencio**:
- * un mapa desplegado lleva el código original adentro, y decir «el artefacto
- * está limpio» mientras la falsa viaja en el mapa es la clase de «ok» que
- * enseña a no leer los «ok».
- *
- * Que los mapas se desplieguen o no **todavía no está decidido**. Mientras no
- * lo esté, esto lo deja a la vista.
- */
-const maps = filesIn(DIST, /\.map$/)
-const mapsWithMarker = maps.filter(hasMarker)
+/** Las fuentes de las que sale cualquier artefacto: cada aplicación y los paquetes. */
+const SOURCES = [...apps.map((app) => join(ROOT, ...app.split('/'), 'src')), join(ROOT, 'packages')]
+const sourcesAt = Math.max(
+  ...SOURCES.filter(existsSync).map((d) => newest(d, /\.(ts|tsx)$/, null)),
+  0,
+)
 
 console.log('')
+
+let verified = 0
+const offenders = []
+const mapsWithMarker = []
+
+for (const app of apps) {
+  const dist = join(ROOT, ...app.split('/'), 'dist')
+
+  if (!existsSync(dist)) {
+    console.log(`  --     ${app} no tiene dist/ todavía: la falsa no se verificó ahí`)
+    console.log(`         (corré npm run build -w ${app} antes)`)
+    continue
+  }
+
+  verified++
+  const distAt = newest(dist, /\.(js|mjs|cjs|html|css)$/, dist)
+
+  if (distAt > 0 && sourcesAt > distAt) {
+    console.log(
+      `  --     ${app}/dist es más viejo que el código: la falsa se verificó contra otra compilación`,
+    )
+    console.log('         (corré npm run build para que este ok hable de lo de ahora)')
+  }
+
+  /** Lo que se ejecuta. Acá una marca es la falsa corriendo, y es una falla. */
+  const executables = filesIn(dist, /\.(js|mjs|cjs)$/, dist)
+  offenders.push(...executables.filter(hasMarker))
+
+  /**
+   * Los mapas de fuente **no se ejecutan**, así que una marca ahí no es una
+   * puerta trasera. Pero **se informa igual, en vez de ignorarse en silencio**:
+   * un mapa desplegado lleva el código original adentro, y decir «el artefacto
+   * está limpio» mientras la falsa viaja en el mapa es la clase de «ok» que
+   * enseña a no leer los «ok».
+   *
+   * Que los mapas se desplieguen o no **todavía no está decidido**. Mientras no
+   * lo esté, esto lo deja a la vista.
+   */
+  mapsWithMarker.push(...filesIn(dist, /\.map$/, dist).filter(hasMarker))
+
+  console.log(
+    `  ok     ${executables.length} archivos ejecutables de ${app}/dist, sin rastro de la falsa`,
+  )
+}
+
 if (offenders.length > 0) {
   for (const c of offenders) {
     console.log('  FALLA  la implementación falsa está en el artefacto')
@@ -124,10 +138,17 @@ if (offenders.length > 0) {
   process.exit(1)
 }
 
-console.log(`  ok     ${executables.length} archivos ejecutables de dist/, sin rastro de la falsa`)
 for (const m of mapsWithMarker) {
   console.log(`  aviso  su código sí está en el mapa de fuente: ${shortPath(m)}`)
 }
+
+/* sin sujeto: ninguna aplicación compilada todavía. Se dice y no se aprueba
+   como si se hubiera mirado algo (`TAN-6`, regla 4). */
+if (verified === 0) {
+  console.log('')
+  process.exit(0)
+}
+
 console.log('')
 console.log('EL ARTEFACTO ESTÁ LIMPIO')
 console.log('')

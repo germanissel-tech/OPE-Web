@@ -34,21 +34,29 @@ la independencia es más fuerte — **cada tramo termina con algo que se puede c
 recorra las dos capas. **Puro movimiento y renombre**: ninguna conducta cambia, y el hola mundo
 sigue siendo el de cuarzo contra su simulado.
 
-- [ ] T001 [E1] Mover `src/`, `index.html`, `vite.config.ts`, `public/` y `contracts/demo.yaml` a `apps/console/` con `git mv`, y crear `apps/console/package.json` (`name: @ope/console`, `private`, `dev`/`build` con Vite, dependencias de la aplicación) y `apps/console/tsconfig.json` que extiende el de la raíz
-- [ ] T002 [E1] Reescribir `package.json` de la raíz: `name: ope-web`, `workspaces: ["packages/*", "apps/*"]`, la clave `ope` (antes `cuarzo`) con `apps: ["apps/console"]` y `compositionLayer` con las rutas nuevas, y los scripts de la raíz (`dev` → `npm run dev -w apps/console`, `build`, `test`, `revisar`, `build:paquetes`); `simulado`, `tipos`, `catalogo`, `clon`, `avance`, `iconos` siguen por ahora
-- [ ] T003 [P] [E1] Renombrar los paquetes: `packages/core/package.json` → `@ope/core` (`private: true`, `bin: ope-check`, clave `ope.generated`), `packages/session/package.json` → `@ope/session` (`private: true`); los `peerDependencies` entre ellos y hacia granito se conservan
-- [ ] T004 [P] [E1] Reemplazar `@cuarzo/core` y `@cuarzo/session` por `@ope/core` y `@ope/session` en todo `import` de `packages/` y `apps/`, y `cuarzoBuild`/`__CUARZO_BUILD__` por `opeBuild`/`__OPE_BUILD__` en `packages/core/build/index.mjs`, `index.d.mts` y `apps/console/vite.config.ts`
-- [ ] T005 [P] [E1] Renombrar la marca de la falsa a `OPE_FAKE_SESSION_NOT_FOR_PRODUCTION` en `packages/session/src/fake.ts` y `packages/core/checks/artifact.mjs`, y el recuerdo de `dev-session.ts` a `ope.dev.papel`
-- [ ] T006 [E1] `packages/core/checks/context.mjs`: la clave es `ope`, `KNOWN` gana `apps`, y exporta `apps` (falla con la lista vacía o ausente: «no hay ninguna aplicación que revisar», `TAN-6` regla 4)
-- [ ] T007 [E1] `packages/core/checks/boundaries.mjs`: `STYLE_ROOTS` y las zonas (`app`, `features`, `components`, `lib`, `api`, `testing`) se calculan por cada entrada de `apps`, más `packages/*/src`; informa cuántas aplicaciones recorrió
-- [ ] T008 [P] [E1] `packages/core/checks/artifact.mjs`: mira `apps/<x>/dist` por cada aplicación, y las fuentes de `apps/*/src` y `packages/*/src` para decir si el `dist` es viejo
-- [ ] T009 [P] [E1] `packages/core/checks/packaging.mjs`: exige licencia, repositorio, versión y peers acotados **sólo a los paquetes que no son `private`**; con todos privados sigue verificando `exports`, `files` y `bin` y que git los siga; lo que falla con cero sujetos es «no hay ningún paquete en `packages/`»
-- [ ] T010 [P] [E1] `packages/core/checks/cli.mjs`: el nombre que imprime es `ope-check`; `packages/core/checks/quality.mjs`, `decisions.mjs`, `labels.mjs`, `errors.mjs`: las rutas de `src/` pasan a salir de `apps` más `packages/*/src`
-- [ ] T011 [E1] `biome.json`, `tsconfig.json` de la raíz y `vitest.config.ts` (nuevo, sacado de lo que `vite.config.ts` tenía de pruebas: `jsdom`, `dedupe` de React): cubren `packages/*/src`, `packages/*/tests`, `apps/*/src`, `scripts/`; excluyen `apps/*/src/api/*/types.ts`, `roles.ts`, `constraints.ts`
-- [ ] T012 [E1] Ajustar `tests/roles.mjs`, `tests/constraints.mjs`, `tests/mock.mjs`, `tests/catalogo.mjs`, `tests/icons.mjs` y `tests/raiz.mjs` a las rutas de `apps/console/` (se retiran en los tramos 5 y 6; hasta entonces tienen que correr)
-- [ ] T013 [E1] `npm install` en la raíz, `npm run build:paquetes`, `npm test`. Corregir lo que las rutas rompieron hasta que esté en verde; `npm run dev` levanta el hola mundo de cuarzo en `:5173`
+- [x] T001 [E1] Mover `src/`, `index.html`, `vite.config.ts`, `public/` y `contracts/demo.yaml` a `apps/console/` con `git mv`, y crear `apps/console/package.json` (`name: @ope/console`, `private`, `dev`/`build` con Vite, dependencias de la aplicación) y `apps/console/tsconfig.json` que extiende el de la raíz
+- [x] T002 [E1] Reescribir `package.json` de la raíz: `name: ope-web`, `workspaces: ["packages/*", "apps/*"]`, la clave `ope` (antes `cuarzo`) con `apps: ["apps/console"]` y `compositionLayer` con las rutas nuevas, y los scripts de la raíz (`dev` → `npm run dev -w apps/console`, `build`, `test`, `revisar`, `build:paquetes`); `simulado`, `tipos`, `catalogo`, `clon`, `avance`, `iconos` siguen por ahora
+- [x] T003 [P] [E1] Renombrar los paquetes: `packages/core/package.json` → `@ope/core` (`private: true`, `bin: ope-check`, clave `ope.generated`), `packages/session/package.json` → `@ope/session` (`private: true`); los `peerDependencies` entre ellos y hacia granito se conservan
+- [x] T004 [P] [E1] Reemplazar `@cuarzo/core` y `@cuarzo/session` por `@ope/core` y `@ope/session` en todo `import` de `packages/` y `apps/`, y `cuarzoBuild`/`__CUARZO_BUILD__` por `opeBuild`/`__OPE_BUILD__` en `packages/core/build/index.mjs`, `index.d.mts` y `apps/console/vite.config.ts`
+- [x] T005 [P] [E1] Renombrar la marca de la falsa a `OPE_FAKE_SESSION_NOT_FOR_PRODUCTION` en `packages/session/src/fake.ts` y `packages/core/checks/artifact.mjs`, y el recuerdo de `dev-session.ts` a `ope.dev.papel`
+- [x] T006 [E1] `packages/core/checks/context.mjs`: la clave es `ope`, `KNOWN` gana `apps`, y exporta `apps` (falla con la lista vacía o ausente: «no hay ninguna aplicación que revisar», `TAN-6` regla 4)
+- [x] T007 [E1] `packages/core/checks/boundaries.mjs`: `STYLE_ROOTS` y las zonas (`app`, `features`, `components`, `lib`, `api`, `testing`) se calculan por cada entrada de `apps`, más `packages/*/src`; informa cuántas aplicaciones recorrió
+- [x] T008 [P] [E1] `packages/core/checks/artifact.mjs`: mira `apps/<x>/dist` por cada aplicación, y las fuentes de `apps/*/src` y `packages/*/src` para decir si el `dist` es viejo
+- [x] T009 [P] [E1] `packages/core/checks/packaging.mjs`: exige licencia, repositorio, versión y peers acotados **sólo a los paquetes que no son `private`**; con todos privados sigue verificando `exports`, `files` y `bin` y que git los siga; lo que falla con cero sujetos es «no hay ningún paquete en `packages/`»
+- [x] T010 [P] [E1] `packages/core/checks/cli.mjs`: el nombre que imprime es `ope-check`; `packages/core/checks/quality.mjs`, `decisions.mjs`, `labels.mjs`, `errors.mjs`: las rutas de `src/` pasan a salir de `apps` más `packages/*/src`
+- [x] T011 [E1] `biome.json`, `tsconfig.json` de la raíz y `vitest.config.ts` (nuevo, sacado de lo que `vite.config.ts` tenía de pruebas: `jsdom`, `dedupe` de React): cubren `packages/*/src`, `packages/*/tests`, `apps/*/src`, `scripts/`; excluyen `apps/*/src/api/*/types.ts`, `roles.ts`, `constraints.ts`
+- [x] T012 [E1] Ajustar `tests/roles.mjs`, `tests/constraints.mjs`, `tests/mock.mjs`, `tests/catalogo.mjs`, `tests/icons.mjs` y `tests/raiz.mjs` a las rutas de `apps/console/` (se retiran en los tramos 5 y 6; hasta entonces tienen que correr)
+- [x] T013 [E1] `npm install` en la raíz, `npm run build:paquetes`, `npm test`. Corregir lo que las rutas rompieron hasta que esté en verde; `npm run dev` levanta el hola mundo de cuarzo en `:5173`
 
 **Punto de control**: `npm test` en verde con el hola mundo de cuarzo intacto; `ope-check` dice que recorrió `apps/console`, y con `apps: []` falla. Commit: `refactor(005): el monorepo — apps/console y @ope/*`.
+
+> **Lo que el tramo trajo además, 2026-10-08.** Tres cosas que la copia tal cual no pasaba en esta
+> máquina y se arreglaron antes de mover nada: el `package-lock.json` apuntaba a la ruta vieja de
+> granito (se regeneró), `build:paquetes` compilaba `core` antes que `session` de la que depende
+> (se invirtió el orden), y el catálogo de Tandilia fallaba porque los documentos de la 005 lo
+> desactualizan. **`catalogo.mjs`, su prueba, `catalogo.json` y `clone.mjs` se retiraron acá** y no
+> en el tramo 6: son de Tandilia, estaban por irse, y adaptarlos a `apps/` era trabajo sobre algo
+> que se borra. T066 queda con lo que resta.
 
 ---
 
@@ -149,7 +157,7 @@ resuelvan. **Describe lo que quedó, no lo que se planeó.**
 - [ ] T063 [E6] Plantar `OW-99` en un comentario de `packages/core/src` y ver a `decisions` fallar; sacarlo
 - [ ] T064 [P] [E6] `docs/origen.md` (NUEVO): el commit `9bd4009` de cuarzo y la fecha; tres tablas — heredado tal cual, enmendado (con `CU-n`, fecha, motivo), retirado (con qué lo reemplaza) — sacadas de `research.md` §9 y §11
 - [ ] T065 [P] [E6] `docs/segunda-aplicacion.md` (NUEVO): cómo nace `apps/portal` copiando `apps/console`: qué se copia, qué se renombra, qué adaptador de sesión elige, qué entra en `ope.apps`
-- [ ] T066 [E6] Retirar `PEDIDOS.md`, `packages/core/checks/requests.mjs` y su entrada en `cli.mjs`, `tests/catalogo.mjs`, `tests/catalogo.test.mjs`, `catalogo.json`, `tests/clone.mjs`, `tests/progress.mjs`, los scripts `catalogo`, `clon`, `nueva-aplicacion`, `avance`; `tests/icons.mjs` se conserva si granito sigue exigiendo el inventario de íconos, si no se retira con el script `iconos`
+- [ ] T066 [E6] Retirar `PEDIDOS.md`, `packages/core/checks/requests.mjs` y su entrada en `cli.mjs`, `tests/progress.mjs` y el script `avance` (el catálogo y el ritual de clonar ya se retiraron en el tramo 1); `tests/icons.mjs` se conserva si granito sigue exigiendo el inventario de íconos, si no se retira con el script `iconos`
 - [ ] T067 [E6] `packages/core/checks/quality.mjs`: quitar la regla 12 («cliente») y renumerar lo que la cite; `docs/` y la constitución dejan de nombrarla
 - [ ] T068 [E6] `CLAUDE.md` reescrito para OPE-Web: qué es (consola y portal sobre `@ope/*` y granito), el mapa (constitución, `estado.md`, decisiones con las tres familias propias y las dos ajenas, `origen.md`, deuda), el ciclo de Spec Kit con autonomía por feature, el lazo de comandos (`npm test`, `revisar`, `contract:sync`, `dev`), la regla de que Tandilia es sólo lectura, y las dos muletas de la 040; `README.md`: el monorepo y cómo se levanta; `.specify/memory/estado.md`: de cero, con las muletas listadas
 - [ ] T069 [P] [E6] `docs/deuda.md`: entrada «las restricciones del contrato (`CU-38`) no se emiten desde el bundle de OPE», a pagar antes del primer formulario del panel; y `packages/core/docs` sigue ignorado

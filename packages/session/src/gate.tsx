@@ -1,5 +1,5 @@
 /**
- * La puerta: **todo lo que `@cuarzo/session` expone**.
+ * La puerta: **todo lo que `@ope/session` expone**.
  *
  * La regla que gobierna el contrato: **nada de lo que se exporta permite
  * obtener un token** (`CU-10`).
@@ -116,9 +116,9 @@ export function useSessionControl(): Pick<AppSession, 'signOut' | 'reenter'> {
 /**
  * **La falsa NO sale por acá.** El contrato de `001` la lista como superficie
  * pública y `CU-36` exige que no esté en el artefacto de producción; las dos
- * cosas se cumplen poniéndola en otra entrada: `@cuarzo/session/fake`.
+ * cosas se cumplen poniéndola en otra entrada: `@ope/session/fake`.
  *
- * Así el código que importa `@cuarzo/session` no la arrastra nunca, y no
+ * Así el código que importa `@ope/session` no la arrastra nunca, y no
  * depende de que el sacudido de árbol la saque — que es una propiedad de la
  * configuración del empaquetador y cambia sin que nadie lo note.
  */

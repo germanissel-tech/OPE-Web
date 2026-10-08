@@ -36,7 +36,7 @@ import type { Capabilities, Claims, SessionPort } from './types'
  * Como campo de un objeto que se construye al ejecutar, no hay sacudido de árbol
  * que la saque sin sacar también a la falsa.
  */
-export const FAKE_SESSION_MARKER = 'CUARZO_FAKE_SESSION_NOT_FOR_PRODUCTION'
+export const FAKE_SESSION_MARKER = 'OPE_FAKE_SESSION_NOT_FOR_PRODUCTION'
 
 /** Qué pasa cuando el operador vuelve a entrar. */
 export type ReturnBehaviour = 'same-subject' | 'other-subject' | 'window-closed'

@@ -20,8 +20,8 @@ import { join } from 'node:path'
 import { emit } from './emit.mjs'
 import { ROOT } from './raiz.mjs'
 
-const CONTRACT = join(ROOT, 'contracts', 'demo.yaml')
-const OUTPUT = join(ROOT, 'src', 'api', 'demo', 'roles.ts')
+const CONTRACT = join(ROOT, 'apps', 'console', 'contracts', 'demo.yaml')
+const OUTPUT = join(ROOT, 'apps', 'console', 'src', 'api', 'demo', 'roles.ts')
 
 const yaml = readFileSync(CONTRACT, 'utf8')
 

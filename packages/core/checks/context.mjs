@@ -3,7 +3,7 @@
  * configuración.
  *
  * **La raíz es `process.cwd()`, no la carpeta de este archivo.** Publicado, esto
- * vive en `node_modules/@cuarzo/core/checks/`, así que mirarse a sí mismo sería
+ * vive en `node_modules/@ope/core/checks/`, así que mirarse a sí mismo sería
  * revisar el paquete en vez de la aplicación.
  *
  * Lo que varía entre repositorios se declara en el `package.json` del que las
@@ -26,7 +26,7 @@ const manifestPath = join(ROOT, 'package.json')
 const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : {}
 
 /** Lo que el `package.json` de este repositorio declara. Puede no declarar nada. */
-export const declared = manifest.cuarzo ?? {}
+export const declared = manifest.ope ?? {}
 
 /**
  * **Las claves que se pueden declarar, y nada más.**
@@ -41,6 +41,7 @@ export const declared = manifest.cuarzo ?? {}
  * con el valor por omisión, y quien la escribió cree que configuró algo.
  */
 const KNOWN = [
+  'apps',
   'decisionDocs',
   'decisionIndex',
   'compositionLayer',
@@ -51,7 +52,7 @@ const KNOWN = [
 
 function reject(what, why) {
   console.error('')
-  console.error(`  FALLA  La configuración de cuarzo no es válida: ${what}`)
+  console.error(`  FALLA  La configuración de ope no es válida: ${what}`)
   console.error(`         ${why}`)
   console.error('')
   process.exit(1)
@@ -78,6 +79,34 @@ if (Array.isArray(declared.decisionDocs) && declared.decisionDocs.length === 0) 
 if ('decisionIndex' in declared && !declared.decisionIndex) {
   reject('`decisionIndex` está vacío', 'Sacá la clave, o nombrá el archivo que hace de índice')
 }
+
+/**
+ * **Las aplicaciones del monorepo, y tiene que haber al menos una.**
+ *
+ * Cada una vive en `apps/<nombre>` con su `src/` adentro, y las comprobaciones
+ * que miraban `src/` en la raíz recorren ahora la de cada una. Se declaran y no
+ * se descubren: una carpeta nueva bajo `apps/` que nadie nombró es una
+ * aplicación que ninguna comprobación revisa, y eso tiene que fallar al
+ * agregarla, no aprobar en silencio (`TAN-6`, regla 4).
+ */
+if (!Array.isArray(declared.apps) || declared.apps.length === 0) {
+  reject(
+    '`apps` no nombra ninguna aplicación',
+    'Declarala en el package.json de la raíz: "ope": { "apps": ["apps/console"] }',
+  )
+}
+
+for (const app of declared.apps) {
+  if (!/^apps\/[a-z][a-z0-9-]*$/.test(app)) {
+    reject(`"${app}" no es una aplicación`, 'Una aplicación vive en apps/<nombre>, en minúsculas')
+  }
+  if (!existsSync(join(ROOT, ...app.split('/'), 'src'))) {
+    reject(`"${app}" no tiene src/`, '¿se renombró la carpeta, o falta crearla?')
+  }
+}
+
+/** Las aplicaciones declaradas, como rutas relativas a la raíz (`apps/console`). */
+export const apps = declared.apps
 
 /**
  * **La capa de composición se llama `app/`**, y la lista se acota a ella.
