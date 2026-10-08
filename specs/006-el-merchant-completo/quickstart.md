@@ -122,3 +122,27 @@ Dejar todo como estaba después de cada una.
 La feature está construida cuando los siete escenarios de arriba pasan a mano contra el backend
 real, `npm test` está en verde con las comprobaciones nuevas rotas una vez cada una, y `estado.md`
 lista la tercera muleta con su fecha de vencimiento.
+
+## Lo que se vio al correrlo (2026-10-08 y 2026-10-09)
+
+- **Escenario 1**: tal cual. El origen sin esquema queda en el renglón; las dos credenciales con
+  «copiar» y «copiado»; «continuar» cae en la ficha y atrás cae en la grilla; el origen repetido va al
+  pie con el `detail`, porque el `422` llega sin `errors[]` (040).
+- **Escenario 2**: la gracia por encima del máximo da `422`, **pero al aviso y no al campo**: el
+  backend no manda `errors[]` tampoco acá (anotado para la 040). Y en esta máquina el almacén de
+  desarrollo tiene una versión de plataforma con `rotationGraceMaxMs: 1`, así que `3600` también da
+  `422`; con gracia `0` se rotó la llave del tag y se vio el valor con «copiar», «emitida» y «la
+  anterior vale hasta» en UTC. Una clase inválida en la ruta dibuja «no existe».
+- **Escenarios 3 y 4**: tal cual, con sus confirmaciones; la pastilla dice «apagado» en la ficha y
+  en la grilla con el mismo tono.
+- **Escenario 7**: con el merchant desactivado por `curl` desde otra «pestaña», apagar desde la
+  ficha dio `409 merchant-deactivated` como aviso de rechazo y la ficha se refrescó sola:
+  «desactivado», sin rotar, sin apagar, sin desactivar.
+- **Escenario 5**: el registro de la ficha listó, lo más nuevo primero, la desactivación, el
+  apagado, la rotación aceptada y las rechazadas con `rotation-grace-too-long`, todo en UTC.
+- **Escenario 6**: cubierto por las pruebas de cada pantalla (sin la capacidad, la ruta responde
+  «sin permisos» y la sección del registro no se dibuja); no se repitió a mano.
+- **Romperle algo a cada comprobación**: `conformity` con `signature` sacado de `required` dijo
+  «`MerchantCreate.required` no es el del bundle»; la prueba de `OW-8` con un aviso plantado con el
+  valor en `SecretOnce` falló nombrando el valor. `verifyFlows` y `decisions` ya se habían roto a
+  propósito en la 005 y no cambiaron.

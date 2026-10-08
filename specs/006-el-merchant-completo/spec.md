@@ -1,6 +1,6 @@
 # Especificación · El merchant completo
 
-**Carpeta**: `006-el-merchant-completo` · **Estado**: borrador · **Fecha**: 2026-10-08
+**Carpeta**: `006-el-merchant-completo` · **Estado**: construida · **Fecha**: 2026-10-08
 
 **Pedido**: "La primera feature del panel de OPE-Console: el ciclo de vida completo de un merchant.
 El alta pasa de diálogo a pantalla y muestra las credenciales que el backend devuelve una sola vez;

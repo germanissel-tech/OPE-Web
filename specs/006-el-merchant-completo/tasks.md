@@ -121,17 +121,26 @@ para un merchant con confirmación. **Un `409` refresca la ficha.**
 **Meta**: que la ficha diga quién hizo qué sobre el merchant, y que los documentos describan lo que
 quedó.
 
-- [ ] T034 [E4] `apps/console/src/api/ope/client.ts`: `listMerchantAdminLog(merchantId, query) → AdminEntryPage`; tipos `AdminEntry`, `AdminEntryPage`, `AdminOutcome`
-- [ ] T035 [E4] `apps/console/src/features/merchants/data/merchant-log.ts` (NUEVO): `merchantLog(merchantId) = [...oneMerchant(merchantId), 'log']`, `useMerchantLog(merchantId, { from, onCursor })` con `useCollection`; `create-merchant.ts`, `deactivate-merchant.ts`, `rotate-credential.ts` y `set-kill-switch.ts` invalidan `merchantLog` del merchant (el alta no: nadie lo tiene cargado)
-- [ ] T036 [E4] `apps/console/src/features/merchants/strings.ts`: `log`, `logCaption`, `at`, `atUtc`, `operator`, `operation`, `outcome`, `code`, `accepted`, `rejected`, `denied`, `logEmpty`, `logEmptyHelp`; `timeOf(instant)` junto a `dayOf` en `data/merchants.ts` (`HH:mm` UTC)
-- [ ] T037 [E4] `apps/console/src/features/merchants/screens/merchant-log.tsx` (NUEVO): `Section` con `Table` de `resultOf(useMerchantLog(…), states, strings)`: columnas `at` (fecha y hora UTC, encabezado `atUtc`), `operatorId`, `operation`, `outcome` como `Badge` (`accepted` éxito, `rejected` aviso, `denied` peligro), `code`; `useTableQuery('log')`; `rowId = at + operatorId + operation`; `LoadMoreCursor` debajo con filas; el error con «reintentar» que hace `setCursor(undefined)`; sin filtros (el contrato no filtra); la ficha la monta debajo de las credenciales
-- [ ] T038 [E4] `apps/console/src/features/merchants/screens/merchant-log.test.tsx` (NUEVO): los cuatro estados; «cargar más» escribe `log.c`; el vacío dice «todavía nadie»; sin `log:read` la sección no se dibuja y la ficha sí
-- [ ] T039 [E4] Contra el backend real (quickstart, escenario 5 y 6): el registro lista lo hecho en los tramos 2 y 3, pagina, y un enlace con `log.c` reproduce el tramo; con `?dev.papel=lectura` sólo se ve lo de lectura. Anotar lo visto
-- [ ] T040 [P] [E4] `.specify/memory/estado.md`: la tercera muleta (`emitConstraints`) en la tabla de la 040; «Qué hay hoy» dice que la 006 está construida; «Lo que sigue» pasa a configuración versionada; se saca de «roto o incómodo» el alta como diálogo y el `409` que no se veía
-- [ ] T041 [P] [E4] `contracts/ope/README.md` (lo escribe `contract-sync`; verificar que nombre `constraints.*`), `README.md` de la raíz y `CLAUDE.md` si nombran qué pantallas hay o qué muletas quedan
-- [ ] T042 [E4] `specs/006-el-merchant-completo/quickstart.md` con las notas fechadas de lo que difirió; `spec.md`: **Estado**: construida; `npm test` entero, `npm run build -w apps/console` y `ope-check artifact` sin la marca de la falsa
+- [x] T034 [E4] `apps/console/src/api/ope/client.ts`: `listMerchantAdminLog(merchantId, query) → AdminEntryPage`; tipos `AdminEntry`, `AdminEntryPage`, `AdminOutcome`
+- [x] T035 [E4] `apps/console/src/features/merchants/data/merchant-log.ts` (NUEVO): `merchantLog(merchantId) = [...oneMerchant(merchantId), 'log']`, `useMerchantLog(merchantId, { from, onCursor })` con `useCollection`; `create-merchant.ts`, `deactivate-merchant.ts`, `rotate-credential.ts` y `set-kill-switch.ts` invalidan `merchantLog` del merchant (el alta no: nadie lo tiene cargado)
+- [x] T036 [E4] `apps/console/src/features/merchants/strings.ts`: `log`, `logCaption`, `at`, `atUtc`, `operator`, `operation`, `outcome`, `code`, `accepted`, `rejected`, `denied`, `logEmpty`, `logEmptyHelp`; `timeOf(instant)` junto a `dayOf` en `data/merchants.ts` (`HH:mm` UTC)
+- [x] T037 [E4] `apps/console/src/features/merchants/screens/merchant-log.tsx` (NUEVO): `Section` con `Table` de `resultOf(useMerchantLog(…), states, strings)`: columnas `at` (fecha y hora UTC, encabezado `atUtc`), `operatorId`, `operation`, `outcome` como `Badge` (`accepted` éxito, `rejected` aviso, `denied` peligro), `code`; `useTableQuery('log')`; `rowId = at + operatorId + operation`; `LoadMoreCursor` debajo con filas; el error con «reintentar» que hace `setCursor(undefined)`; sin filtros (el contrato no filtra); la ficha la monta debajo de las credenciales
+- [x] T038 [E4] `apps/console/src/features/merchants/screens/merchant-log.test.tsx` (NUEVO): los cuatro estados; «cargar más» escribe `log.c`; el vacío dice «todavía nadie»; sin `log:read` la sección no se dibuja y la ficha sí
+- [x] T039 [E4] Contra el backend real (quickstart, escenario 5 y 6): el registro lista lo hecho en los tramos 2 y 3, pagina, y un enlace con `log.c` reproduce el tramo; con `?dev.papel=lectura` sólo se ve lo de lectura. Anotar lo visto
+- [x] T040 [P] [E4] `.specify/memory/estado.md`: la tercera muleta (`emitConstraints`) en la tabla de la 040; «Qué hay hoy» dice que la 006 está construida; «Lo que sigue» pasa a configuración versionada; se saca de «roto o incómodo» el alta como diálogo y el `409` que no se veía
+- [x] T041 [P] [E4] `contracts/ope/README.md` (lo escribe `contract-sync`; verificar que nombre `constraints.*`), `README.md` de la raíz y `CLAUDE.md` si nombran qué pantallas hay o qué muletas quedan
+- [x] T042 [E4] `specs/006-el-merchant-completo/quickstart.md` con las notas fechadas de lo que difirió; `spec.md`: **Estado**: construida; `npm test` entero, `npm run build -w apps/console` y `ope-check artifact` sin la marca de la falsa
 
 **Punto de control**: escenario 5 a mano; `npm test`; commit: `feat(006): la ficha muestra el registro de administración del merchant`, y después `docs(006): cierre — estado, muletas y quickstart`.
+
+> **Hecho el 2026-10-09.** Desvíos: (1) la sección del registro se esconde sin `log:read` con un
+> `Visible` local de la ficha, porque `ActionButton` esconde controles y no secciones. (2) El tono de
+> «denegada» es `error`: granito no tiene `danger` en las pastillas. (3) Los anchos de las columnas
+> se ajustaron a la tarjeta de la ficha (la primera versión desbordaba). Contra el backend: la ficha
+> del merchant del tramo 3 listó, lo más nuevo primero, la desactivación, el apagado, la rotación
+> aceptada y las rechazadas con su código, con «8 cargados · no hay más». El escenario 6 quedó
+> cubierto por las pruebas y no se repitió a mano. `npm run build -w apps/console` y `ope-check
+> artifact`: sin rastro de la falsa.
 
 ---
 

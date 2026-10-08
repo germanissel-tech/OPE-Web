@@ -89,18 +89,20 @@ feature, además, la tabla de «romperle algo a cada comprobación» de su quick
 **Commits**: convencionales, en castellano, un tramo por commit, con `Co-Authored-By` del agente. No
 se commitea con las pruebas en rojo. Se publica cuando el dueño lo pidió.
 
-## Las dos muletas de la 040
+## Las tres muletas de la 040
 
-Hasta que OPE-Backend publique su feature 040, dos cosas viven acá **con nombre y comentario** y se
+Hasta que OPE-Backend publique su feature 040, tres cosas viven acá **con nombre y comentario** y se
 sacan cuando llegue:
 
 | muleta | dónde | la reemplaza |
 |---|---|---|
 | `identify` es una sonda a `listMerchants` y la barra dice `operator` | `apps/console/src/api/ope/identity.ts` | `getOperator` con `operatorId`, `displayName` y `scope` |
 | `contract-sync` **emite** el módulo de capacidades desde el bundle | `scripts/contract-sync.mjs` | copiar `generated/contract/` del backend |
+| `contract-sync` **emite** las restricciones de cada cuerpo de pedido (`CU-38`, capa 1) | `scripts/contract-sync.mjs`, `emitConstraints` | copiar `constraints.{js,d.ts}` de `generated/contract/` |
 
 Y lo que la 040 agrega además: `X-Request-Id` y `requestId` en el problema (hoy el aviso dice «sin
-identificador»), y `errors[]` con `pointer` en el `422 origin-already-registered`.
+identificador»), y `errors[]` con `pointer` en los `422` de invariante —`origin-already-registered`,
+`rotation-grace-too-long`— que hoy llegan sin campo y caen al pie del formulario o al aviso.
 
 ## Cuando algo del código está mal, primero se tría
 
