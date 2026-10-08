@@ -117,28 +117,6 @@ y verifique que **no pasa como buena** — hoy pasa.
 
 ---
 
----
-
-### 4 · Las restricciones del contrato (`CU-38`) no se emiten desde el bundle de OPE
-
-**Qué es.** Cuarzo generaba `constraints.ts` —obligatorios, largos, patrones e invariantes de cada
-mensaje— leyendo `demo.yaml` por líneas. Ese generador se retiró con el simulado (`docs/origen.md`),
-y el bundle de OPE no tiene la forma que leía. Hoy las restricciones del único formulario, el alta de
-merchant, están **escritas a mano con la cita del contrato** en
-`apps/console/src/features/merchants/data/create-merchant.ts`.
-
-**Qué produce.** Nada falla: `useForm` y `FieldConstraints` siguen en el núcleo, y la capa 1 valida
-con lo escrito. Lo que restringe es la promesa de `CU-38` —*si el contrato cambia, la copia deja de
-compilar*—: con una copia a mano, el backend puede subir `maxLength` y el formulario sigue bloqueando
-con el criterio de antes, que es el error que **no se descubre nunca**.
-
-**Qué costaría.** Un emisor sobre el bundle con `yaml` —el mismo que `contract-sync` ya usa para el
-módulo de capacidades—, que recorra `components.schemas` y emita `constraints.ts` por consumidor, o
-que el backend lo emita en `generated/contract/` junto con las capacidades (040). Medio día.
-
-**Cuándo se paga.** **Antes del primer formulario del panel**: con un formulario a mano se tolera;
-con cinco, la copia que un día no coincide ya está en producción.
-
 ## Lo que NO es deuda, y por qué se anota igual
 
 Para que nadie lo mueva a la lista de arriba pensando que se olvidó.
@@ -157,6 +135,15 @@ formulario**, y se desincronizan en la primera corrección.
 Se pagó con la edición del catálogo, en la forma que `granito#PED-8` ya había elegido —una región de
 la misma página— y sacando los campos a un solo lugar: el alta pasó de 136 renglones a 88, y ninguno
 de los dos puede agregar un campo sin que el otro lo tenga.
+
+**Las restricciones del contrato (`CU-38`) estaban escritas a mano** (deuda 4, anotada en la 005): el
+generador de cuarzo leía `demo.yaml` por líneas y se retiró con el simulado, y el alta de merchant
+validaba con una copia que el backend podía dejar vieja sin que nadie se enterara. Se fijó pagarla
+antes del primer formulario del panel, y se pagó con él (feature 006, 2026-10-08): `contract-sync`
+emite `contracts/ope/constraints.{js,d.ts}` desde `components.schemas` del bundle con la forma de
+`specs/006-el-merchant-completo/contracts/constraints-artifact.md`, `conformity` falla si lo emitido
+y el bundle se despegan, y es la tercera muleta con la fecha de la 040. La capa 2 (`invalid-origin`)
+queda a mano con su cita, porque una regla en prosa no se emite como predicado.
 
 **Y lo caro no fue eso.** El punto de control encontró cuatro defectos que ninguna prueba había
 visto: el formulario cargaba vacío porque tomaba sus valores iniciales antes de que llegara el

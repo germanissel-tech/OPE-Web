@@ -1791,6 +1791,8 @@ nosotros no. Cómo se coordina eso es `TAN-3`, en la plataforma, y está abierta
 
 **Estado**: decidida · **Depende de**: CU-5, CU-25, CU-37
 
+> **Enmienda OPE (2026-10-08).** La **capa 1** ya no se escribe a mano: `npm run contract:sync` la emite del bundle de OPE en `contracts/ope/constraints.{js,d.ts}` —`required`, tipos, largos, patrones, rangos y, para una lista, cuántos renglones y qué exige cada uno— con la forma de `specs/006-el-merchant-completo/contracts/constraints-artifact.md`, interina hasta que OPE-Backend 040 la emita en `generated/contract/`; `ope-check conformity` falla si lo emitido y el bundle se despegan. La **capa 2** queda a mano con la cita del `x-invariant` (`invalid-origin`), porque la regla del contrato es prosa; el enum de códigos de las-animas que esta decisión nombra es, en OPE, el catálogo de tipos de problema. La capa 3 no cambia. Ver `docs/origen.md`.
+
 **La distinción no la inventamos acá.** ADR-009 del backend ya declara cada invariante en un lado o
 en el otro: *sobre el schema si involucra campos del propio mensaje, o sobre la operación si depende
 de otro recurso.* De ahí salen las tres capas.

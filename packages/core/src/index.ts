@@ -186,6 +186,7 @@ export {
   type ActionIconButtonProps,
 } from './ui/action-button'
 export { CannotStart } from './ui/cannot-start'
+export { ConfirmDialog, type ConfirmDialogProps } from './ui/confirm-dialog'
 export { ConflictDialog, type ConflictDialogProps } from './ui/conflict-dialog'
 export { Frame, type FrameProps } from './ui/frame'
 export { LoadMoreCursor, type LoadMoreCursorProps } from './ui/load-more'
@@ -193,6 +194,7 @@ export { buildMenu } from './ui/menu'
 export { type QueryLike, Result, type ResultProps, type ResultState } from './ui/result'
 export { type GridQuery, type GridResult, type GridStates, resultOf } from './ui/result-of'
 export { ScreenError } from './ui/screen-error'
+export { SecretOnce, type SecretOnceProps } from './ui/secret-once'
 export {
   defaultSessionViews,
   Forbidden,

@@ -29,6 +29,14 @@ export type FieldConstraints = {
   readonly minimum?: number
   readonly maximum?: number
   /**
+   * Para un campo que es una lista: cuántos renglones admite, y qué le exige a
+   * cada uno. Un renglón se valida con `items` como si fuera el campo; cuántos
+   * hay lo decide el formulario con `minItems` y `maxItems`.
+   */
+  readonly minItems?: number
+  readonly maxItems?: number
+  readonly items?: FieldConstraints
+  /**
    * Qué es el dato, en el vocabulario de granito.
    *
    * No se valida con esto: **se dibuja**. Vive acá porque sale del mismo lugar

@@ -7,8 +7,10 @@
  * `openapi-typescript` y el catálogo de problemas— y, **mientras OPE-Backend no
  * emita el módulo de capacidades** (su feature 040), lo emite acá desde el
  * bundle con la forma que el frontend publica en
- * `specs/005-la-base-de-ope/contracts/contract-artifact.md`. Cuando el backend
- * tenga `generated/contract/`, esto la copia entera y deja de emitir.
+ * `specs/005-la-base-de-ope/contracts/contract-artifact.md`. Lo mismo con las
+ * restricciones de cada cuerpo de pedido (la capa 1 de `CU-38`, forma en
+ * `specs/006-el-merchant-completo/contracts/constraints-artifact.md`). Cuando el
+ * backend tenga `generated/contract/`, esto la copia entera y deja de emitir.
  *
  * Dónde está el backend, en este orden: `--from <carpeta>` (una carpeta
  * descomprimida de un release, con la misma disposición), `OPE_BACKEND_DIR`, o
@@ -129,8 +131,29 @@ const today = new Date().toISOString().slice(0, 10)
 
 /* ── El módulo de capacidades: copiado si el backend lo emite, emitido si no ── */
 
+const SCHEMA_REF = '#/components/schemas/'
+const refName = (ref) =>
+  typeof ref === 'string' && ref.startsWith(SCHEMA_REF) ? ref.slice(SCHEMA_REF.length) : undefined
+
+/** Lo que de un JSON Schema puede verificar un formulario sin preguntar nada. */
+const FIELD_KEYS = [
+  'minLength',
+  'maxLength',
+  'pattern',
+  'minimum',
+  'maximum',
+  'minItems',
+  'maxItems',
+  'enum',
+  'format',
+]
+
 const EMITTED = join(BACKEND, 'generated', 'contract')
+const INTERIM =
+  'emitido por `scripts/contract-sync.mjs` desde el bundle, hasta que OPE-Backend 040 lo emita'
 let origin
+
+let constraintsOrigin
 
 if (existsSync(EMITTED) && statSync(EMITTED).isDirectory()) {
   for (const name of readdirSync(EMITTED)) {
@@ -138,10 +161,19 @@ if (existsSync(EMITTED) && statSync(EMITTED).isDirectory()) {
     console.log(`  copiado  generated/contract/${name} → ${short(join(TARGET, name))}`)
   }
   origin = 'copiado de `generated/contract/` del backend (feature 040)'
+  /* La 040 puede llegar en dos partes: el módulo primero y las restricciones
+     después. Lo que el backend no emita todavía, se sigue emitiendo acá. */
+  if (existsSync(join(EMITTED, 'constraints.js'))) {
+    constraintsOrigin = origin
+  } else {
+    emitConstraints()
+    constraintsOrigin = INTERIM
+  }
 } else {
   emitModule()
-  origin =
-    'emitido por `scripts/contract-sync.mjs` desde el bundle, hasta que OPE-Backend 040 lo emita'
+  emitConstraints()
+  origin = INTERIM
+  constraintsOrigin = INTERIM
 }
 
 function emitModule() {
@@ -255,6 +287,123 @@ export type OperationId = keyof typeof OPERATIONS
   )
 }
 
+/* ── Las restricciones: la capa 1 de `CU-38`, emitida del bundle hasta la 040 ── */
+
+/**
+ * Qué esquemas entran: los objetos que algún cuerpo de pedido del consumidor
+ * nombra, **y los que ésos nombran** —un objeto anidado se teclea igual—. Los de
+ * respuesta no: nadie los escribe. La forma de lo emitido está en
+ * `specs/006-el-merchant-completo/contracts/constraints-artifact.md`.
+ */
+function emitConstraints() {
+  const schemas = bundle.components?.schemas ?? {}
+  const wanted = new Map()
+
+  const fieldOf = (schema) => {
+    if (!schema || typeof schema !== 'object') return {}
+    const nested = refName(schema.$ref)
+    if (nested) return { type: 'object', ref: nested }
+    const field = {}
+    if (typeof schema.type === 'string') field.type = schema.type
+    for (const key of FIELD_KEYS) if (schema[key] !== undefined) field[key] = schema[key]
+    if (schema.items !== undefined) field.items = fieldOf(schema.items)
+    return field
+  }
+
+  const visit = (name, where) => {
+    if (wanted.has(name)) return
+    const schema = schemas[name]
+    if (!schema || typeof schema !== 'object') {
+      fail(`${where} referencia un esquema que el bundle no tiene`, `#/components/schemas/${name}`)
+    }
+    if (schema.type !== 'object') return
+    wanted.set(name, {
+      required: Array.isArray(schema.required) ? [...schema.required] : [],
+      fields: Object.fromEntries(
+        Object.entries(schema.properties ?? {}).map(([property, each]) => [
+          property,
+          fieldOf(each),
+        ]),
+      ),
+    })
+    for (const each of Object.values(schema.properties ?? {})) {
+      const inner = refName(each?.$ref) ?? refName(each?.items?.$ref)
+      if (inner) visit(inner, `el esquema ${name}`)
+    }
+  }
+
+  for (const [path, item] of Object.entries(bundle.paths ?? {})) {
+    for (const method of METHODS) {
+      const op = item?.[method]
+      if (!op || typeof op !== 'object') continue
+      if (!Array.isArray(op.tags) || !op.tags.includes(CONSUMER)) continue
+      const body = op.requestBody?.content?.['application/json']?.schema
+      const name = refName(body?.$ref)
+      if (name) visit(name, `${method.toUpperCase()} ${path}`)
+    }
+  }
+
+  if (wanted.size === 0) {
+    fail(
+      `Ningún cuerpo de pedido del consumidor \`${CONSUMER}\` referencia un esquema`,
+      '¿cambió la forma del contrato?',
+    )
+  }
+
+  const names = [...wanted.keys()].sort()
+  const banner = `// ${HEADER}\n// DO NOT EDIT BY HAND. Regenerate with: npm run contract:sync\n`
+  const literal = JSON.stringify(Object.fromEntries(names.map((n) => [n, wanted.get(n)])), null, 2)
+
+  const js = `${banner}
+/** The contract this module was derived from. */
+export const CONTRACT = { version: '${version}', sha256: '${sha256}' }
+
+/** What a form can verify locally of each request body of the ${CONSUMER} consumer (layer 1). */
+export const CONSTRAINTS = ${literal}
+`
+
+  const dts = `${banner}
+/** The contract this module was derived from. */
+export declare const CONTRACT: {
+  readonly version: '${version}'
+  readonly sha256: '${sha256}'
+}
+
+/** What the contract demands of one field; the same shape \`@ope/core\` validates with. */
+export type FieldConstraints = {
+  readonly type?: string
+  readonly ref?: string
+  readonly minLength?: number
+  readonly maxLength?: number
+  readonly pattern?: string
+  readonly minimum?: number
+  readonly maximum?: number
+  readonly minItems?: number
+  readonly maxItems?: number
+  readonly items?: FieldConstraints
+  readonly enum?: readonly (string | number | boolean)[]
+  readonly format?: string
+}
+
+/** What the contract demands of one request body. */
+export type MessageConstraints = {
+  readonly required: readonly string[]
+  readonly fields: Readonly<Record<string, FieldConstraints>>
+}
+
+/** What a form can verify locally of each request body of the ${CONSUMER} consumer (layer 1). */
+export declare const CONSTRAINTS: {
+${names.map((n) => `  readonly ${n}: MessageConstraints`).join('\n')}
+}
+export type ConstrainedSchema = keyof typeof CONSTRAINTS
+`
+
+  writeFileSync(join(TARGET, 'constraints.js'), js, 'utf8')
+  writeFileSync(join(TARGET, 'constraints.d.ts'), dts, 'utf8')
+
+  console.log(`  emitido  constraints.js, constraints.d.ts: ${names.length} esquemas de pedido`)
+}
+
 /* ── El README: de qué commit salió, y cuándo ───────────────────────────── */
 
 const readme = `# \`contracts/ope/\` — el contrato de OPE, como artefacto
@@ -269,6 +418,7 @@ const readme = `# \`contracts/ope/\` — el contrato de OPE, como artefacto
 | Commit de OPE-Backend | ${commit ? `\`${commit}\`` : '_desconocido: el backend no era un clon de git_'} |
 | Sincronizado | ${today} |
 | Módulo de capacidades | ${origin} |
+| Restricciones | ${constraintsOrigin} |
 
 ## Los archivos
 
@@ -279,10 +429,12 @@ const readme = `# \`contracts/ope/\` — el contrato de OPE, como artefacto
 | \`problem-types.d.ts\` | \`generated/problem-types.d.ts\` del backend | \`@ope/core\` (\`ProblemSlug\`) |
 | \`capabilities.js\` + \`capabilities.d.ts\` | el módulo de \`TAN-7\`: operación → capacidades e idempotencia, y el vocabulario del consumidor \`${CONSUMER}\` | \`operation()\`, \`conformity\`, la sesión falsa |
 | \`identity.json\` | versión y \`sha256\` del bundle, y el commit del backend | \`conformity\`; este README |
+| \`constraints.js\` + \`constraints.d.ts\` | la capa 1 de \`CU-38\`: qué puede verificar un formulario de cada cuerpo de pedido del consumidor \`${CONSUMER}\` | \`useForm\` desde \`apps/*/src/api/ope/\`; \`conformity\` |
 
 La forma del módulo es la que el frontend publica en
-\`specs/005-la-base-de-ope/contracts/contract-artifact.md\`; es lo que OPE-Backend 040 tiene que emitir
-en \`generated/contract/\`. Cuando lo emita, el sincronizador copia en vez de emitir.
+\`specs/005-la-base-de-ope/contracts/contract-artifact.md\`, y la de las restricciones en
+\`specs/006-el-merchant-completo/contracts/constraints-artifact.md\`; es lo que OPE-Backend 040 tiene
+que emitir en \`generated/contract/\`. Cuando lo emita, el sincronizador copia en vez de emitir.
 `
 
 writeFileSync(join(TARGET, 'README.md'), readme, 'utf8')

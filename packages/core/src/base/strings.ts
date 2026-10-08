@@ -114,6 +114,17 @@ export type Strings = {
   unsavedConfirm: string
   unsavedCancel: string
 
+  /* Lo que compone el núcleo: confirmar con consecuencia, y copiar un valor — `GR-65`, `OW-8` */
+  /** Los dos botones de una confirmación cuando la aplicación no da otros. */
+  confirm: string
+  cancel: string
+  /** Copiar un valor al portapapeles, y lo que se dice después: copió, o no pudo. */
+  copy: string
+  copied: string
+  copyFailed: string
+  /** El título de la advertencia sobre un valor que no vuelve a verse (`OW-8`). */
+  copyOnceTitle: string
+
   /* Lo que dice una acción — `CU-25` */
   /** Lo que se dice cuando la acción no declaró qué anuncia. */
   actionDone: string
@@ -235,6 +246,13 @@ export const DEFAULT_STRINGS: Strings = {
   unsavedDescription: 'Si salís ahora se pierden. Podés quedarte y guardarlos.',
   unsavedConfirm: 'Salir y descartar',
   unsavedCancel: 'Quedarme',
+
+  confirm: 'Confirmar',
+  cancel: 'Cancelar',
+  copy: 'Copiar',
+  copied: 'Copiado',
+  copyFailed: 'No se pudo copiar: seleccionalo y copialo a mano',
+  copyOnceTitle: 'Se muestra una sola vez',
 
   actionDone: 'Listo',
   unknownRoute: 'Esa dirección no existe',
