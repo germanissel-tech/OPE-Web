@@ -4,9 +4,9 @@ import { type AnyPreference, defineWorkContext, standardPreferences } from '@ope
  * **Cómo se ve el marco en esta aplicación.**
  *
  * Lo del marco que decide la aplicación y no una funcionalidad. Hoy son las
- * preferencias del operador; acá van también las vistas de sesión y la pantalla
- * de «sin permisos» cuando esta aplicación quiera las suyas en vez de las que
- * trae el marco.
+ * preferencias del operador y el contexto de trabajo; acá van también las
+ * vistas de sesión y la pantalla de «sin permisos» cuando esta aplicación
+ * quiera las suyas en vez de las que trae el marco.
  */
 
 /**
@@ -27,10 +27,12 @@ import { type AnyPreference, defineWorkContext, standardPreferences } from '@ope
 export const preferences: readonly AnyPreference[] = [...standardPreferences]
 
 /**
- * **La sucursal con la que se opera** (`CU-26`).
+ * **El merchant sobre el que se opera** (`CU-26`).
  *
- * Vive en la máquina porque casi nunca cambia, y volver a elegirla cada mañana
- * es fricción diaria. Al clonar, cada aplicación declara los suyos: una terminal
- * de mostrador y un panel de administración no trabajan sobre lo mismo.
+ * Un operador de OPE trabaja un rato sobre un merchant —su configuración, sus
+ * experimentos, su registro— y después sobre otro. Vive en la pestaña y no en
+ * la máquina: cambia varias veces por día, y uno que quedó puesto de ayer
+ * manda a mirar el merchant equivocado. Las pantallas del panel lo leen con
+ * `useWorkContext(currentMerchant)`; el hola mundo todavía no.
  */
-export const currentBranch = defineWorkContext('branch', 'machine')
+export const currentMerchant = defineWorkContext('merchant', 'tab')

@@ -1,7 +1,6 @@
 {
   "systems": {
-    "ope": "/api",
-    "demo": "http://localhost:4010"
+    "ope": "/api"
   },
   "waitThresholdMs": 60000
 }

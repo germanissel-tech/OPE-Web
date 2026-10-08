@@ -11,7 +11,7 @@ import { homeStrings } from '../strings'
  * La pantalla de inicio. Declara la ruta raíz, así que el marco no dibuja la
  * suya.
  *
- * **Enlaza al catálogo sin conocerlo** (`CU-44`): informa un desenlace, y a
+ * **Enlaza a los merchants sin conocerlos** (`CU-44`): informa un desenlace, y a
  * dónde lleva lo dice el paso del flujo activo, en `app/flows.ts` (`CU-47`).
  * `CU-15` sigue prohibiendo que una funcionalidad importe de otra, y acá no
  * hace falta.
@@ -26,8 +26,8 @@ function WelcomeScreen() {
           <Alert severity="success" title={homeStrings.menuFromRegistry}>
             {homeStrings.menuFromRegistryHelp}
           </Alert>
-          <Button onClick={() => emit(home.outcomes.catalogRequested({ from: 'home' }))}>
-            {homeStrings.goToCatalog}
+          <Button onClick={() => emit(home.outcomes.merchantsRequested({ from: 'home' }))}>
+            {homeStrings.goToMerchants}
           </Button>
         </Block>
       </Region>

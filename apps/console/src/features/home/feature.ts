@@ -14,10 +14,10 @@ export const home = defineFeature({
   root: welcomeScreen,
 
   /* El nombre dice **qué pasó**, no a dónde ir (`CU-44`). Esta funcionalidad
-     no sabe que el catálogo existe, y la comprobación de límites se encarga
+     no sabe que los merchants existen, y la comprobación de límites se encarga
      de que siga sin saberlo. */
   outcomes: {
-    catalogRequested: outcome<{ from: string }>('home.catalogRequested'),
+    merchantsRequested: outcome<{ from: string }>('home.merchantsRequested'),
   },
   userMenuEntries: [{ id: 'about', label: aboutScreen.title, screen: aboutScreen }],
 })

@@ -68,6 +68,22 @@ En el navegador, `http://localhost:5173`:
 > ingreso se dibuja **sin el shell de granito** (tipografía por omisión), igual que las vistas de
 > `anonymous` y `ended` que cuarzo ya tenía fuera de `active`; es cosmético y queda para el tramo 6.
 
+> **Corrido el 2026-10-08, tramo 5**, en el navegador con `?dev.bearer=1` y el token de desarrollo.
+> Paso 3: la grilla trae los merchants del backend (dos desactivados de pruebas anteriores) con «2
+> cargados · No hay más»; el alta de `https://hola-mundo.example` responde `201`, cierra el diálogo,
+> refresca la grilla y avisa con el identificador y sin credenciales. Paso 7: un origen que ya es de
+> otro merchant responde `422 origin-already-registered` **sin `errors[]`** —el contrato lo
+> ejemplifica con `pointer: /origins/0`, y el backend hoy no lo manda—, así que llega como rechazo de
+> negocio (aviso con el `detail`) y no al campo; queda pedido a la 040 junto con el prefijo `/body`.
+> Desactivar responde `200`, la fila pasa a «Desactivado», el botón desaparece y `merchants.row`
+> queda en la dirección; la ficha muestra estado, orígenes, alta y las tres credenciales por clase e
+> instante. **Lo que no se corrió**: paso 4 (hacen falta más merchants que el tramo por omisión; lo
+> cubre `merchants-screen.test.tsx` con cursor), paso 5 (lo cubre la prueba del `400` con
+> «reintentar»), paso 6 (acuñar un operador exige tocar `config/dev-operators.json` del backend), y
+> el `409 merchant-deactivated` del paso 7: desactivar dos veces es `200` por contrato, el `409` lo
+> dan operaciones que el hola mundo no tiene (`setKillSwitch`). Lo que difiere: la columna «Alta»
+> con `format: 'date'` muestra el instante ISO entero; granito espera una fecha sin hora.
+
 ## Sin backend
 
 ```bash

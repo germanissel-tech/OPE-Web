@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { useRef, useState } from 'react'
 
 /**
  * **Una colección paginada por cursor, sin total** (`ADR-020` del backend).
@@ -76,12 +77,28 @@ export function useCollection<T>(
 ): CollectionQuery<T> {
   const { from, onCursor } = options
 
+  /**
+   * **De dónde arranca la acumulación, y cuándo vuelve a arrancar.**
+   *
+   * El cursor de arranque es parte de la clave: dos arranques distintos son dos
+   * acumulaciones distintas, y mezclarlas repetiría filas. Pero `from` cambia
+   * por dos motivos que no son lo mismo: **alguien lo puso** —un enlace
+   * pegado, «reintentar», otro filtro—, y entonces se arranca de nuevo desde
+   * ahí; o **esto mismo lo anotó** al traer un tramo, y entonces no: volver a
+   * arrancar desde el cursor recién anotado tiraría lo acumulado y dejaría sólo
+   * el último tramo. Se distingue recordando qué se anotó.
+   */
+  const announced = useRef<string | undefined>(undefined)
+  const [start, setStart] = useState(from)
+  if (from !== start && from !== announced.current) {
+    announced.current = undefined
+    setStart(from)
+  }
+
   const query = useInfiniteQuery({
-    /* El cursor de arranque es parte de la clave: dos arranques distintos son
-       dos acumulaciones distintas, y mezclarlas repetiría filas. */
-    queryKey: [...key, { from: from ?? null }],
+    queryKey: [...key, { from: start ?? null }],
     queryFn: ({ pageParam }) => fetchPage(pageParam),
-    initialPageParam: from,
+    initialPageParam: start,
     getNextPageParam: (last) => last.nextCursor,
     /* Lo anterior se queda mientras llega lo nuevo: sin esto, cambiar de filtro
        deja la grilla en blanco por medio segundo. */
@@ -103,7 +120,10 @@ export function useCollection<T>(
          reproduce lo que el operador está viendo (`CU-47`). */
       const params = result.data?.pageParams ?? []
       const arrived = params.at(-1)
-      if (typeof arrived === 'string') onCursor?.(arrived)
+      if (typeof arrived === 'string') {
+        announced.current = arrived
+        onCursor?.(arrived)
+      }
     },
     data: last === undefined ? undefined : { items, nextCursor: last.nextCursor },
     error: query.error ?? undefined,

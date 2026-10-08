@@ -1,5 +1,4 @@
 import { bootstrapApplication, consoleTelemetry, ServicesProvider } from '@ope/core'
-import { createDemoClient, demoService } from '../api/demo/client'
 import { createClient, opeService } from '../api/ope/client'
 import { readConfig } from './config'
 import { identity } from './identity'
@@ -19,9 +18,7 @@ await bootstrapApplication({
    *
    * Acá va el tablero de esta aplicación. `consoleTelemetry` es el de
    * desarrollo, donde el que mira es quien está programando; el día que haya
-   * uno de verdad **se cambia esta línea y nada más** — ni la puerta de
-   * acciones, ni el límite de error, ni ninguna pantalla se entera de cuál le
-   * tocó.
+   * uno de verdad **se cambia esta línea y nada más**.
    *
    * Recibe la configuración porque a dónde apunta un tablero se lee al arrancar
    * (`CU-17`), no se compila adentro.
@@ -62,16 +59,10 @@ await bootstrapApplication({
    * puede pedirlas —`useSessionControl` no las expone, y eso es lo que `CU-10`
    * garantiza—, así que los servicios se arman acá y se reciben.
    *
-   * Crece una línea por sistema (`CU-22`), y cada uno con **su** URL base. El
-   * `demo` del hola mundo se va con él en el tramo 5 de la 005.
+   * Crece una línea por sistema (`CU-22`), y cada uno con **su** URL base.
    */
   provide: ({ config, session, children }) => (
-    <ServicesProvider
-      services={[
-        opeService(createClient(config.systems.ope, session)),
-        demoService(createDemoClient(config.systems.demo, session.authorize)),
-      ]}
-    >
+    <ServicesProvider services={[opeService(createClient(config.systems.ope, session))]}>
       {children}
     </ServicesProvider>
   ),

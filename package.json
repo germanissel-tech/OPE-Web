@@ -16,10 +16,7 @@
     "dev": "npm run build:paquetes && npm run dev -w apps/console",
     "iconos": "node tests/icons.mjs",
     "revisar": "biome check .",
-    "simulado": "node tests/mock.mjs",
-    "simulado:contrato": "prism mock apps/console/contracts/demo.yaml --port 4010 --errors",
-    "test": "npm run build:paquetes && ope-check && node tests/roles.mjs --verificar && node tests/constraints.mjs --verificar && node tests/icons.mjs && npm --prefix packages/session test && vitest run",
-    "tipos": "npx -y openapi-typescript apps/console/contracts/demo.yaml -o apps/console/src/api/demo/types.ts && node tests/roles.mjs && node tests/constraints.mjs",
+    "test": "npm run build:paquetes && ope-check && node tests/icons.mjs && npm --prefix packages/session test && vitest run",
     "vitest": "vitest run"
   },
   "dependencies": {
@@ -28,8 +25,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.10",
-    "@stoplight/prism-cli": "^5.14.2",
     "@testing-library/react": "^16.3.2",
+    "@types/node": "^26.6.4",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",

@@ -11,6 +11,10 @@ import type { operations, paths } from '../../../../../contracts/ope/api'
  *
  * **Y recibe su URL base**, que sale de la configuración leída al arrancar
  * (`CU-17`): en desarrollo es `/api`, que Vite reenvía al backend.
+ *
+ * Sin clave de idempotencia en ninguna: OPE repite por cuerpo idéntico
+ * (`x-idempotency`), y `deactivateMerchant` aplicada dos veces deja el mismo
+ * estado (`200` otra vez).
  */
 
 /** Lo que `listMerchants` acepta: el cursor opaco y el tamaño del tramo (ADR-020 del backend). */
@@ -22,9 +26,22 @@ export type MerchantPage =
 
 export type Merchant = MerchantPage['items'][number]
 
+/** Lo que el contrato pide para dar de alta. Sale del contrato, no se escribe. */
+export type MerchantCreate = NonNullable<
+  paths['/v1/admin/merchants']['post']['requestBody']
+>['content']['application/json']
+
+/** Lo que el alta devuelve: el merchant **con sus credenciales, esta única vez**. */
+export type MerchantCredentials =
+  paths['/v1/admin/merchants']['post']['responses']['201']['content']['application/json']
+
 export type OpeClient = {
   /** Los merchants del alcance del operador, por cursor. */
   readonly listMerchants: (query: MerchantQuery) => Promise<MerchantPage>
+  readonly getMerchant: (merchantId: string) => Promise<Merchant>
+  readonly createMerchant: (body: MerchantCreate) => Promise<MerchantCredentials>
+  /** Terminal: no hay vuelta ni borrado (`ADR-031` del backend). */
+  readonly deactivateMerchant: (merchantId: string) => Promise<Merchant>
 }
 
 /**
@@ -41,6 +58,24 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
   return {
     async listMerchants(query) {
       return unwrap<MerchantPage>(await client.GET('/v1/admin/merchants', { params: { query } }))
+    },
+
+    async getMerchant(merchantId) {
+      return unwrap<Merchant>(
+        await client.GET('/v1/admin/merchants/{merchantId}', { params: { path: { merchantId } } }),
+      )
+    },
+
+    async createMerchant(body) {
+      return unwrap<MerchantCredentials>(await client.POST('/v1/admin/merchants', { body }))
+    },
+
+    async deactivateMerchant(merchantId) {
+      return unwrap<Merchant>(
+        await client.POST('/v1/admin/merchants/{merchantId}/deactivate', {
+          params: { path: { merchantId } },
+        }),
+      )
     },
   }
 }

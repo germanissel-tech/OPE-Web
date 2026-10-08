@@ -11,7 +11,9 @@ import { ADMIN_CAPABILITIES, READ_CAPABILITIES } from '../api/ope/identity'
  * Lo verifica `packages/core/checks/artifact.mjs` sobre la compilación.
  *
  * Los claims los arma la aplicación y no la falsa: qué capacidades existen lo
- * dice el módulo del contrato, y la falsa no tiene por qué conocerlo.
+ * dice el módulo del contrato, y la falsa no tiene por qué conocerlo. Tienen
+ * **la misma forma que los del bearer** (`operatorId`, `scope`) más
+ * `capabilities`, que es lo que `identity.ts` lee para la falsa.
  */
 
 /**
@@ -19,14 +21,11 @@ import { ADMIN_CAPABILITIES, READ_CAPABILITIES } from '../api/ope/identity'
  *
  * `CU-3` dice que lo que un permiso no habilita no se muestra, y dice también
  * por qué eso se rompe sin que nadie lo note: *«el defecto no se ve con permisos
- * completos, que es como se mira una pantalla mientras se la escribe»*. Con una
- * sesión falsa que concede todo, esa advertencia se cumplía sobre sí misma —
- * había que editar este archivo para ver el otro caso, así que no lo veía nadie.
+ * completos, que es como se mira una pantalla mientras se la escribe»*.
  *
- * **Se elige el papel y se vuelve a entrar**, y eso no es una limitación: es lo
- * que pasa de verdad. Las capacidades llegan con la sesión, así que conceder o
- * revocar una tiene efecto **con la sesión siguiente** (`TAN-7`). Un cambiador
- * que las alterara en vivo mostraría algo que en producción no puede pasar.
+ * **Se elige el papel y se vuelve a entrar**: las capacidades llegan con la
+ * sesión, así que conceder o revocar una tiene efecto **con la sesión
+ * siguiente** (`TAN-7`).
  */
 const PAPELES = {
   todo: [...ADMIN_CAPABILITIES],
@@ -79,9 +78,10 @@ export default function devSession(session: SessionConfig) {
     toCapabilities: session.toCapabilities,
     noSession: conEntrada,
     claims: {
-      sub: 'fake-1',
-      name: 'Ana Operadora',
-      preferred_username: 'aoperadora',
+      sub: 'fake-operator',
+      operatorId: 'fake-operator',
+      name: 'Operador de desarrollo',
+      scope: '*',
       capabilities: [...PAPELES[papel]],
     },
   })

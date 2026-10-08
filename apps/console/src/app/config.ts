@@ -5,8 +5,7 @@ import { baseSchema, baseUrl, because, mapOf, readConfigWith, type ValueOf } fro
  *
  * Es el piso del marco más lo suyo. Acá lo suyo es **contra qué sistemas
  * habla**: `ope` es obligatorio, así que `config.systems.ope` es un texto y no
- * `string | undefined`. `demo` es el del hola mundo y se va con él en el tramo
- * 5 de la 005.
+ * `string | undefined`.
  *
  * Eso no es comodidad de tipos: sin declararlo, quien lo use termina poniéndole
  * un `?? ''` y **la configuración faltante se descubre en una llamada a una URL
@@ -19,7 +18,7 @@ import { baseSchema, baseUrl, because, mapOf, readConfigWith, type ValueOf } fro
  */
 const schema = {
   ...baseSchema,
-  systems: because(mapOf(baseUrl, ['ope', 'demo']), 'La aplicación no tendría a quién preguntarle'),
+  systems: because(mapOf(baseUrl, ['ope']), 'La aplicación no tendría a quién preguntarle'),
 }
 
 export type Config = ValueOf<typeof schema>

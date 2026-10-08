@@ -156,18 +156,30 @@ en vuelo termine la sesión. **Primero el paquete, después el núcleo, después
 **Meta**: que `apps/console` muestre una colección real de OPE en sus cuatro estados con cursor, y
 que lo que exige una capacidad no se dibuje sin ella. **Se retira el simulado.**
 
-- [ ] T049 [E5] `apps/console/src/api/ope/client.ts`: `getMerchant(merchantId)`, `createMerchant(body)`, `deactivateMerchant(merchantId)`; tipos de `api.d.ts` (`Merchant`, `MerchantCreate`, `MerchantPage`)
-- [ ] T050 [E5] `apps/console/src/features/merchants/` (NUEVO, copiando la forma de `catalog/`): `feature.ts` (desenlace `merchantChosen`), `strings.ts`, `data/merchants.ts` (`useMerchants` con `useCollection`, `useMerchant`, claves de caché `['ope', 'merchants', …]`), `data/create-merchant.ts` y `data/deactivate-merchant.ts` (acciones con `opeOperation`, invalidan `allMerchants`, anuncian con el `merchantId`)
-- [ ] T051 [E5] `apps/console/src/features/merchants/screens/merchants-screen.tsx`: `Table` con `resultOf`, columnas `merchantId`, `status` (`Badge`), `origins`, `createdAt` (formato de fecha de granito), acciones de fila (`useActionColumn`); **sin barra de filtros**, con el comentario de que `listMerchants` no filtra y `filtered` es siempre falso; `useTableQuery('merchants')` para `c` y `row`; `LoadMoreCursor` debajo; el error con «reintentar» que hace `setCursor(undefined)`
-- [ ] T052 [P] [E5] `apps/console/src/features/merchants/screens/merchant-screen.tsx` (ficha por `:merchantId`, con `Result`, muestra credenciales por clase e instante), `new-merchant-dialog.tsx` (`origins` y `signature`, `useForm`, los `errors[]` del `422` van al campo), `row-actions.tsx` y `deactivate-button.tsx` (`ActionButton` con `requires` de la acción)
-- [ ] T053 [E5] `apps/console/src/app/features.ts`, `flows.ts`, `chrome.ts`, `strings.ts`, `manifest.ts`: `merchants` en lugar de `catalog`; `currentBranch` → `currentMerchant` como contexto de trabajo; el nombre de la aplicación es `OPE-Console`; `index.html` con título `OPE-Console` y `lang="es"`
-- [ ] T054 [P] [E5] `apps/console/src/app/dev-session.ts`: papeles `todo`, `lectura`, `ninguno` sobre `CAPABILITIES` del módulo; claims `{ sub: 'fake-operator', operatorId: 'fake-operator', name: 'Operador de desarrollo', scope: '*', capabilities: [...] }`
-- [ ] T055 [E5] Retirar `apps/console/src/features/catalog/`, `apps/console/src/api/demo/`, `apps/console/contracts/demo.yaml`, `tests/mock.mjs`, `tests/roles.mjs`, `tests/constraints.mjs`, `tests/emit.mjs`, `tests/raiz.mjs` (si nadie más lo usa), los scripts `simulado`, `simulado:contrato`, `tipos`, y `@stoplight/prism-cli`; `biome.json` deja de excluir `roles.ts` y `constraints.ts`
-- [ ] T056 [E5] `apps/console/src/features/merchants/data/*.test.ts` y `screens/merchants-screen.test.tsx`: la grilla en sus cuatro estados sobre las fixtures de OPE, «cargar más» escribe `merchants.c`, el botón de alta no se dibuja sin `merchants:write`, el `409` es rechazo y el `403` deja rastro
-- [ ] T057 [E5] Contra el backend real (quickstart, pasos 3 a 7): vacío, alta, con datos, cargar más, enlace con cursor, error con el backend apagado, alcance acotado, `409` y `422`. Anotar lo visto
-- [ ] T058 [E5] `npm run build -w apps/console` y `ope-check artifact`: sin la marca de la falsa
+- [x] T049 [E5] `apps/console/src/api/ope/client.ts`: `getMerchant(merchantId)`, `createMerchant(body)`, `deactivateMerchant(merchantId)`; tipos de `api.d.ts` (`Merchant`, `MerchantCreate`, `MerchantPage`)
+- [x] T050 [E5] `apps/console/src/features/merchants/` (NUEVO, copiando la forma de `catalog/`): `feature.ts` (desenlace `merchantChosen`), `strings.ts`, `data/merchants.ts` (`useMerchants` con `useCollection`, `useMerchant`, claves de caché `['ope', 'merchants', …]`), `data/create-merchant.ts` y `data/deactivate-merchant.ts` (acciones con `opeOperation`, invalidan `allMerchants`, anuncian con el `merchantId`)
+- [x] T051 [E5] `apps/console/src/features/merchants/screens/merchants-screen.tsx`: `Table` con `resultOf`, columnas `merchantId`, `status` (`Badge`), `origins`, `createdAt` (formato de fecha de granito), acciones de fila (`useActionColumn`); **sin barra de filtros**, con el comentario de que `listMerchants` no filtra y `filtered` es siempre falso; `useTableQuery('merchants')` para `c` y `row`; `LoadMoreCursor` debajo; el error con «reintentar» que hace `setCursor(undefined)`
+- [x] T052 [P] [E5] `apps/console/src/features/merchants/screens/merchant-screen.tsx` (ficha por `:merchantId`, con `Result`, muestra credenciales por clase e instante), `new-merchant-dialog.tsx` (`origins` y `signature`, `useForm`, los `errors[]` del `422` van al campo), `row-actions.tsx` y `deactivate-button.tsx` (`ActionButton` con `requires` de la acción)
+- [x] T053 [E5] `apps/console/src/app/features.ts`, `flows.ts`, `chrome.ts`, `strings.ts`, `manifest.ts`: `merchants` en lugar de `catalog`; `currentBranch` → `currentMerchant` como contexto de trabajo; el nombre de la aplicación es `OPE-Console`; `index.html` con título `OPE-Console` y `lang="es"`
+- [x] T054 [P] [E5] `apps/console/src/app/dev-session.ts`: papeles `todo`, `lectura`, `ninguno` sobre `CAPABILITIES` del módulo; claims `{ sub: 'fake-operator', operatorId: 'fake-operator', name: 'Operador de desarrollo', scope: '*', capabilities: [...] }`
+- [x] T055 [E5] Retirar `apps/console/src/features/catalog/`, `apps/console/src/api/demo/`, `apps/console/contracts/demo.yaml`, `tests/mock.mjs`, `tests/roles.mjs`, `tests/constraints.mjs`, `tests/emit.mjs`, `tests/raiz.mjs` (si nadie más lo usa), los scripts `simulado`, `simulado:contrato`, `tipos`, y `@stoplight/prism-cli`; `biome.json` deja de excluir `roles.ts` y `constraints.ts`
+- [x] T056 [E5] `apps/console/src/features/merchants/data/*.test.ts` y `screens/merchants-screen.test.tsx`: la grilla en sus cuatro estados sobre las fixtures de OPE, «cargar más» escribe `merchants.c`, el botón de alta no se dibuja sin `merchants:write`, el `409` es rechazo y el `403` deja rastro
+- [x] T057 [E5] Contra el backend real (quickstart, pasos 3 a 7): vacío, alta, con datos, cargar más, enlace con cursor, error con el backend apagado, alcance acotado, `409` y `422`. Anotar lo visto
+- [x] T058 [E5] `npm run build -w apps/console` y `ope-check artifact`: sin la marca de la falsa
 
 **Punto de control**: escenarios 4, 5, 6 y 7 vistos contra el backend; `npm test` sin simulado. Commit: `feat(005): el hola mundo lista los merchants de OPE con cursor y sus cuatro estados`.
+
+> **Hecho el 2026-10-08.** Desvíos: (1) las pruebas de `apps/` corren contra el **código fuente** de los
+> paquetes (`resolve.alias` en `vitest.config.ts`) y granito se procesa en vez de cargarse como externo
+> (`server.deps.inline`): cargado por Node, su `Table` traía `@tanstack/react-virtual` con **el React de
+> granito** y toda pantalla con tabla moría en `useReducer` de `null`. (2) `useCollection` distingue el
+> cursor que **anotó** del que **le pusieron**: sin eso, anotar el cursor del tramo que llegó re-arrancaba
+> la colección desde ahí y tiraba lo acumulado. (3) Las restricciones del alta (`merchantConstraints`) van
+> escritas a mano con la cita del contrato: el generador de cuarzo se retiró con el simulado y el backend
+> todavía no las emite. (4) El `422 origin-already-registered` del backend llega **sin `errors[]`**: el
+> alta lo muestra como rechazo, no en el campo; pedido a la 040. (5) `merchants-screen.test.tsx` toma
+> `opeService` por `data/merchants.ts` y las pantallas por `merchants.screens`, porque `boundaries` vale
+> también para las pruebas.
 
 ---
 

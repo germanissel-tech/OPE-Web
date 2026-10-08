@@ -1,6 +1,6 @@
 # Una carpeta por funcionalidad
 
-> **`home/` y `catalog/` son el hola mundo, no funcionalidades.** Existen para que el clon arranque
+> **`home/` y `merchants/` son el hola mundo de OPE-Console.** Existen para que la base arranque
 > mostrando algo que anda, y para que la primera pantalla propia se copie de un ejemplo en vez de
 > escribirse de cero.
 >
