@@ -62,7 +62,7 @@ if (!existsSync(LINKED)) {
 }
 
 /** Dónde puede haber un icono propio: lo compartido y lo de la aplicación. */
-const files = ['packages/core/src/**/*.tsx', 'src/**/*.tsx'].flatMap((pattern) =>
+const files = ['packages/core/src/**/*.tsx', 'apps/*/src/**/*.tsx'].flatMap((pattern) =>
   globSync(pattern, { cwd: ROOT }),
 )
 

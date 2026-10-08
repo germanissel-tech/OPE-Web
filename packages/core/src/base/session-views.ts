@@ -1,3 +1,4 @@
+import type { SignInOutcome } from '@ope/session'
 import type { ReactNode } from 'react'
 import type { Strings } from './strings'
 
@@ -32,12 +33,27 @@ export type SessionViewContext = {
    * resolución que no vuelve deja la pantalla en blanco para siempre.
    */
   readonly waitThresholdMs: number
+  /**
+   * Cómo se llama la aplicación, para la marca del marco.
+   *
+   * Las vistas que no dejan ver la aplicación —ingreso, sin permisos,
+   * terminada— se dibujan **adentro del shell de granito** igual que una
+   * pantalla, y el shell necesita saber en qué aplicación está (`GR-12`).
+   */
+  readonly appName: string
   /** Por qué terminó, cuando terminó. */
   readonly endReason: string | undefined
   /** La aplicación, ya montada. Sólo la usan los estados que la dejan ver. */
   readonly application: ReactNode
   /** Volver a entrar, para el diálogo de `CU-9`. */
   readonly reenter: () => void
+  /**
+   * Entrar con una credencial, **cuando el adaptador tiene entrada**.
+   *
+   * `undefined` con uno que entra solo (redirección): la vista de `anonymous`
+   * lo sabe por esto, y dibuja el aviso de «no hay sesión» en vez del ingreso.
+   */
+  readonly signIn: ((credential?: string) => Promise<SignInOutcome>) | undefined
   /**
    * Lo que dice el marco, ya resuelto contra lo que la aplicación reemplazó.
    *

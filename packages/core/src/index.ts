@@ -1,5 +1,5 @@
 /**
- * La superficie pública de `@cuarzo/core`.
+ * La superficie pública de `@ope/core`.
  *
  * **No es un archivo barril de los que prohíbe `CU-15`**: aquéllos re-exportan
  * una carpeta entera con `export *` y rompen el sacudido de árbol. Acá cada
@@ -102,6 +102,7 @@ export {
   useCapabilities,
 } from './base/routes'
 export {
+  baseUrl,
   because,
   type Field,
   mapOf,
@@ -147,15 +148,23 @@ export {
   type Operations,
   operation,
 } from './data/action'
+export { createOpeClient, type OpeClient, type SessionHooks } from './data/client'
+export {
+  type Collection,
+  type CollectionOptions,
+  type CollectionQuery,
+  useCollection,
+} from './data/collection'
 export { type Clash, clashBetween } from './data/conflict'
+export type { ContractModule, OperationRequirement } from './data/contract'
 export {
   type FieldError,
   failedWith,
-  isPaged,
-  type Meta,
-  type Page,
-  type PagedMeta,
+  fieldNameOf,
+  PROBLEM_NAMESPACE,
+  type RejectedField,
   RequestFailed,
+  UNKNOWN_PROBLEM,
   unwrap,
 } from './data/envelope'
 export { failureNotice, isBusinessRejection, successNotice } from './data/notice'
@@ -179,15 +188,16 @@ export {
 export { CannotStart } from './ui/cannot-start'
 export { ConflictDialog, type ConflictDialogProps } from './ui/conflict-dialog'
 export { Frame, type FrameProps } from './ui/frame'
+export { LoadMoreCursor, type LoadMoreCursorProps } from './ui/load-more'
 export { buildMenu } from './ui/menu'
 export { type QueryLike, Result, type ResultProps, type ResultState } from './ui/result'
-export { type GridResult, type GridStates, resultOf } from './ui/result-of'
+export { type GridQuery, type GridResult, type GridStates, resultOf } from './ui/result-of'
 export { ScreenError } from './ui/screen-error'
 export {
   defaultSessionViews,
   Forbidden,
 } from './ui/session-views'
-export { TablePagination } from './ui/table-pagination'
+export { SignIn, type SignInProps } from './ui/sign-in'
 export { useUnsavedWork } from './ui/unsaved-work'
 export { useActionColumn } from './ui/use-action-column'
 export {

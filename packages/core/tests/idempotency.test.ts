@@ -11,8 +11,8 @@ import { attemptKey, forgetAttempt, resolveOperations } from '../src/data/use-ac
  * un segundo cambio legítimo se pierda. Las dos salen bien en pantalla.
  */
 
-const writes = { roles: ['catalog:write'], idempotent: true, versioned: false }
-const reads = { roles: ['catalog:read'], idempotent: false, versioned: false }
+const writes = { capabilities: ['catalog:write'], idempotent: true }
+const reads = { capabilities: ['catalog:read'] }
 
 /* El núcleo no conoce ningún sistema: la prueba arma el suyo. */
 const fake = defineService<{ readonly ping: () => string }>('fake')

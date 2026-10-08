@@ -1,5 +1,5 @@
 import { Failure } from './failure'
-import { because, mapOf, milliseconds, parse, type Shape, text, url, type ValueOf } from './schema'
+import { baseUrl, because, mapOf, milliseconds, parse, type Shape, type ValueOf } from './schema'
 
 /**
  * La configuración se lee **al arrancar**, no se hornea al compilar (`CU-17`).
@@ -26,12 +26,16 @@ import { because, mapOf, milliseconds, parse, type Shape, text, url, type ValueO
  * obligatorio y olvidarse de validarlo: no hay dónde escribirlo dos veces.
  */
 export const baseSchema = {
-  /** El emisor de OIDC. Es configuración y no código — `CU-10`. */
-  issuer: url,
-  /** El client de esta aplicación en el realm. */
-  clientId: text,
-  /** La URL base de cada sistema que la aplicación consume — `CU-22`. */
-  systems: because(mapOf(url), 'La aplicación no tendría a quién preguntarle'),
+  /**
+   * La URL base de cada sistema que la aplicación consume — `CU-22`.
+   *
+   * Absoluta, o **una ruta desde la raíz** (`/api`): la consola habla con su
+   * propio origen y un reenvío la lleva al backend, así que no hay CORS que
+   * pedir. **Nada de ningún proveedor de identidad**: lo que un adaptador
+   * necesita lo recibe el adaptador, tipado como suyo. Y un `config.json`
+   * nunca lleva una credencial: el esquema no tiene dónde ponerla.
+   */
+  systems: because(mapOf(baseUrl), 'La aplicación no tendría a quién preguntarle'),
   /** Cuánto se espera antes de mostrar que se está resolviendo — `CU-9`. */
   waitThresholdMs: milliseconds,
 } satisfies Shape

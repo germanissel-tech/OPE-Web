@@ -26,7 +26,9 @@ export type SessionEvent =
 
 /** Desde qué estados se acepta cada evento. Lo que no está acá, no pasa. */
 const TRANSITIONS: Readonly<Record<SessionEvent['type'], readonly SessionStatus[]>> = {
-  resolved: ['resolving'],
+  /* Desde `anonymous` también: es lo que un ingreso con credencial necesita y
+     lo que la redirección nunca necesitó. `unauthorized` sigue sin salida. */
+  resolved: ['resolving', 'anonymous'],
   'no-session': ['resolving'],
   'renewal-failed': ['active'],
   reenter: ['expiring'],

@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { baseSchema } from '../src/base/config'
-import { mapOf, milliseconds, parse, text, url } from '../src/base/schema'
+import { baseUrl, mapOf, milliseconds, parse, text, url } from '../src/base/schema'
 
 const completa = {
-  issuer: 'http://localhost:8080/realms/siempre',
-  clientId: 'cuarzo-esqueleto',
-  systems: { 'las-animas': 'http://localhost:4010' },
+  systems: { ope: '/api' },
   waitThresholdMs: 60000,
 }
 
@@ -13,27 +11,30 @@ describe('el esquema de configuración', () => {
   it('acepta una configuración completa y devuelve sus valores', () => {
     const read = parse(baseSchema, completa)
     expect(read.ok).toBe(true)
-    if (read.ok) expect(read.value.clientId).toBe('cuarzo-esqueleto')
+    if (read.ok) expect(read.value.systems.ope).toBe('/api')
   })
 
   it('informa TODOS los faltantes de una vez, no el primero', () => {
-    /* Descubrirlos de a uno son cuatro despliegues para enterarse de cuatro
-       cosas. Es la propiedad que `CU-17` compra. */
+    /* Descubrirlos de a uno son dos despliegues para enterarse de dos cosas. Es
+       la propiedad que `CU-17` compra. */
     const read = parse(baseSchema, {})
     expect(read.ok).toBe(false)
-    if (!read.ok) expect(read.missing).toHaveLength(4)
+    if (!read.ok) expect(read.missing).toHaveLength(2)
   })
 
-  it('dice cuál falta, con su nombre', () => {
-    const read = parse(baseSchema, { ...completa, clientId: '' })
-    expect(read.ok).toBe(false)
-    if (!read.ok) expect(read.missing.join()).toMatch(/clientId/)
+  it('no tiene dónde poner un emisor, un client ni una credencial', () => {
+    /* Lo que un adaptador necesita lo recibe el adaptador; y un `config.json`
+       con un token adentro sería una puerta trasera. El esquema no los conoce,
+       así que llegan y se ignoran: no hay valor que leer de ahí. */
+    expect('issuer' in baseSchema).toBe(false)
+    expect('clientId' in baseSchema).toBe(false)
+    expect(Object.keys(baseSchema).some((key) => /token|credential/i.test(key))).toBe(false)
   })
 
   it('señala la entrada exacta de un mapa, no el mapa entero', () => {
     const read = parse(baseSchema, {
       ...completa,
-      systems: { 'las-animas': 'http://localhost:4010', centinela: 'no-es-una-url' },
+      systems: { ope: '/api', centinela: 'no-es-una-url' },
     })
     expect(read.ok).toBe(false)
     if (!read.ok) expect(read.missing.join()).toMatch(/systems\.centinela/)
@@ -56,6 +57,19 @@ describe('los campos', () => {
        Sin exigir http o https, el error de tipeo más común pasa entero. */
     expect(url('localhost:4010', 'x').ok).toBe(false)
     expect(url('http://localhost:4010', 'x').ok).toBe(true)
+  })
+
+  it('la base de un sistema es una URL absoluta o una ruta desde la raíz', () => {
+    expect(baseUrl('http://localhost:3000', 'x').ok).toBe(true)
+    expect(baseUrl('/api', 'x')).toEqual({ ok: true, value: '/api' })
+    /* La barra final se saca: `/api/` más `/v1/...` daría `/api//v1/...`. */
+    expect(baseUrl('/api/', 'x')).toEqual({ ok: true, value: '/api' })
+  })
+
+  it('pero no una ruta relativa, que se resolvería contra la pantalla actual', () => {
+    expect(baseUrl('api', 'x').ok).toBe(false)
+    expect(baseUrl('//otro.host/api', 'x').ok).toBe(false)
+    expect(baseUrl('', 'x').ok).toBe(false)
   })
 
   it('un umbral tiene que ser un número positivo', () => {

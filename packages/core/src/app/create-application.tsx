@@ -7,7 +7,7 @@ import type { ApplicationManifest, UserMenuEntry } from '../base/manifest'
 import { createRegistry } from '../base/registry'
 import { AuthorizationProvider, buildRoutes, useCapabilities } from '../base/routes'
 import type { NavigationPort } from '../base/services'
-import type { SessionStatusName, SessionViews } from '../base/session-views'
+import type { SessionStatusName, SessionViewContext, SessionViews } from '../base/session-views'
 import { type OutcomePort, OutcomeProvider } from '../base/use-outcome'
 import { useStrings } from '../base/use-strings'
 import { verifyFlows } from '../base/verify-flows'
@@ -216,7 +216,7 @@ export function createApplication(manifest: ApplicationManifest, chrome: Chrome)
 
   const views: SessionViews = { ...defaultSessionViews, ...manifest.sessionViews }
 
-  return { screens, router, navigation, outcome, views, forbidden, wiring }
+  return { name: manifest.name, screens, router, navigation, outcome, views, forbidden, wiring }
 }
 
 export type Application = ReturnType<typeof createApplication>
@@ -233,6 +233,7 @@ export function ApplicationView({
   capabilities,
   endReason,
   reenter,
+  signIn,
   userCaption,
   waitThresholdMs,
 }: {
@@ -241,6 +242,7 @@ export function ApplicationView({
   readonly capabilities: ReadonlySet<string>
   readonly endReason: string | undefined
   readonly reenter: () => void
+  readonly signIn: SessionViewContext['signIn']
   readonly userCaption: string | undefined
   readonly waitThresholdMs: number
 }) {
@@ -254,8 +256,10 @@ export function ApplicationView({
           <OutcomeProvider value={application.outcome}>
             <AuthorizationProvider capabilities={capabilities} forbidden={application.forbidden}>
               {view({
+                appName: application.name,
                 endReason,
                 reenter,
+                signIn,
                 waitThresholdMs,
                 strings,
                 application: <RouterProvider router={application.router} />,

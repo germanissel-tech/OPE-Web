@@ -15,7 +15,7 @@
  * Lo que producía es lo peor de esta familia de fallas: **acá andaba todo**.
  * `npm run dev`, `npm test` y `npm run build` pasaban, porque los archivos
  * estaban. Recién se rompía en la copia de otro —`vite.config.ts` empieza
- * importando `@cuarzo/core/build`—, o sea **lejos de la causa y en la máquina
+ * importando `@ope/core/build`—, o sea **lejos de la causa y en la máquina
  * equivocada**.
  *
  * Por eso mira las dos cosas y no una: que el archivo **esté**, y que git lo
@@ -196,7 +196,13 @@ for (const name of readdirSync(PACKAGES)) {
     for (const [cumple, que, porque] of REQUISITOS) {
       if (!cumple(manifest)) identity.push([`${manifest.name} ${que}`, porque])
     }
+  }
 
+  /* **Los tipos se revisan en todos, privados incluidos.** Un workspace que una
+     aplicación consume enlazado tiene exactamente el problema de abajo: sus
+     tipos resuelven desde la ruta real, y lo que nombren sin declarar lo
+     resuelve otro. */
+  {
     const declarados = new Set([
       ...Object.keys(manifest.dependencies ?? {}),
       ...Object.keys(manifest.peerDependencies ?? {}),
@@ -241,7 +247,7 @@ for (const name of readdirSync(PACKAGES)) {
    * conoce los nombres de la salida ajena perdona de más el día que aparece un
    * tercero, y lo perdona **en silencio**.
    */
-  const generated = manifest.cuarzo?.generated ?? []
+  const generated = manifest.ope?.generated ?? []
 
   /** De qué carpeta generada sale esa ruta, si sale de alguna. */
   const outputOf = (named) =>
@@ -322,23 +328,23 @@ console.log(
  * leer sus aprobados: con todo marcado `private`, ésta aprobaría sin haber
  * mirado un solo manifiesto.
  */
-if (publicables === 0) {
+if (publicables + privados === 0) {
   console.log(
-    '  FALLA  no hay ningún paquete publicable, y esta comprobación existe para revisarlos',
+    '  FALLA  no hay ningún paquete en packages/, y esta comprobación existe para revisarlos',
   )
-  console.log(
-    '         si dejaron de publicarse, sacala; si no, algo se marcó `private` sin querer',
-  )
+  console.log('         si dejaron de existir, sacala; si no, algo se movió de lugar')
   console.log('')
   process.exit(1)
 }
 
-const cuantos =
-  publicables === 1
-    ? '1 paquete publicable declara'
-    : `${publicables} paquetes publicables declaran`
+if (publicables > 0) {
+  const cuantos =
+    publicables === 1
+      ? '1 paquete publicable declara'
+      : `${publicables} paquetes publicables declaran`
 
-console.log(`  ok     ${cuantos} licencia, repositorio, versión y peers acotados`)
+  console.log(`  ok     ${cuantos} licencia, repositorio, versión y peers acotados`)
+}
 
 /* **Cuántos archivos de tipos se leyeron, y no sólo que no hubo fallas.** Con
    los paquetes sin compilar no hay ninguno, y un «ok» sobre cero archivos se

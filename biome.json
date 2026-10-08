@@ -7,14 +7,13 @@
   },
   "files": {
     "includes": [
-      "src/**",
+      "apps/**",
       "packages/**",
       "tests/**",
+      "scripts/**",
       "*.ts",
       "*.json",
-      "!src/api/*/types.ts",
-      "!src/api/*/roles.ts",
-      "!src/api/*/constraints.ts"
+      "!contracts/ope"
     ]
   },
   "formatter": {

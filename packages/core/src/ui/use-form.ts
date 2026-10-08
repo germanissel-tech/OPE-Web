@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNotices } from '../base/notices'
 import { useStrings } from '../base/use-strings'
-import type { FieldError } from '../data/envelope'
+import type { RejectedField } from '../data/envelope'
 
 /**
  * **Cuándo se marca un campo, y las dos capas que se validan acá** (`CU-38`).
@@ -125,8 +125,11 @@ export function useForm<Values extends Readonly<Record<string, string>>>(
   initial: Values,
   constraints: MessageConstraints,
   strings: ShapeStrings,
-  /** Lo que el servidor rechazó. Se muestra igual que lo local (`CU-25`, `CU-5`). */
-  fromServer: readonly FieldError[] = [],
+  /**
+   * Lo que el servidor rechazó, **ya traducido a nombres de campo** por la
+   * puerta (`fieldNameOf`). Se muestra igual que lo local (`CU-25`, `CU-5`).
+   */
+  fromServer: readonly RejectedField[] = [],
 ): Form<Values> {
   const [values, setValues] = useState(initial)
   const [marked, setMarked] = useState<ReadonlySet<string>>(new Set())

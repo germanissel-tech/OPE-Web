@@ -19,9 +19,20 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 
-import { ROOT } from './context.mjs'
+import { apps, ROOT } from './context.mjs'
 
-const SRC = join(ROOT, 'src')
+/**
+ * El `src/` de cada aplicación declarada. Las reglas de abajo valen **adentro
+ * de cada una**: lo que una aplicación comparte con otra pasa por `packages/`,
+ * nunca por una importación relativa que cruce de `apps/x` a `apps/y`.
+ */
+const APP_ROOTS = apps.map((app) => join(ROOT, ...app.split('/'), 'src'))
+
+/** A qué aplicación pertenece un archivo, o `undefined` si a ninguna. */
+const rootOf = (path) => APP_ROOTS.find((root) => path.startsWith(root + sep) || path === root)
+
+const CONTRACT_ARTIFACT = join(ROOT, 'contracts', 'ope')
+const isContractArtifact = (path) => path.startsWith(CONTRACT_ARTIFACT + sep)
 
 /**
  * Quién puede importar a quién. `lib` y `components` alimentan a `features`,
@@ -59,7 +70,9 @@ function filesIn(dir, pattern = /\.(ts|tsx)$/) {
 
 /** La zona y, si corresponde, la funcionalidad y si está en `data/`. */
 function locate(path) {
-  const parts = relative(SRC, path).split(sep)
+  const root = rootOf(path)
+  if (!root) return { zone: undefined }
+  const parts = relative(root, path).split(sep)
   const zone = parts[0]
   if (zone !== 'features') return { zone }
   return {
@@ -75,12 +88,14 @@ function importsIn(text) {
   return [...text.matchAll(pattern)].map((m) => m[1])
 }
 
-if (!existsSync(SRC)) {
-  console.error('No encuentro src/. ¿Se corrió desde la raíz del repositorio?')
-  process.exit(1)
+for (const root of APP_ROOTS) {
+  if (!existsSync(root)) {
+    console.error(`No encuentro ${relative(ROOT, root)}. ¿Se corrió desde la raíz del repositorio?`)
+    process.exit(1)
+  }
 }
 
-const allFiles = filesIn(SRC)
+const allFiles = APP_ROOTS.flatMap((root) => filesIn(root))
 let checkedCount = 0
 
 for (const file of allFiles) {
@@ -97,8 +112,20 @@ for (const file of allFiles) {
   for (const specifier of importsIn(text)) {
     checkedCount++
     const target = resolve(dirname(file), specifier)
-    if (!target.startsWith(SRC)) {
-      fail('Importa fuera de src/', `${shortPath}  ->  ${specifier}`)
+
+    /* **El artefacto del contrato es la única salida de `src/`, y sólo `api/`
+       la toma.** `contracts/ope/` lo deja `contract:sync` y es de las dos
+       aplicaciones; vive en la raíz porque no es de ninguna. Una pantalla que lo
+       importe directo se saltea el servicio, que es donde la sesión se cose. */
+    if (isContractArtifact(target)) {
+      if (from.zone !== 'api') {
+        fail('Sólo api/ lee contracts/ope/', `${shortPath}  ->  ${specifier}`)
+      }
+      continue
+    }
+
+    if (rootOf(target) !== rootOf(file)) {
+      fail('Importa fuera del src/ de su aplicación', `${shortPath}  ->  ${specifier}`)
       continue
     }
 
@@ -161,7 +188,11 @@ for (const file of allFiles) {
  * de estilos sin revisar a nadie. Que falten las de `packages/` con `packages/`
  * ahí también lo es. Que falten sin `packages/` es, simplemente, un clon.
  */
-const STYLE_ROOTS = ['src', 'packages/core/src', 'packages/session/src']
+const STYLE_ROOTS = [
+  ...apps.map((app) => `${app}/src`),
+  'packages/core/src',
+  'packages/session/src',
+]
 
 const PUBLICA = existsSync(join(ROOT, 'packages'))
 
@@ -364,20 +395,22 @@ if (failures.length > 0) {
   process.exit(1)
 }
 
-console.log(`  ok     ${allFiles.length} archivos de src/, ${checkedCount} importaciones internas`)
+console.log(
+  `  ok     ${allFiles.length} archivos en ${apps.length === 1 ? '1 aplicación' : `${apps.length} aplicaciones`}, ${checkedCount} importaciones internas`,
+)
 console.log('  ok     lib y components -> features -> app, y nunca al revés')
 console.log('  ok     sólo features/<x>/data/ toca api/')
 /* **Se dice dónde se miró, no sólo cuánto.** Un clon revisa una carpeta y
    cuarzo tres; con el mismo texto, el informe del clon parecería cubrir lo que
    no cubre — y eso es cómo se lee un «ok» que no corresponde. */
 console.log(
-  `  ok     ${styled} archivos sin un estilo propio ni una hoja, en ${PUBLICA ? 'src/ y en lo que el paquete publica' : 'src/ — este repositorio no publica paquetes'}`,
+  `  ok     ${styled} archivos sin un estilo propio ni una hoja, en ${PUBLICA ? 'las aplicaciones y en lo que el paquete publica' : 'las aplicaciones — este repositorio no publica paquetes'}`,
 )
 console.log(
   `  ok     ${screensAsOrigin} pantallas revisadas: sólo feature.ts y app/flows.ts las nombran`,
 )
 console.log(
-  `  ok     ${colocated === 1 ? '1 prueba' : `${colocated} pruebas`} de src/, al lado de lo que prueba`,
+  `  ok     ${colocated === 1 ? '1 prueba' : `${colocated} pruebas`} de las aplicaciones, al lado de lo que prueba`,
 )
 if (PUBLICA) {
   console.log(`  ok     ${layered} importaciones del paquete: ui -> data -> base, y nunca al revés`)

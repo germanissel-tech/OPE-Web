@@ -1,5 +1,5 @@
-import { useSession, useSessionControl } from '@cuarzo/session'
 import { Identity, Menu, type MenuOption } from '@granito/ui'
+import { useSession, useSessionControl } from '@ope/session'
 import { useRef, useState } from 'react'
 import type { UserMenuEntry } from '../base/manifest'
 import { usePreferences } from '../base/use-preferences'

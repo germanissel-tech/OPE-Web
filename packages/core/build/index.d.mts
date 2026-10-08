@@ -5,7 +5,7 @@
  * de `package.json` y el commit corto. Sin repositorio lo dice —`+sin-commit`—
  * en vez de mentir con una versión que parece precisa.
  *
- * Define `__CUARZO_BUILD__`, que es lo que se le pasa a `bootstrapApplication`.
+ * Define `__OPE_BUILD__`, que es lo que se le pasa a `bootstrapApplication`.
  *
  * ## Por qué el tipo se declara acá y no se importa de vite
  *
@@ -35,8 +35,8 @@
  * compilación**, y un paquete que no lo declara le pide a npm que resuelva algo
  * que nadie pidió.
  */
-export declare function cuarzoBuild(): {
-  readonly name: 'cuarzo-build'
+export declare function opeBuild(): {
+  readonly name: 'ope-build'
   config(
     config: unknown,
     env: { readonly command: 'build' | 'serve' },

@@ -1,8 +1,0 @@
-{
-  "issuer": "http://localhost:8080/realms/siempre",
-  "clientId": "cuarzo-esqueleto",
-  "systems": {
-    "demo": "http://localhost:4010"
-  },
-  "waitThresholdMs": 60000
-}

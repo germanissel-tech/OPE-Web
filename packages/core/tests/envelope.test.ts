@@ -1,141 +1,162 @@
 import { describe, expect, it } from 'vitest'
-import { failedWith, RequestFailed, unwrap } from '../src/data/envelope'
+import { failedWith, fieldNameOf, RequestFailed, unwrap } from '../src/data/envelope'
+import {
+  cutByProxy,
+  failing,
+  lastMerchantPage,
+  type MerchantPage,
+  merchantPage,
+  problems,
+  succeeding,
+} from './fixtures/ope/responses'
 
-const conEncabezado = (id: string) =>
-  new Response(null, { headers: { 'X-Request-Id': id }, status: 200 })
+/**
+ * **El núcleo lee lo que OPE responde** (`CU-14`): cuerpos pelados y Problem
+ * Details. Las respuestas son las que el contrato ejemplifica, no un sobre
+ * inventado.
+ */
 
-describe('el sobre', () => {
-  it('devuelve los datos y conserva el identificador del pedido', () => {
-    const page = unwrap<{ id: number }[]>({
-      data: { data: [{ id: 3 }], meta: { requestId: '01JBQ', page: 1, totalPages: 4 } },
-      response: conEncabezado('otro'),
-    })
+const caught = (attempt: () => unknown): RequestFailed => {
+  try {
+    attempt()
+  } catch (error) {
+    if (error instanceof RequestFailed) return error
+    throw error
+  }
+  throw new Error('no tiró')
+}
 
-    expect(page.data).toEqual([{ id: 3 }])
-    expect(page.meta.requestId).toBe('01JBQ')
-    expect(page.meta.totalPages).toBe(4)
+describe('un cuerpo pelado', () => {
+  it('llega entero, tal como el contrato lo responde', () => {
+    /* Sin sobre: un `MerchantPage` es `{ items, nextCursor? }` y nada alrededor. */
+    const page = unwrap<MerchantPage>(succeeding(merchantPage))
+
+    expect(page).toEqual(merchantPage)
+    expect(page.items[0]?.merchantId).toBe('mrc_7f3k5d2q4m6x')
+    expect(page.nextCursor).toBeDefined()
   })
 
-  it('cae al encabezado cuando el cuerpo no trae el identificador', () => {
-    /* El contrato manda `X-Request-Id` en toda respuesta, incluidas las que un
-       intermediario corta antes de que el servidor arme un cuerpo — que son
-       justo las más difíciles de diagnosticar. */
-    const page = unwrap<number[]>({
-      data: { data: [1], meta: {} },
-      response: conEncabezado('01DESDE-EL-HEADER'),
-    })
+  it('el último tramo no trae cursor, y eso es lo que dice que no hay más', () => {
+    const page = unwrap<MerchantPage>(succeeding(lastMerchantPage))
 
-    expect(page.meta.requestId).toBe('01DESDE-EL-HEADER')
+    expect('nextCursor' in page).toBe(false)
   })
 
-  it('convierte el error del servidor en algo con código, no en un texto', () => {
-    /* `CU-14`: se ramifica por `code`, nunca por `message`, que es castellano
-       para una persona y puede cambiar sin ser un cambio de contrato. */
-    let caught: unknown
-    try {
-      unwrap({
-        error: {
-          error: {
-            code: 'CATALOG_ENTRY_DUPLICATE',
-            message: 'Ya existe un banco con ese nombre',
-            requestId: '01JBQ',
-          },
-        },
-        response: new Response(null, { status: 409 }),
-      })
-    } catch (error) {
-      caught = error
-    }
-
-    expect(failedWith(caught, 'CATALOG_ENTRY_DUPLICATE')).toBe(true)
-    expect((caught as RequestFailed).status).toBe(409)
-    expect((caught as RequestFailed).requestId).toBe('01JBQ')
-  })
-
-  it('lleva los campos rechazados, para marcarlos', () => {
-    let caught: unknown
-    try {
-      unwrap({
-        error: {
-          error: {
-            code: 'VALIDATION_FAILED',
-            message: 'Falta el nombre',
-            requestId: '01JBQ',
-            fields: [{ field: 'name', code: 'REQUIRED', message: 'Es obligatorio' }],
-          },
-        },
-        response: new Response(null, { status: 422 }),
-      })
-    } catch (error) {
-      caught = error
-    }
-
-    expect((caught as RequestFailed).fields[0]?.field).toBe('name')
-  })
-
-  it('no deja pasar una respuesta sin sobre', () => {
-    /* Sin esto, un backend que responda el arreglo pelado daría `undefined` en
-       la grilla y el defecto aparecería lejos de acá. */
-    expect(() => unwrap({ data: [1, 2, 3], response: conEncabezado('01JBQ') })).toThrow(
-      RequestFailed,
-    )
+  it('un 204 devuelve nada, que es lo que su tipo dice', () => {
+    /* `openapi-fetch` entrega `{}` en un `204`; `{}` como «el recurso» sería un
+       objeto vacío que ninguna pantalla espera. */
+    expect(unwrap<undefined>(succeeding({}, 204))).toBeUndefined()
   })
 })
 
-describe('el testigo del recurso', () => {
-  const conTestigo = (etag: string) =>
-    new Response(null, { headers: { 'X-Request-Id': '01JBQ', ETag: etag }, status: 200 })
+describe('un problema del servidor', () => {
+  it('se ramifica por su tipo, sin el espacio de nombres', () => {
+    /* `CU-14`: nunca por `detail`, que es texto para una persona. El slug es lo
+       estable, y `urn:ope:problem:` no aporta nada al ramificar. */
+    const failed = caught(() => unwrap(failing(problems.originAlreadyRegistered)))
 
-  it('llega a meta, tal cual vino', () => {
-    /* **Opaco**: no se interpreta ni se normaliza. Las comillas son parte del
-       valor que el servidor emitió, y es lo que hay que devolverle. */
-    const page = unwrap<{ id: number }>({
-      data: { data: { id: 3 }, meta: { requestId: '01JBQ' } },
-      response: conTestigo('"7"'),
-    })
-
-    expect(page.meta.version).toBe('"7"')
+    expect(failedWith(failed, 'origin-already-registered')).toBe(true)
+    expect(failed.type).toBe('origin-already-registered')
+    expect(failed.status).toBe(422)
   })
 
-  it('y si no vino, la clave no está', () => {
-    /* No es lo mismo «no hay testigo» que «se consultó y no está». Una lista no
-       lo trae porque no le corresponde: con `version: undefined` el sobre diría
-       que sí le corresponde y falta, que es otra cosa. */
-    const page = unwrap<number[]>({
-      data: { data: [1, 2, 3], meta: { requestId: '01JBQ' } },
-      response: conEncabezado('01JBQ'),
-    })
-
-    expect('version' in page.meta).toBe(false)
+  it('cada tipo del catálogo llega como tal', () => {
+    for (const [name, slug, status] of [
+      ['validationFailed', 'validation-failed', 400],
+      ['operatorUnknown', 'operator-unknown', 401],
+      ['merchantOutOfScope', 'merchant-out-of-scope', 403],
+      ['merchantDeactivated', 'merchant-deactivated', 409],
+    ] as const) {
+      const failed = caught(() => unwrap(failing(problems[name])))
+      expect(failed.type).toBe(slug)
+      expect(failed.status).toBe(status)
+    }
   })
 
-  it('el cuerpo no lo pisa: sale del encabezado o no sale', () => {
-    /* Al revés que el identificador del pedido, que admite que el cuerpo lo diga
-       mejor. El testigo no tiene cuerpo donde decirse — es del transporte. */
-    const page = unwrap<{ id: number }>({
-      data: { data: { id: 3 }, meta: { requestId: '01JBQ', version: '"mentira"' } },
-      response: conTestigo('"7"'),
-    })
+  it('el mensaje es el detalle, o el título cuando no hay detalle', () => {
+    const withDetail = caught(() => unwrap(failing(problems.originAlreadyRegistered)))
+    const titleOnly = caught(() => unwrap(failing(problems.merchantDeactivated)))
 
-    expect(page.meta.version).toBe('"7"')
+    expect(withDetail.message).toBe('An origin already belongs to another merchant.')
+    expect(titleOnly.message).toBe('The merchant is deactivated')
+    expect(titleOnly.detail).toBeUndefined()
   })
 
-  it('y sin encabezado tampoco: lo del cuerpo no se hereda', () => {
-    /**
-     * **La mitad que faltaba.** La otra prueba sólo cubría el caso con
-     * encabezado, donde el orden del `...` alcanza para pisar — y el orden sólo
-     * decide cuando los dos están.
-     *
-     * Sin encabezado no había con qué pisar y el `version` del cuerpo pasaba
-     * entero. Un servidor que lo repita en el sobre le daría a la pantalla un
-     * testigo que el transporte nunca confirmó, y ése es el que saldría como
-     * `If-Match`: la garantía decía una cosa y lo verificado era otra.
-     */
-    const page = unwrap<{ id: number }>({
-      data: { data: { id: 3 }, meta: { requestId: '01JBQ', version: '"mentira"' } },
-      response: conEncabezado('01JBQ'),
-    })
+  it('lleva las violaciones con su puntero, para llevarlas a donde corresponda', () => {
+    const failed = caught(() => unwrap(failing(problems.originAlreadyRegistered)))
 
-    expect('version' in page.meta).toBe(false)
+    expect(failed.errors).toEqual([
+      { pointer: '/body/origins/0', message: 'An origin already belongs to another merchant.' },
+    ])
+  })
+})
+
+describe('el identificador del pedido', () => {
+  it('falta cuando falta, y no se inventa', () => {
+    /* Hoy OPE no lo manda; lo agrega su feature 040. Un texto que parezca un
+       identificador se citaría como si sirviera. */
+    const failed = caught(() => unwrap(failing(problems.merchantOutOfScope)))
+
+    expect(failed.requestId).toBeUndefined()
+  })
+
+  it('sale del encabezado cuando viene', () => {
+    const failed = caught(() =>
+      unwrap(failing(problems.merchantOutOfScope, { 'X-Request-Id': '01JBQ' })),
+    )
+
+    expect(failed.requestId).toBe('01JBQ')
+  })
+
+  it('y del cuerpo, cuando el problema lo traiga', () => {
+    /* La forma que la 040 va a agregar: el miembro `requestId` del problema
+       dice más que el encabezado, porque sobrevive a que alguien copie el JSON. */
+    const failed = caught(() =>
+      unwrap({
+        error: { ...problems.merchantOutOfScope.body, requestId: '01DEL-CUERPO' },
+        response: new Response(null, { status: 403, headers: { 'X-Request-Id': '01DEL-HEADER' } }),
+      }),
+    )
+
+    expect(failed.requestId).toBe('01DEL-CUERPO')
+  })
+})
+
+describe('un intermediario que cortó antes', () => {
+  it('sigue siendo una falla con tipo, estado y lo que haya de identificador', () => {
+    /* Un `502` con HTML no es un Problem Details. La pantalla igual tiene que
+       poder decir «no se pudo» con lo que haya. */
+    const failed = caught(() => unwrap(cutByProxy({ 'X-Request-Id': '01DEL-PROXY' })))
+
+    expect(failed.type).toBe('unknown')
+    expect(failed.status).toBe(502)
+    expect(failed.title).toBe('HTTP 502')
+    expect(failed.requestId).toBe('01DEL-PROXY')
+    expect(failed.errors).toEqual([])
+  })
+
+  it('y sin encabezado, sin identificador', () => {
+    expect(caught(() => unwrap(cutByProxy())).requestId).toBeUndefined()
+  })
+})
+
+describe('de qué campo habla un puntero', () => {
+  it('traduce los del cuerpo a nombres de campo', () => {
+    expect(fieldNameOf('/body/origins/0')).toBe('origins.0')
+    expect(fieldNameOf('/body/signature')).toBe('signature')
+    expect(fieldNameOf('/body/a/b/c')).toBe('a.b.c')
+  })
+
+  it('rechaza los que no son del cuerpo: no hay control donde dibujarlos', () => {
+    /* Un cursor viejo en `/query` no lo escribió el operador en ningún campo. */
+    expect(fieldNameOf('/query/cursor')).toBeUndefined()
+    expect(fieldNameOf('/headers/x-ope-signature')).toBeUndefined()
+    expect(fieldNameOf('/body')).toBeUndefined()
+    expect(fieldNameOf('/body/')).toBeUndefined()
+    expect(fieldNameOf('origins/0')).toBeUndefined()
+  })
+
+  it('deshace el escape de JSON Pointer', () => {
+    expect(fieldNameOf('/body/a~1b/c~0d')).toBe('a/b.c~d')
   })
 })

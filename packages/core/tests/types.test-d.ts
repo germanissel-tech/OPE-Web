@@ -14,10 +14,12 @@ import { closes, defineFlow, finishes, opens } from '../src/base/flow'
 import { outcome } from '../src/base/outcome'
 import { defineService } from '../src/data/service'
 import {
+  type ContractModule,
   defineAction,
   defineScreen,
   type GridStates,
   type NavigationPort,
+  type OperationRequirement,
   operation,
   type ResultProps,
   type Screen,
@@ -160,7 +162,7 @@ const sistema = defineService<{ readonly ping: () => string }>('fake')
 const crear = operation(
   'createArticle',
   sistema,
-  { roles: ['catalog:write'], idempotent: false, versioned: false },
+  { capabilities: ['catalog:write'] },
   async (_service, body: { name: string }) => body,
 )
 
@@ -176,6 +178,40 @@ defineAction({
   // @ts-expect-error — `borrar` no está declarada, así que no la tiene
   run: (input: { name: string }, ops) => ops.borrar.run(input),
 })
+
+/**
+ * **Una exigencia se escribe contra el vocabulario del módulo, y un typo no
+ * compila** (`TAN-7`, `CU-37`).
+ *
+ * El núcleo no sabe qué es `catalog:read`: sabe que `Capability` es lo que el
+ * módulo del consumidor lista. Acá el vocabulario es de mentira; el de verdad
+ * se prueba al lado de `api/ope/` en cada aplicación, con su módulo.
+ */
+type Vocabulary = 'catalog:read' | 'catalog:write'
+
+const exige: OperationRequirement<Vocabulary> = {
+  capabilities: ['catalog:read'],
+  idempotent: false,
+}
+void exige
+
+const conTypo: OperationRequirement<Vocabulary> = {
+  // @ts-expect-error — `catalog:reed` no está en el vocabulario
+  capabilities: ['catalog:reed'],
+  idempotent: false,
+}
+void conTypo
+
+/* Y el módulo entero tiene una forma, que es lo que `conformity` espera encontrar. */
+const modulo = {
+  CONTRACT: { version: '1.0.0', sha256: 'abc' },
+  CONSUMER: 'admin',
+  CAPABILITIES: ['catalog:read', 'catalog:write'],
+  OPERATIONS: { listArticles: { capabilities: ['catalog:read'], idempotent: false } },
+} as const
+
+const conForma: ContractModule<typeof modulo.OPERATIONS, Vocabulary> = modulo
+void conForma
 
 /* ── Los pasos de un flujo (`CU-47`) ─────────────────────────────────────── */
 

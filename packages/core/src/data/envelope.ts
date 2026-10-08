@@ -1,16 +1,40 @@
 /**
- * **El sobre se abre en un solo lugar** (`CU-14`).
+ * **La respuesta se lee en un solo lugar** (`CU-14`).
  *
- * Todo contrato de Tandilia responde `{ data, meta }`, y `meta.requestId` es el
- * dato que un operador cita para pedir ayuda. Si cada pantalla desenvolviera lo
- * suyo, el identificador se perdería en la mayoría — y se nota recién el día que
- * alguien llama para reportar un problema.
+ * OPE responde el recurso **pelado** —un `MerchantPage` es `{ items, nextCursor? }`
+ * y nada alrededor— y, cuando no puede, un **Problem Details** (RFC 9457) con
+ * `application/problem+json`. Si cada pantalla leyera lo suyo, el tipo del
+ * problema se compararía por su texto en alguna y el identificador del pedido se
+ * perdería en la mayoría — y se nota recién el día que alguien llama para pedir
+ * ayuda.
  */
 
-/** Un campo que el servidor rechazó, para llevarlo al campo que lo pidió. */
+/** El espacio de nombres de todo `type` del catálogo de OPE. Se recorta al leer. */
+export const PROBLEM_NAMESPACE = 'urn:ope:problem:'
+
+/** Lo que `type` vale cuando el servidor no llegó a armar un problema. */
+export const UNKNOWN_PROBLEM = 'unknown'
+
+/**
+ * Una violación del contrato, tal como el servidor la señala.
+ *
+ * `pointer` es un JSON Pointer **relativo al pedido**: `/body/origins/0`,
+ * `/query/cursor`, `/headers/x`. Sólo los del cuerpo son de un campo del
+ * formulario; `fieldNameOf` es quien lo sabe.
+ */
 export type FieldError = {
+  readonly pointer: string
+  readonly message: string
+}
+
+/**
+ * Lo mismo, **ya traducido a un campo del formulario**.
+ *
+ * Es lo que la puerta le da a `useForm`: el formulario sabe qué control
+ * corresponde a cada nombre, y no tiene por qué saber la forma de un puntero.
+ */
+export type RejectedField = {
   readonly field: string
-  readonly code: string
   readonly message: string
 }
 
@@ -18,179 +42,138 @@ export type FieldError = {
  * Lo que respondió el servidor cuando no pudo.
  *
  * **No es una `Failure`** (`CU-45`): aquéllas son defectos nuestros —una
- * declaración mal hecha, un puerto sin proveedor—. Un `409` porque el nombre
- * está repetido es una respuesta esperada del negocio, y una pantalla la
+ * declaración mal hecha, un puerto sin proveedor—. Un `422` porque un origen ya
+ * es de otro merchant es una respuesta esperada del negocio, y una pantalla la
  * muestra en vez de romperse.
  */
 export class RequestFailed extends Error {
-  constructor(
-    /** El de HTTP. Decide si tiene sentido reintentar (`CU-9`). */
-    readonly status: number,
-    /**
-     * **Sobre esto se ramifica, nunca sobre el mensaje** (`CU-14`). Es un enum
-     * cerrado del contrato; el mensaje es castellano para una persona y puede
-     * cambiar sin que eso sea un cambio de contrato.
-     */
-    readonly code: string,
-    /** Lo que el operador cita para pedir ayuda (`CU-25`). */
-    readonly requestId: string,
-    message: string,
-    /** Presente sólo en errores de validación. Va a los campos (`CU-38`). */
-    readonly fields: readonly FieldError[] = [],
-  ) {
-    super(message)
+  /** El de HTTP. Decide si tiene sentido reintentar (`CU-9`). */
+  readonly status: number
+  /**
+   * **Sobre esto se ramifica, nunca sobre `detail`** (`CU-14`). Es el slug del
+   * catálogo de problemas, sin `urn:ope:problem:`: `merchant-out-of-scope`.
+   * `detail` es texto para una persona y cambia sin que eso sea un cambio de
+   * contrato.
+   */
+  readonly type: string
+  /** Fijo por tipo de problema. */
+  readonly title: string
+  /** De esta ocurrencia, si el servidor lo escribió. */
+  readonly detail: string | undefined
+  /**
+   * Lo que el operador cita para pedir ayuda (`CU-25`).
+   *
+   * **Opcional, y nunca inventado.** Sale del encabezado `X-Request-Id` o del
+   * miembro `requestId` del problema, que OPE agrega en su feature 040. Hasta
+   * entonces falta, y que falte **se muestra** (`strings.noRequestId`) en vez
+   * de rellenarse con un texto que parece un identificador.
+   */
+  readonly requestId: string | undefined
+  /** Presente sólo en `400` y `422`. Va a los campos, o al aviso (`CU-38`). */
+  readonly errors: readonly FieldError[]
+
+  constructor(problem: {
+    readonly status: number
+    readonly type: string
+    readonly title: string
+    readonly detail?: string
+    readonly requestId?: string
+    readonly errors?: readonly FieldError[]
+  }) {
+    /* El mensaje del `Error` es lo que se muestra: el detalle de esta ocurrencia,
+       o el título del tipo si el servidor no escribió uno. */
+    super(problem.detail ?? problem.title)
     this.name = 'RequestFailed'
+    this.status = problem.status
+    this.type = problem.type
+    this.title = problem.title
+    this.detail = problem.detail
+    this.requestId = problem.requestId
+    this.errors = problem.errors ?? []
   }
 }
 
-/** Si una falla vino del servidor, y con qué código. Para tratarla, no para leerla. */
-export function failedWith(error: unknown, code: string): error is RequestFailed {
-  return error instanceof RequestFailed && error.code === code
-}
-
-/** Lo que trae toda respuesta, paginada o no. */
-export type Meta = {
-  readonly requestId: string
-  /**
-   * **Qué versión del recurso es ésta** (`CU-29`).
-   *
-   * Sale del encabezado, igual que `requestId`, y es **opaca**: cuarzo la guarda
-   * y la devuelve al escribir, no la lee ni la compara. Con ella el servidor
-   * puede rechazar un guardado sobre una versión vieja, que es lo único que
-   * convierte «otro editó lo mismo» en algo detectable.
-   *
-   * **Opcional a propósito**: una lista no la trae —es de un recurso, no de una
-   * página— y un servidor que no la emite tampoco. Que falte no es un error de
-   * transporte; es un error recién cuando alguien intenta escribir un recurso
-   * que la exige, y eso lo dice el tipo de la operación.
-   */
-  readonly version?: string
-  readonly page?: number
-  readonly size?: number
-  readonly totalItems?: number
-  readonly totalPages?: number
+/** Si una falla vino del servidor, y de qué tipo. Para tratarla, no para leerla. */
+export function failedWith(error: unknown, type: string): error is RequestFailed {
+  return error instanceof RequestFailed && error.type === type
 }
 
 /**
- * El sobre de una respuesta **paginada**.
+ * **De qué campo del formulario habla un puntero**, o `undefined` si de ninguno.
  *
- * Los cuatro campos son opcionales en `Meta` porque una respuesta sin paginar
- * no los trae. Pero el contrato los da **todos o ninguno** —su `PageMeta` los
- * declara requeridos—, así que tratarlos de a uno obliga a inventar un valor por
- * omisión para cada uno, **y ahí es donde se copia el tamaño de página**.
+ * `/body/origins/0` → `origins.0`. Un puntero bajo `/query` o `/headers` no es
+ * del formulario —el operador no escribió ese dato— y va al aviso, no a un
+ * control que no existe. Es lo único que sabe la forma del puntero: ni la puerta
+ * ni el formulario la conocen. Que el cuerpo va bajo `/body` lo fija el backend
+ * (`BODY_POINTER` en su `dispatch.ts`) y lo documenta su `ProblemDetails`.
  */
-export type PagedMeta = Meta & {
-  readonly page: number
-  readonly size: number
-  readonly totalItems: number
-  readonly totalPages: number
-}
-
-/** Si el sobre trae paginación. Se pregunta una vez, no campo por campo. */
-export function isPaged(meta: Meta | undefined): meta is PagedMeta {
-  return (
-    meta?.page !== undefined &&
-    meta.size !== undefined &&
-    meta.totalItems !== undefined &&
-    meta.totalPages !== undefined
-  )
-}
-
-/** Lo que una pantalla recibe: los datos, y de dónde salieron. */
-export type Page<T> = {
-  readonly data: T
-  readonly meta: Meta
+export function fieldNameOf(pointer: string): string | undefined {
+  const match = /^\/body\/(.+)$/.exec(pointer)
+  if (!match?.[1]) return undefined
+  return match[1]
+    .split('/')
+    .map((segment) => segment.replaceAll('~1', '/').replaceAll('~0', '~'))
+    .join('.')
 }
 
 /**
- * Abre el sobre, o tira lo que el servidor dijo.
+ * Lee la respuesta, o tira lo que el servidor dijo.
  *
  * Recibe lo que devuelve `openapi-fetch` —datos, error y la respuesta cruda— y
- * **no pierde el identificador por ninguno de los dos caminos**: el del éxito
- * lo lleva en `meta`, y el de la falla lo saca del cuerpo del error o, si el
- * servidor no llegó a armarlo, del encabezado.
+ * devuelve **el recurso tal cual**: OPE no lo envuelve. Un `204` devuelve
+ * `undefined`, que es lo que su tipo dice.
  */
-export function unwrap<T>(result: {
-  data?: unknown
-  error?: unknown
-  response: Response
-}): Page<T> {
+export function unwrap<T>(result: { data?: unknown; error?: unknown; response: Response }): T {
   if (result.error !== undefined) throw asRequestFailed(result.error, result.response)
 
-  const body = result.data
-  if (typeof body !== 'object' || body === null || !('data' in body)) {
-    throw new RequestFailed(
-      result.response.status,
-      'ENVELOPE_MISSING',
-      requestIdFrom(result.response),
-      'La respuesta no vino en el sobre que declara el contrato.',
-    )
-  }
+  if (result.response.status === 204) return undefined as T
 
-  const meta = 'meta' in body && typeof body.meta === 'object' ? body.meta : null
-  const version = versionFrom(result.response)
-
-  return {
-    data: body.data as T,
-    /* **El testigo sale del encabezado o no sale**, al revés que el
-       identificador: aquél admite que el cuerpo lo diga mejor, y éste no. Por
-       eso el cuerpo entra ya sin él, y no sólo pisado después. */
-    meta: { requestId: requestIdFrom(result.response), ...withoutVersion(meta), ...version },
-  }
+  return result.data as T
 }
 
+/**
+ * **El problema, leído por su forma y no por lo que se supone que trae.**
+ *
+ * Un intermediario que cortó antes —un `502` con HTML, un cuerpo vacío— no
+ * arma un Problem Details. Se devuelve igual un `RequestFailed`, con `type`
+ * `unknown` y el estado como título, porque lo que la pantalla necesita es
+ * poder mostrar «no se pudo» con lo que haya: y lo que haya es, a veces, sólo
+ * el identificador del encabezado.
+ */
 function asRequestFailed(raw: unknown, response: Response): RequestFailed {
-  const body =
-    typeof raw === 'object' && raw !== null && 'error' in raw
-      ? (raw.error as Record<string, unknown>)
-      : {}
+  const body = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {}
+  const type = typeof body.type === 'string' ? withoutNamespace(body.type) : UNKNOWN_PROBLEM
 
-  return new RequestFailed(
-    response.status,
-    typeof body.code === 'string' ? body.code : 'UNKNOWN',
-    typeof body.requestId === 'string' ? body.requestId : requestIdFrom(response),
-    typeof body.message === 'string' ? body.message : 'El servidor no pudo responder el pedido.',
-    Array.isArray(body.fields) ? (body.fields as FieldError[]) : [],
-  )
+  return new RequestFailed({
+    status: response.status,
+    type,
+    title: typeof body.title === 'string' ? body.title : `HTTP ${response.status}`,
+    detail: typeof body.detail === 'string' ? body.detail : undefined,
+    requestId: typeof body.requestId === 'string' ? body.requestId : requestIdFrom(response),
+    errors: Array.isArray(body.errors) ? body.errors.filter(isFieldError) : [],
+  })
+}
+
+function withoutNamespace(type: string): string {
+  return type.startsWith(PROBLEM_NAMESPACE) ? type.slice(PROBLEM_NAMESPACE.length) : type
+}
+
+function isFieldError(each: unknown): each is FieldError {
+  if (typeof each !== 'object' || each === null) return false
+  /* Se mira la forma de lo que llegó, no su contenido: es lo que hace falta
+     para armar el error antes de que exista (`CU-14`). */
+  const candidate = each as Partial<FieldError>
+  return typeof candidate.pointer === 'string' && typeof candidate.message === 'string'
 }
 
 /**
- * **El encabezado, como respaldo.**
+ * **El encabezado, cuando viene.**
  *
- * El contrato manda `X-Request-Id` en toda respuesta, incluidas las que un
- * intermediario corta antes de que el servidor arme un cuerpo. Sin esto, esos
- * casos —los más difíciles de diagnosticar— son justamente los que quedan sin
- * identificador.
+ * Hoy OPE no manda `X-Request-Id`; lo agrega su feature 040, y entonces
+ * también en las respuestas que un intermediario corta antes de que el servidor
+ * arme un cuerpo — que son justamente las más difíciles de diagnosticar. Hasta
+ * entonces esto devuelve `undefined`, y **`undefined` no se disfraza**.
  */
-function requestIdFrom(response: Response): string {
-  return response.headers.get('X-Request-Id') ?? 'sin-identificador'
-}
-
-/**
- * **El testigo, si vino** (`CU-29`).
- *
- * Devuelve un objeto y no un valor para que **la ausencia no escriba la clave**:
- * con `version: undefined`, un `meta` de una lista diría que el testigo se
- * consultó y no está, cuando lo cierto es que no corresponde. Es la diferencia
- * entre «no hay» y «no aplica», y acá se nota en un `in`.
- */
-function versionFrom(response: Response): { version?: string } {
-  const etag = response.headers.get('ETag')
-  return etag === null ? {} : { version: etag }
-}
-
-/**
- * El sobre del cuerpo, **sin lo que el cuerpo diga de la versión** (`CU-29`).
- *
- * Pisar con el encabezado no alcanza: **cuando el encabezado no vino no hay con
- * qué pisar**, y un `version` del cuerpo pasaba entero. La pantalla se quedaba
- * con un testigo que el transporte nunca confirmó y lo mandaba como `If-Match`.
- *
- * Se borra en vez de confiar en el orden del `...` porque el orden sólo decide
- * quién gana **cuando los dos están**.
- */
-function withoutVersion(meta: object | null): Record<string, unknown> {
-  const rest = { ...meta } as Record<string, unknown>
-  delete rest.version
-  return rest
+function requestIdFrom(response: Response): string | undefined {
+  return response.headers.get('X-Request-Id') ?? undefined
 }

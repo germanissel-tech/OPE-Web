@@ -149,6 +149,8 @@ hay nada que cada formulario tenga que implementar.
 
 **Estado**: decidida · **Depende de**: CU-14
 
+> **Enmienda OPE (2026-10-08).** `SessionConfig` queda con `toCapabilities` y `reentryTimeout`: **`issuer` y `clientId` dejan de ser del piso de configuración** y pasan al adaptador que los necesite. `SessionPort` gana `signIn?(credential)` —recibe y no devuelve— y `observe?(response)`, con el que un `401` en vuelo termina la sesión. El adaptador de OPE es el **bearer** (`@ope/session/bearer`, credencial opaca por operador de `ADR-031` del backend); `@ope/session/keycloak` se conserva sin entrada hasta que exista OIDC (`OW-2`). Lo que no cambia: nada de lo exportado entrega una credencial.
+
 **Keycloak es lo que se usa hoy, no una propiedad del diseño.** Se puede cambiar por otro
 proveedor sin tocar el resto del código.
 

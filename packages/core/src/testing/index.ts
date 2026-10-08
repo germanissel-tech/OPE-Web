@@ -1,5 +1,5 @@
 /**
- * **Lo que cuarzo publica para probar** — `@cuarzo/core/testing`.
+ * **Lo que cuarzo publica para probar** — `@ope/core/testing`.
  *
  * Entra por una puerta aparte y no por la principal, y no es prolijidad: lo que
  * se importa desde acá **es para el banco de pruebas**, y una aplicación que lo

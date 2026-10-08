@@ -23,7 +23,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { config, ROOT } from './context.mjs'
+import { apps, config, ROOT } from './context.mjs'
 
 /**
  * **La capa de composición**, exenta de las reglas 1 y 6 (`CU-36`).
@@ -83,7 +83,10 @@ const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/
  */
 const isGenerated = (file) => readFileSync(file, 'utf8').slice(0, 200).includes('auto-generated')
 
-const todos = [...filesIn(join(ROOT, 'src')), ...filesIn(join(ROOT, 'packages'))]
+const todos = [
+  ...apps.flatMap((app) => filesIn(join(ROOT, ...app.split('/'), 'src'))),
+  ...filesIn(join(ROOT, 'packages')),
+]
 const generated = todos.filter(isGenerated)
 const checked = todos.filter((file) => !generated.includes(file))
 
@@ -314,49 +317,10 @@ for (const file of checked) {
   }
 }
 
-/**
- * **12 · «Cliente» en un comentario, cuando cuarzo no conoce ninguno.**
- *
- * En Tandilia hay cuenta corriente, y ahí **un cliente es una persona**: el
- * contexto de trabajo de `CU-26` es «el cliente actual», y `CU-9` habla de los
- * datos de un cliente en una pantalla congelada.
- *
- * Y cuarzo se clona **adentro** de esos sistemas. Un comentario que llama
- * «cliente» a lo que habla con un backend le pone al lector la acepción
- * equivocada justo donde la otra ya está ocupada.
- *
- * En castellano se dice **el servicio**, que además es como se llama en el
- * código: `defineService`, `useService`.
- *
- * **La regla es exacta acá y en ningún otro lado**, y por eso se puede
- * mecanizar: cuarzo no sabe de negocio, así que **no tiene clientes de los
- * otros**. Cualquier mención suya es la acepción de red. En `docs/` no se mira,
- * porque ahí las decisiones sí hablan de personas.
- */
-const CUSTOMER = /[Cc]lientes?\b/
-
-for (const file of checked) {
-  const shortPath = relative(ROOT, file).split(sep).join('/')
-  const text = readFileSync(file, 'utf8')
-
-  const comments = [
-    ...[...text.matchAll(/\/\*[\s\S]*?\*\//g)].map((m) => m[0]),
-    ...[...text.matchAll(/\/\/.*/g)].map((m) => m[0]),
-  ]
-
-  for (const comment of comments) {
-    const found = CUSTOMER.exec(comment)
-    if (!found) continue
-    /* Se muestra la frase y no la palabra: sin verla, no se sabe cuál de las
-       dos acepciones quedó escrita. */
-    const around = comment.slice(Math.max(0, found.index - 30), found.index + 40)
-    fail(
-      'Un comentario dice «cliente», que en Tandilia es una persona (TAN-6, regla 12)',
-      shortPath,
-      `«…${around.replace(/\s+/g, ' ').trim()}…» — ¿es el servicio de un sistema?`,
-    )
-  }
-}
+/* La regla 12 de cuarzo —la palabra «cliente» en un comentario— no está: era la
+   convención de cuenta corriente de Tandilia, y en OPE esa palabra no está
+   ocupada (`docs/origen.md`). La numeración de las demás se conserva para que
+   las citas a `TAN-6, regla n` sigan resolviendo. */
 
 /**
  * **4 · Una comprobación que se va sin decir nada cuando no encuentra qué
@@ -716,7 +680,11 @@ if (!existsSync(GATE)) {
      verificada allá. Se dice, en vez de aprobar en silencio. */
   laPuerta = '  --     sin packages/: que la puerta trate el conflicto se verifica en cuarzo'
 } else {
-  const falta = ['STALE_VERSION', 'clashBetween'].filter(
+  /* En OPE el tipo de problema es un slug y hoy ningún backend lo emite: la
+     ruta queda **dormida con su constante**, no borrada. Lo que se verifica es
+     que la constante siga nombrando el slug y que el cálculo del choque siga
+     ahí: borrar cualquiera de los dos «porque no se usa» es lo que esto impide. */
+  const falta = ["const STALE = 'stale-version'", 'clashBetween'].filter(
     (each) => !readFileSync(GATE, 'utf8').includes(each),
   )
 
@@ -797,16 +765,20 @@ for (const file of checked) {
  * Es la mitad estática de `CU-49`. La otra es el respaldo de `useForm`, que
  * atrapa en tiempo de ejecución lo que ningún contrato nuestro puede impedir.
  */
-const CONTRACTS = join(ROOT, 'contracts')
+/** El contrato del ejemplo vive con la aplicación que lo consume: `apps/<x>/contracts/`. */
+const CONTRACTS = apps
+  .map((app) => join(ROOT, ...app.split('/'), 'contracts'))
+  .filter((dir) => existsSync(dir))
 const MOCK = join(ROOT, 'tests', 'mock.mjs')
 
 let losCampos = '  --     sin simulado ni contrato: qué puede ir en fields se verifica donde estén'
 
-if (existsSync(MOCK) && existsSync(CONTRACTS)) {
-  const yaml = readdirSync(CONTRACTS)
-    .filter((name) => /\.ya?ml$/.test(name))
-    .map((name) => readFileSync(join(CONTRACTS, name), 'utf8'))
-    .join('\n')
+if (existsSync(MOCK) && CONTRACTS.length > 0) {
+  const yaml = CONTRACTS.flatMap((dir) =>
+    readdirSync(dir)
+      .filter((name) => /\.ya?ml$/.test(name))
+      .map((name) => readFileSync(join(dir, name), 'utf8')),
+  ).join('\n')
 
   /* Las propiedades de los esquemas, por sangría: lo que cuelga de un
      `properties:` un nivel más adentro, hasta que la sangría vuelve. */
@@ -885,7 +857,6 @@ console.log(laPuerta)
 console.log('  ok     ninguna relectura de conflicto usa refetch()')
 console.log(laComparacion)
 console.log(losCampos)
-console.log('  ok     ningún comentario dice «cliente»: en Tandilia eso es una persona')
 console.log('  ok     sólo la raíz de composición nombra implementaciones concretas')
 console.log('  ok     toda pantalla registrada se llama …Screen')
 console.log('  ok     el id, el componente y el archivo de cada pantalla coinciden')

@@ -11,7 +11,9 @@
  *
  * Permite forzar los casos que en producción casi no ocurren: que la renovación
  * falle, que se cierre la ventana sin entrar, que venza el plazo, y que vuelva
- * otro sujeto.
+ * otro sujeto. Y **tiene entrada** (`signIn`), para poder mirar la vista de
+ * ingreso sin backend: entra con los claims configurados, sea cual sea la
+ * credencial.
  *
  * **No va al artefacto de producción** (`CU-36`). Si se pudiera encender desde
  * `config.json`, el archivo de configuración sería una puerta trasera de
@@ -36,7 +38,7 @@ import type { Capabilities, Claims, SessionPort } from './types'
  * Como campo de un objeto que se construye al ejecutar, no hay sacudido de árbol
  * que la saque sin sacar también a la falsa.
  */
-export const FAKE_SESSION_MARKER = 'CUARZO_FAKE_SESSION_NOT_FOR_PRODUCTION'
+export const FAKE_SESSION_MARKER = 'OPE_FAKE_SESSION_NOT_FOR_PRODUCTION'
 
 /** Qué pasa cuando el operador vuelve a entrar. */
 export type ReturnBehaviour = 'same-subject' | 'other-subject' | 'window-closed'
@@ -45,7 +47,7 @@ export type FakeSessionOptions = {
   readonly subject?: string
   readonly claims?: Claims
   readonly toCapabilities: (claims: Claims) => Capabilities
-  /** Arrancar sin sesión, para ejercitar `anonymous`. */
+  /** Arrancar sin sesión, para ejercitar `anonymous` y la vista de ingreso. */
   readonly noSession?: boolean
   /** Por omisión vuelve el mismo. */
   readonly onReturn?: ReturnBehaviour
@@ -108,10 +110,20 @@ export function createFakeSession(options: FakeSessionOptions): FakeSession {
      *
      * Es a propósito y vale mirarlo: la falsa no pone ningún encabezado, y la
      * aplicación funciona igual. Eso es exactamente lo que `CU-10` afirma — que
-     * quien llama **no sabe** si adentro hay un bearer, una cookie o nada.
+     * quien llama **no sabe** si adentro hay un encabezado, una cookie o nada.
      */
     async authorize(request: Request) {
       return request
+    },
+
+    /**
+     * Entra con los claims configurados, **sea cual sea la credencial**: es lo
+     * que deja mirar la vista de ingreso sin backend. Con `noSession` se arranca
+     * en `anonymous` y esto es la salida.
+     */
+    async signIn() {
+      apply({ type: 'resolved', subject, claims })
+      return { ok: true }
     },
 
     async signOut() {

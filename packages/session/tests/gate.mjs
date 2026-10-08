@@ -1,5 +1,5 @@
 /**
- * Verifica **la regla que gobierna el contrato de `@cuarzo/session`**: que nada
+ * Verifica **la regla que gobierna el contrato de `@ope/session`**: que nada
  * de lo que se exporta permita obtener un token (`CU-10`).
  *
  * Es una comprobación sobre el **texto** de la superficie pública y no sobre su
@@ -95,6 +95,20 @@ function stripComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ')
 }
 
+/**
+ * Los mecanismos de autenticación que se reconocen por nombre.
+ *
+ * La misma regla que con los proveedores, un nivel más abajo: **la superficie
+ * principal no nombra a ninguno en su código**, y una entrada adaptadora nombra
+ * exactamente el suyo. Se mira el código y no la prosa, porque los comentarios
+ * de la puerta explican justamente que quien llama no sabe si adentro hay un
+ * encabezado, una cookie o mTLS — y esa explicación es lo que hay que conservar.
+ */
+const MECHANISMS = ['bearer', 'cookie', 'mtls']
+
+const mechanismOf = (fileName) =>
+  MECHANISMS.find((mechanism) => fileName.toLowerCase().includes(mechanism))
+
 const failures = []
 const checked = filesIn(MODULE_DIR)
 
@@ -110,6 +124,18 @@ for (const file of checked) {
         where: `${shortPath}  —  ${found[0].trim()}`,
       })
     }
+  }
+
+  const ownMechanism = mechanismOf(shortPath)
+  for (const mechanism of MECHANISMS) {
+    if (!new RegExp(`\\b${mechanism}\\b`, 'i').test(code)) continue
+    if (mechanism === ownMechanism) continue
+    failures.push({
+      what: ownMechanism
+        ? `El adaptador ${ownMechanism} nombra además otro mecanismo`
+        : 'La superficie principal nombra un mecanismo de autenticación',
+      where: `${shortPath}  —  ${mechanism}`,
+    })
   }
 
   /* Acá se mira el texto entero, comentarios incluidos: un comentario que
@@ -132,6 +158,31 @@ for (const file of checked) {
   }
 }
 
+/**
+ * **La entrada recibe y no devuelve.**
+ *
+ * `signIn` es lo único nuevo que toca una credencial, así que es lo único que
+ * podría convertirse en la forma de sacarla: con que devolviera `{ ok, token }`
+ * una sola vez, cada vista de ingreso pasaría a tenerla. Se fija por el texto
+ * la firma, y que `SignInOutcome` no tenga ningún miembro que la nombre.
+ */
+const types = stripComments(readFileSync(join(MODULE_DIR, 'types.ts'), 'utf8'))
+
+if (!/signIn\?:\s*\(credential\?:\s*string\)\s*=>\s*Promise<SignInOutcome>/.test(types)) {
+  failures.push({
+    what: 'La entrada de la puerta no tiene la firma que recibe y no devuelve',
+    where: 'src/types.ts  —  signIn?: (credential?: string) => Promise<SignInOutcome>',
+  })
+}
+
+const outcome = /export type SignInOutcome\s*=([\s\S]*?)(?:\n\s*\n|export)/.exec(types)?.[1] ?? ''
+if (outcome === '' || /token|credential/i.test(outcome)) {
+  failures.push({
+    what: 'El desenlace de entrar nombra la credencial, o no existe',
+    where: 'src/types.ts  —  SignInOutcome',
+  })
+}
+
 console.log('')
 if (failures.length > 0) {
   for (const f of failures) {
@@ -145,8 +196,9 @@ if (failures.length > 0) {
 }
 
 console.log(`  ok     ${checked.length} archivos de la sesión, y ninguno entrega un token`)
-console.log('  ok     la superficie principal no nombra a ningún proveedor')
+console.log('  ok     la superficie principal no nombra a ningún proveedor ni mecanismo')
 console.log('  ok     cada adaptador nombra sólo al suyo')
+console.log('  ok     la entrada recibe una credencial y no devuelve ninguna')
 console.log('')
 console.log('LA PUERTA SE SOSTIENE')
 console.log('')

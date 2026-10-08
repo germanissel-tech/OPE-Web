@@ -1,0 +1,6 @@
+{
+  "systems": {
+    "ope": "/api"
+  },
+  "waitThresholdMs": 60000
+}

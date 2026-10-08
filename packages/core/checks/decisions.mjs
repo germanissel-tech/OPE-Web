@@ -70,7 +70,9 @@ const decisions = new Map()
 for (const [name, path] of OWN) {
   const text = readFileSync(join(ROOT, path), 'utf8')
 
-  for (const m of text.matchAll(/^### (CU-\d+) · (.+)$/gm)) {
+  /* Las propias son dos familias: las `CU-n` heredadas de cuarzo y las `OW-n`
+     de OPE-Web. Las dos se declaran igual y se indexan en la misma tabla. */
+  for (const m of text.matchAll(/^### ((?:CU|OW)-\d+) · (.+)$/gm)) {
     const [, id, title] = m
     if (decisions.has(id)) {
       fail('Identificador repetido', `    ${id} está en ${decisions.get(id).archivo} y en ${name}`)
@@ -89,7 +91,7 @@ for (const [name, path] of OWN) {
         `    ${id} dice «${ficha[1]}» y sólo vale ${[...ESTADOS].join(' o ')}`,
       )
     }
-    const dep = (ficha[2] ?? '').match(/CU-\d+/g) ?? []
+    const dep = (ficha[2] ?? '').match(/(?:CU|OW)-\d+/g) ?? []
     decisions.set(id, { id, title, status: ficha[1], dep, archivo: name })
   }
 }
@@ -122,7 +124,7 @@ const hasIndex = OWN.length > 0 && existsSync(join(ROOT, INDEX))
 const index = new Map()
 if (hasIndex) {
   for (const m of readFileSync(join(ROOT, INDEX), 'utf8').matchAll(
-    /^\| \*\*(CU-\d+)\*\* \| (\w+) \| (.+?) \| (\w+) \|/gm,
+    /^\| \*\*((?:CU|OW)-\d+)\*\* \| (\w+) \| (.+?) \| (\w+) \|/gm,
   )) {
     index.set(m[1], { status: m[2], title: m[3], archivo: m[4] })
   }
@@ -208,8 +210,8 @@ const FAMILIES = [
     /* Las propias van primero: en cuarzo, `decisionDocs` **son** las CU. */
     candidates: config.cuarzoDocs ?? [
       ...config.decisionDocs,
-      'node_modules/@cuarzo/core/docs/arquitectura.md',
-      'node_modules/@cuarzo/core/docs/seguridad.md',
+      'node_modules/@ope/core/docs/arquitectura.md',
+      'node_modules/@ope/core/docs/seguridad.md',
       '../cuarzo/docs/arquitectura.md',
     ],
     read: (text) => [...text.matchAll(/^### (CU-\d+) · /gm)].map((m) => m[1]),
@@ -239,6 +241,14 @@ const FAMILIES = [
     label: 'plataforma',
     candidates: config.platformDocs ?? ['../docs/decisiones.md', '../../docs/decisiones.md'],
     read: (text) => [...text.matchAll(/^### (TAN-\d+) · /gm)].map((m) => m[1]),
+  },
+  {
+    prefix: 'OW',
+    label: 'OPE-Web',
+    /* Las de OPE-Web viven en `docs/ope.md`, que es uno de los `decisionDocs`
+       propios: así una cita `OW-n` se verifica igual que una `CU-n`. */
+    candidates: config.opeDocs ?? ['docs/ope.md', 'node_modules/@ope/core/docs/ope.md'],
+    read: (text) => [...text.matchAll(/^### (OW-\d+) · /gm)].map((m) => m[1]),
   },
 ]
 

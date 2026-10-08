@@ -88,7 +88,7 @@ export function useServices(): ReadonlyMap<string, unknown> {
 /**
  * El servicio de un sistema, **con su tipo**.
  *
- * **Sólo lo llama `features/<x>/data/`** (`CU-15`), y lo verifica `cuarzo-check`.
+ * **Sólo lo llama `features/<x>/data/`** (`CU-15`), y lo verifica `ope-check`.
  * Una pantalla nunca ve un servicio: le pide los datos a su capa de datos, que
  * es la que sabe contra qué sistema hablar.
  */

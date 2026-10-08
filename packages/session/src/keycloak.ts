@@ -1,15 +1,17 @@
 /**
- * **La forma de Keycloak**, en una entrada aparte.
+ * **La forma de Keycloak**, conservada **sin entrada**.
  *
  * Es lo único del proveedor que una aplicación necesita conocer:
  * `resource_access.<client>.roles`, que existe porque **OIDC estándar no tiene
  * claim de roles**.
  *
- * Vive en `@cuarzo/session/keycloak` y no en la superficie principal por la
- * misma razón que la falsa vive en `/fake`: **lo específico de un proveedor se
- * pide por su nombre**. La superficie principal no nombra a ninguno, y `TAN-2`
- * dice que hoy usamos Keycloak y se puede cambiar — cambiarlo es cambiar este
- * import, en una línea.
+ * **Hoy no se exporta** (`package.json` no tiene `./keycloak`): OPE entra con
+ * una credencial opaca por operador (`@ope/session/bearer`) y no hay adaptador
+ * OIDC. El archivo se queda, y no por nostalgia: el día que aparezca una
+ * segunda aplicación con SSO, el adaptador OIDC entra por la misma puerta y
+ * esto vuelve a tener entrada en una línea de `exports`. Lo específico de un
+ * proveedor se pide por su nombre, y la superficie principal no nombra a
+ * ninguno (`tests/gate.mjs`).
  */
 
 import type { Capabilities, Claims } from './types'
