@@ -2,6 +2,13 @@ import { createOpeClient, defineService, type SessionHooks, unwrap } from '@ope/
 import type { operations, paths } from '../../../../../contracts/ope/api'
 
 /**
+ * Lo que un formulario puede verificar de cada cuerpo de pedido, emitido del
+ * contrato (`CU-38`, capa 1). Sale por acá porque `contracts/ope/` sólo lo lee
+ * `api/`; una funcionalidad lo toma de `data/`.
+ */
+export { CONSTRAINTS } from '../../../../../contracts/ope/constraints'
+
+/**
  * El servicio del sistema `ope`: el backend de OPE, por su contrato.
  *
  * Los tipos salen de `contracts/ope/api.d.ts`, que `npm run contract:sync`

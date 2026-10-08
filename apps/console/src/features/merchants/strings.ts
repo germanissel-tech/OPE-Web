@@ -32,18 +32,40 @@ export const merchantsStrings = {
   off: 'Apagado',
   deactivated: 'Desactivado',
 
-  /* El alta: el botón que la abre, el diálogo, sus campos y lo que anuncia. */
+  /* El alta: el botón que la abre, la pantalla con sus dos secciones, y lo que
+     anuncia. Es una pantalla y no un diálogo (`GR-70`). */
   newMerchant: 'Nuevo merchant',
-  origin: 'Origen de la tienda',
-  originHelp: 'Con esquema y host, sin ruta: https://tienda.example',
+  originsSection: 'Orígenes de la tienda',
+  originsWhy:
+    'Con esquema y host, sin ruta: https://tienda.example. Un origen pertenece a un solo merchant.',
+  originRow: (position: number) => `Origen ${position}`,
+  addOrigin: 'Agregar otro origen',
+  removeOrigin: 'Quitar',
+  signatureSection: 'Firma de las notificaciones',
+  signatureWhy:
+    'Si la plataforma firma, se acuña también un secreto de firma. Se puede crear después.',
   signature: 'La plataforma firma sus notificaciones',
   save: 'Crear',
+  cancel: 'Cancelar',
   merchantCreated: 'El merchant se creó',
-  merchantCreatedDetail: (merchantId: string) =>
-    `${merchantId} · las credenciales se muestran una sola vez`,
+  merchantCreatedDetail: (merchantId: string) => merchantId,
+  rejectedTitle: 'El servidor no lo aceptó',
 
-  /* Desactivar: la acción de fila. Es terminal y se dice. */
+  /* El segundo paso del alta: las credenciales, una sola vez (`OW-8`). Las
+     claves de cada una son las del contrato (`MerchantCredentials`). */
+  issuedTitle: 'Credenciales del merchant',
+  issuedWarning:
+    'Entregalas al merchant ahora: no vuelven a verse. Una que se pierda se rota desde la ficha.',
+  ingestKey: 'Llave del tag',
+  platformKey: 'Llave de la plataforma',
+  platformSecret: 'Secreto de firma',
+  continueToMerchant: 'Continuar a la ficha',
+
+  /* Desactivar: la acción de fila. Es terminal, se dice, y se confirma. */
   deactivate: 'Desactivar',
+  deactivateTitle: (merchantId: string) => `Desactivar ${merchantId}`,
+  deactivateConsequence:
+    'No se puede volver atrás: ninguna credencial del merchant vuelve a resolver, y no se puede recrear con el mismo identificador. Sus registros quedan.',
   merchantDeactivated: 'El merchant se desactivó',
   merchantDeactivatedDetail: (merchantId: string) => `${merchantId} · no se puede reactivar`,
 

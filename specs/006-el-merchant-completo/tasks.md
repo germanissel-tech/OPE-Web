@@ -51,16 +51,16 @@ del contrato **se emitan** en vez de escribirse a mano. **Nada de esto nombra un
 **Meta**: que crear un merchant muestre sus credenciales una sola vez, en una pantalla, y que
 desactivar pida confirmación con la consecuencia dicha.
 
-- [ ] T013 [E2] `apps/console/src/features/merchants/feature.ts`: desenlaces `merchantRequested` (sin carga), `newMerchantCancelled` (sin carga) y `merchantCreated({ merchantId })`; `newMerchantScreen` en `screens`
-- [ ] T014 [E2] `apps/console/src/features/merchants/strings.ts`: textos de alta (`newMerchantTitle`, `originsSection`, `originsWhy`, `originRow(n)`, `addOrigin`, `removeOrigin`, `signatureSection`, `create`, `issuedTitle`, `issuedWarning`, `continue`), credenciales (`ingestKey`, `platformKey`, `platformSecret`) y desactivación (`deactivateConsequence`, `confirmDeactivate`); `merchantCreatedDetail` deja de prometer «se muestran una sola vez» en el aviso: lo dice la pantalla
-- [ ] T015 [E2] `apps/console/src/features/merchants/data/create-merchant.ts`: `merchantConstraints` sale de `CONSTRAINTS.MerchantCreate` de `contracts/ope/constraints` (importado desde `api/ope/client.ts`, que es quien puede tocar `contracts/ope/`, y reexportado); `isOrigin(value)` con la cita a `invalid-origin` como capa 2; `shape.badFormat` sigue; invalida `allMerchants`
-- [ ] T016 [E2] `apps/console/src/features/merchants/screens/new-merchant-screen.tsx` (NUEVO): `defineScreen({ id: 'new-merchant', path: '/merchants/new', capability: 'merchants:write' })`; paso `form`: `Page` → `Form` con `Section` de orígenes (renglones `TextInput` con `useForm` por renglón, «agregar» hasta `maxItems`, «quitar» desde `minItems`; los `fields` de `422` con `origins.N` caen en el renglón `N`, los sin índice al pie) y `Section` de firma (`Checkbox`, omisión **sin firma**); pie con «Cancelar» (informa `newMerchantCancelled`; ver la nota del tramo) y «Crear» (`tone="primary"`, apagado mientras corre); paso `issued`: `SecretOnce` con los dos o tres valores y «Continuar» que informa `merchantCreated({ merchantId })`
-- [ ] T017 [E2] `apps/console/src/app/flows.ts`: `merchantsFlow` gana `opens(merchants.outcomes.merchantRequested, newMerchantScreen)` y `finishes(merchants.outcomes.merchantCreated, merchantScreen, ({ merchantId }) => ({ merchantId }))`; `closes(merchants.outcomes.newMerchantCancelled)` para «cancelar»
-- [ ] T018 [E2] `apps/console/src/features/merchants/screens/merchants-screen.tsx`: «Nuevo merchant» (barra y vacío) informa `merchantRequested` con `flow.toReach(…)` y deja de abrir el diálogo; se retira `new-merchant-dialog.tsx` y el estado `creating`
-- [ ] T019 [E2] `apps/console/src/features/merchants/screens/deactivate-button.tsx`: al apretar abre `ConfirmDialog` (`tone="danger"`, `consequence = deactivateConsequence`, `running = action.running`), y la acción corre al confirmar
-- [ ] T020 [E2] `apps/console/src/features/merchants/screens/new-merchant-screen.test.tsx` (NUEVO): montada en la aplicación real; un origen sin esquema no se envía; con `422 invalid-origin` y `pointer /body/origins/1` el error cae en el segundo renglón; con `422` sin `errors[]` cae al pie; al crear se ven los valores y «copiar»; **nada de lo registrado en telemetría ni en avisos contiene un valor** (`OW-8`); «continuar» informa `merchantCreated`; sin `merchants:write` la ruta responde «sin permisos»; `deactivate-button.test.tsx` (o en `merchants-screen.test.tsx`): desactivar pide confirmación y no corre sin ella
-- [ ] T021 [E2] `apps/console/src/features/merchants/data/create-merchant.test.ts`: las restricciones vienen del módulo (`required` incluye `origins` y `signature`; `origins.items.maxLength === 255`)
-- [ ] T022 [E2] Contra el backend real (quickstart, escenario 1 y 4): crear con y sin firma, copiar, continuar, atrás, origen repetido; desactivar con confirmación. Anotar lo visto en `quickstart.md`
+- [x] T013 [E2] `apps/console/src/features/merchants/feature.ts`: desenlaces `merchantRequested` (sin carga), `newMerchantCancelled` (sin carga) y `merchantCreated({ merchantId })`; `newMerchantScreen` en `screens`
+- [x] T014 [E2] `apps/console/src/features/merchants/strings.ts`: textos de alta (`newMerchantTitle`, `originsSection`, `originsWhy`, `originRow(n)`, `addOrigin`, `removeOrigin`, `signatureSection`, `create`, `issuedTitle`, `issuedWarning`, `continue`), credenciales (`ingestKey`, `platformKey`, `platformSecret`) y desactivación (`deactivateConsequence`, `confirmDeactivate`); `merchantCreatedDetail` deja de prometer «se muestran una sola vez» en el aviso: lo dice la pantalla
+- [x] T015 [E2] `apps/console/src/features/merchants/data/create-merchant.ts`: `merchantConstraints` sale de `CONSTRAINTS.MerchantCreate` de `contracts/ope/constraints` (importado desde `api/ope/client.ts`, que es quien puede tocar `contracts/ope/`, y reexportado); `isOrigin(value)` con la cita a `invalid-origin` como capa 2; `shape.badFormat` sigue; invalida `allMerchants`
+- [x] T016 [E2] `apps/console/src/features/merchants/screens/new-merchant-screen.tsx` (NUEVO): `defineScreen({ id: 'new-merchant', path: '/merchants/new', capability: 'merchants:write' })`; paso `form`: `Page` → `Form` con `Section` de orígenes (renglones `TextInput` con `useForm` por renglón, «agregar» hasta `maxItems`, «quitar» desde `minItems`; los `fields` de `422` con `origins.N` caen en el renglón `N`, los sin índice al pie) y `Section` de firma (`Checkbox`, omisión **sin firma**); pie con «Cancelar» (informa `newMerchantCancelled`; ver la nota del tramo) y «Crear» (`tone="primary"`, apagado mientras corre); paso `issued`: `SecretOnce` con los dos o tres valores y «Continuar» que informa `merchantCreated({ merchantId })`
+- [x] T017 [E2] `apps/console/src/app/flows.ts`: `merchantsFlow` gana `opens(merchants.outcomes.merchantRequested, newMerchantScreen)` y `finishes(merchants.outcomes.merchantCreated, merchantScreen, ({ merchantId }) => ({ merchantId }))`; `closes(merchants.outcomes.newMerchantCancelled)` para «cancelar»
+- [x] T018 [E2] `apps/console/src/features/merchants/screens/merchants-screen.tsx`: «Nuevo merchant» (barra y vacío) informa `merchantRequested` con `flow.toReach(…)` y deja de abrir el diálogo; se retira `new-merchant-dialog.tsx` y el estado `creating`
+- [x] T019 [E2] `apps/console/src/features/merchants/screens/deactivate-button.tsx`: al apretar abre `ConfirmDialog` (`tone="danger"`, `consequence = deactivateConsequence`, `running = action.running`), y la acción corre al confirmar
+- [x] T020 [E2] `apps/console/src/features/merchants/screens/new-merchant-screen.test.tsx` (NUEVO): montada en la aplicación real; un origen sin esquema no se envía; con `422 invalid-origin` y `pointer /body/origins/1` el error cae en el segundo renglón; con `422` sin `errors[]` cae al pie; al crear se ven los valores y «copiar»; **nada de lo registrado en telemetría ni en avisos contiene un valor** (`OW-8`); «continuar» informa `merchantCreated`; sin `merchants:write` la ruta responde «sin permisos»; `deactivate-button.test.tsx` (o en `merchants-screen.test.tsx`): desactivar pide confirmación y no corre sin ella
+- [x] T021 [E2] `apps/console/src/features/merchants/data/create-merchant.test.ts`: las restricciones vienen del módulo (`required` incluye `origins` y `signature`; `origins.items.maxLength === 255`)
+- [x] T022 [E2] Contra el backend real (quickstart, escenario 1 y 4): crear con y sin firma, copiar, continuar, atrás, origen repetido; desactivar con confirmación. Anotar lo visto en `quickstart.md`
 
 **Punto de control**: escenario 1 entero a mano; la prueba de telemetría en verde y **en rojo** con un `console.log(value)` plantado en `SecretOnce`; `npm test`. Commit: `feat(006): el alta es una pantalla que muestra las credenciales una sola vez`.
 
@@ -68,6 +68,18 @@ desactivar pida confirmación con la consecuencia dicha.
 > desenlace propio (`newMerchantCancelled`, sin carga) que el flujo **cierra**, igual que `merchantClosed`
 > en la ficha: la pantalla no sabe a dónde vuelve. T016 y T017 lo incluyen; el `feature.ts` de T013 lo
 > declara.
+
+> **Hecho el 2026-10-08.** Desvíos: (1) `useForm` gana `unset(name)` y resuelve `origins.1` contra
+> `fields.origins.items`: sin eso un formulario con renglones reimplementaba el marcado a mano. (2) El
+> botón que abre una confirmación es `repeatable`: granito frena dos activaciones dentro de la ventana
+> del gesto, y abrir-cancelar-abrir se tragaba la segunda. (3) **Un defecto heredado**: `hereFrom` y el
+> título de la pestaña tomaban la **primera** pantalla que calzara, así que `/merchants/new` se leía
+> como la ficha del merchant `new`. `screenAt` elige la más concreta (menos parámetros), con su prueba.
+> (4) El `422` sin campos va al pie como `note` del `Form` con `rejectedTitle`, además del aviso del
+> marco. Contra el backend: alta con error de forma, alta correcta con las dos credenciales y «copiar»,
+> origen repetido al pie, desactivar con confirmación desde la ficha. **Lo que se vio y queda para
+> granito**: «copiar» ocupa el ancho entero debajo del valor, y «copiado» corre el pie del formulario
+> al aparecer (`OW-8`).
 
 ---
 

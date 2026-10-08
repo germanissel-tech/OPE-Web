@@ -2,9 +2,11 @@
 import {
   ApplicationView,
   type Collection,
+  closes,
   createApplication,
   createQueryClient,
   defineFlow,
+  finishes,
   NoticesProvider,
   opens,
   QueryProvider,
@@ -47,7 +49,7 @@ import { merchantsStrings } from '../strings'
 
 afterEach(cleanup)
 
-const [merchantsScreen, merchantScreen] = merchants.screens
+const [merchantsScreen, merchantScreen, newMerchantScreen] = merchants.screens
 
 const merchant = (merchantId: string): Merchant => ({
   merchantId,
@@ -117,16 +119,27 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
       opens(merchants.outcomes.merchantChosen, merchantScreen, ({ merchantId }) => ({
         merchantId,
       })),
+      opens(merchants.outcomes.merchantRequested, newMerchantScreen),
+      finishes(merchants.outcomes.merchantCreated, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
+      closes(merchants.outcomes.newMerchantCancelled),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [merchantsScreen, merchantScreen],
+      screens: [merchantsScreen, merchantScreen, newMerchantScreen],
       flows: [flow],
       menu: [flow],
-      featureRootOf: { merchants: 'merchants', merchant: 'merchants' },
-      outcomesOf: { merchants: [merchants.outcomes.merchantChosen.id] },
+      featureRootOf: { merchants: 'merchants', merchant: 'merchants', 'new-merchant': 'merchants' },
+      outcomesOf: {
+        merchants: [merchants.outcomes.merchantChosen.id, merchants.outcomes.merchantRequested.id],
+        'new-merchant': [
+          merchants.outcomes.merchantCreated.id,
+          merchants.outcomes.newMerchantCancelled.id,
+        ],
+      },
       outcomes: Object.values(merchants.outcomes),
       toCapabilities: () => new Set(capabilities),
       systems: ['ope'],

@@ -58,12 +58,38 @@ export function paramsFrom(declared: string, actual: string): Readonly<Record<st
   return params
 }
 
+/**
+ * **La pantalla que la URL describe, y con dos que calcen gana la más
+ * concreta.** `/merchants/new` calza con `/merchants/new` y con
+ * `/merchants/:merchantId`; la segunda diría que se está en una ficha con
+ * identificador `new`, que es una pantalla mintiendo. Menos parámetros es más
+ * concreta; en empate, la que se declaró primero.
+ *
+ * Es lo mismo que el ruteador hace al elegir qué dibujar, y por eso tiene que
+ * estar acá también: la pila y el título de la pestaña se leen de esto, no del
+ * ruteador.
+ */
+export function screenAt(screens: readonly Screen[], pathname: string): Screen | undefined {
+  const parameters = (path: string) => path.split('/').filter((part) => part.startsWith(':')).length
+  let best: Screen | undefined
+  let fewest = Number.POSITIVE_INFINITY
+  for (const each of screens) {
+    if (!matchesPath(each.path, pathname)) continue
+    const count = parameters(each.path)
+    if (count < fewest) {
+      best = each
+      fewest = count
+    }
+  }
+  return best
+}
+
 /** El escalón que la URL describe, o nada si ninguna pantalla la declara. */
 export function hereFrom(
   screens: readonly Screen[],
   pathname: string,
 ): { readonly entry: StackEntry; readonly screen: Screen } | undefined {
-  const screen = screens.find((each) => matchesPath(each.path, pathname))
+  const screen = screenAt(screens, pathname)
   if (!screen) return undefined
 
   return { entry: { screen: screen.id, params: paramsFrom(screen.path, pathname) }, screen }

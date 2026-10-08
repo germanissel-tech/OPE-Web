@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildUrl } from '../src/base/go-to'
-import { hereFrom, paramsFrom } from '../src/base/here'
+import { hereFrom, paramsFrom, screenAt } from '../src/base/here'
 import { defineScreen } from '../src/base/registry'
 
 /**
@@ -45,6 +45,31 @@ describe('ida y vuelta de un parámetro', () => {
     const here = hereFrom([ficha], buildUrl(ficha, { id: 'AB 12' }))
 
     expect(here?.entry).toEqual({ screen: 'article', params: { id: 'AB 12' } })
+  })
+})
+
+describe('dos rutas que calzan con la misma URL', () => {
+  const alta = defineScreen({
+    id: 'new-article',
+    title: 'Alta',
+    path: '/catalog/new',
+    component: Nada,
+  })
+
+  it('gana la más concreta, aunque se haya declarado después', () => {
+    /* `/catalog/new` también calza con `/catalog/:id`; leerlo como la ficha
+       del artículo «new» pone en la pila y en la pestaña una pantalla que no
+       es. El ruteador ya elige la concreta para dibujar; esto tiene que elegir
+       igual. */
+    expect(screenAt([ficha, alta], '/catalog/new')?.id).toBe('new-article')
+    expect(hereFrom([ficha, alta], '/catalog/new')?.entry).toEqual({
+      screen: 'new-article',
+      params: {},
+    })
+  })
+
+  it('y con un identificador cualquiera sigue siendo la ficha', () => {
+    expect(screenAt([ficha, alta], '/catalog/7')?.id).toBe('article')
   })
 })
 

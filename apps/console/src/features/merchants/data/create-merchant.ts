@@ -1,25 +1,34 @@
 import { defineAction, type MessageConstraints } from '@ope/core'
-import type { MerchantCreate } from '../../../api/ope/client'
+import { CONSTRAINTS, type MerchantCreate } from '../../../api/ope/client'
 import { opeOperation } from '../../../api/ope/operations'
 import { merchantsStrings } from '../strings'
 import { allMerchants } from './merchants'
 
 /**
- * Lo que el contrato le exige al alta (`CU-38`, capa 1), **escrito a mano y
- * con la cita**: `MerchantCreate` en `contracts/ope/openapi.yaml` — `origins`
- * de 1 a 20 orígenes de hasta 255 caracteres, `signature` booleano. El hola
- * mundo toma **un** origen; la capa 2 (`invalid-origin`, la forma del origen)
- * y la 3 (`origin-already-registered`, otro merchant) las contesta el servidor
- * con `errors[]` al campo.
- *
- * Sin generador: el de cuarzo leía `demo.yaml` con expresiones regulares y se
- * retiró con el simulado. Cuando el backend emita las restricciones con el
- * módulo del contrato (040), esto se reemplaza por lo emitido.
+ * **La capa 2 de `CU-38`, a mano y con su cita.** El `x-invariant`
+ * `invalid-origin` de `MerchantCreate` dice en prosa que cada origen es
+ * `scheme://host[:port]` sin ruta; una regla en prosa no se emite, así que acá
+ * está como patrón, y el servidor sigue siendo quien decide: su `422` cae en el
+ * mismo renglón.
  */
+const ORIGIN_SHAPE = '^https?://[^/\\s]+$'
+
+/**
+ * Lo que el contrato le exige al alta (`CU-38`): la capa 1 **emitida** del
+ * bundle (`CONSTRAINTS.MerchantCreate`: cuántos orígenes, de qué largo, y que
+ * `signature` es obligatorio) más la capa 2 de arriba sobre cada renglón de
+ * `origins`. Nada de esto se escribe dos veces: si el backend sube el largo,
+ * el formulario lo sabe en el próximo `contract:sync`.
+ */
+const emitted = CONSTRAINTS.MerchantCreate
 export const merchantConstraints: MessageConstraints = {
-  required: ['origin'],
+  required: emitted.required,
   fields: {
-    origin: { type: 'string', minLength: 1, maxLength: 255, pattern: '^https?://[^/\\s]+$' },
+    ...emitted.fields,
+    origins: {
+      ...emitted.fields.origins,
+      items: { ...emitted.fields.origins?.items, pattern: ORIGIN_SHAPE },
+    },
   },
 }
 
@@ -47,7 +56,8 @@ export const createMerchant = defineAction({
 
   /* El título es **qué pasó**; la descripción, **con qué referirse a eso**. Las
      credenciales viajan en la respuesta **una sola vez** y no van al aviso: un
-     aviso se va solo, y un secreto en un aviso es un secreto en pantalla. */
+     aviso se va solo, y un secreto en un aviso es un secreto en pantalla
+     (`OW-8`). Las muestra la pantalla que las pidió. */
   announces: (created) => ({
     title: merchantsStrings.merchantCreated,
     description: merchantsStrings.merchantCreatedDetail(created.merchant.merchantId),

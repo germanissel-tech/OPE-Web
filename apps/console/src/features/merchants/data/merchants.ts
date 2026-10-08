@@ -1,6 +1,11 @@
 import { useCollection, useService } from '@ope/core'
 import { useQuery } from '@tanstack/react-query'
-import { type Merchant, type OpeClient, opeService } from '../../../api/ope/client'
+import {
+  type Merchant,
+  type MerchantCredentials,
+  type OpeClient,
+  opeService,
+} from '../../../api/ope/client'
 
 /**
  * Los datos de los merchants.
@@ -9,7 +14,7 @@ import { type Merchant, type OpeClient, opeService } from '../../../api/ope/clie
  * y no sabe de qué sistema vino lo que recibe.
  */
 
-export type { Merchant, OpeClient }
+export type { Merchant, MerchantCredentials, OpeClient }
 export { opeService }
 
 /**
