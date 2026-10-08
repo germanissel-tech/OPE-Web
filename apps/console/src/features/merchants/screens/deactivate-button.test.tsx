@@ -48,6 +48,9 @@ function ope() {
     async listMerchants() {
       return { items: [merchant] }
     },
+    async listMerchantAdminLog() {
+      return { items: [] }
+    },
     async getMerchant() {
       return merchant
     },

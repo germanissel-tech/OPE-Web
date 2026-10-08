@@ -2,6 +2,7 @@ import { defineAction } from '@ope/core'
 import type { KillSwitch } from '../../../api/ope/client'
 import { opeOperation } from '../../../api/ope/operations'
 import { merchantsStrings } from '../strings'
+import { merchantLog } from './merchant-log'
 import { allMerchants, oneMerchant } from './merchants'
 
 export type KillSwitchInput = {
@@ -39,6 +40,10 @@ export const setKillSwitch = defineAction({
       : merchantsStrings.switchedOff(input.merchantId),
   }),
 
-  /* El estado cambia en la ficha y en la grilla. */
-  invalidates: (input) => [allMerchants, oneMerchant(input.merchantId)],
+  /* El estado cambia en la ficha y en la grilla, y queda en el registro. */
+  invalidates: (input) => [
+    allMerchants,
+    oneMerchant(input.merchantId),
+    merchantLog(input.merchantId),
+  ],
 })

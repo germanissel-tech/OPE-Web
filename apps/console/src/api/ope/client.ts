@@ -53,6 +53,13 @@ export type CredentialKind = components['schemas']['CredentialKind']
 /** El interruptor de apagado, pedido y respuesta (01 §14.2). */
 export type KillSwitch = components['schemas']['KillSwitch']
 
+/** Lo que `listMerchantAdminLog` acepta: el cursor opaco y el tamaño del tramo. */
+export type AdminLogQuery = NonNullable<operations['listMerchantAdminLog']['parameters']['query']>
+
+/** Una entrada del registro de administración: quién hizo qué, con qué resultado (ADR-031). */
+export type AdminEntry = components['schemas']['AdminEntry']
+export type AdminEntryPage = components['schemas']['AdminEntryPage']
+
 export type OpeClient = {
   /** Los merchants del alcance del operador, por cursor. */
   readonly listMerchants: (query: MerchantQuery) => Promise<MerchantPage>
@@ -75,6 +82,11 @@ export type OpeClient = {
   ) => Promise<CredentialIssued>
   /** Idempotente por estado: pedir el que ya tiene es `200` otra vez. */
   readonly setKillSwitch: (merchantId: string, body: KillSwitch) => Promise<KillSwitch>
+  /** El registro de administración del merchant, lo más nuevo primero, por cursor. */
+  readonly listMerchantAdminLog: (
+    merchantId: string,
+    query: AdminLogQuery,
+  ) => Promise<AdminEntryPage>
 }
 
 /**
@@ -143,6 +155,14 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
         await client.PUT('/v1/admin/merchants/{merchantId}/kill-switch', {
           params: { path: { merchantId } },
           body,
+        }),
+      )
+    },
+
+    async listMerchantAdminLog(merchantId, query) {
+      return unwrap<AdminEntryPage>(
+        await client.GET('/v1/admin/merchants/{merchantId}/log', {
+          params: { path: { merchantId }, query },
         }),
       )
     },

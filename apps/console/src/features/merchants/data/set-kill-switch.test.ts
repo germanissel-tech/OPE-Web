@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { merchantLog } from './merchant-log'
 import { allMerchants, oneMerchant } from './merchants'
 import { setKillSwitch } from './set-kill-switch'
 
@@ -31,6 +32,6 @@ describe('apagar y encender OPE para un merchant', () => {
   it('invalida la ficha y la grilla: el estado se ve en las dos', () => {
     expect(
       setKillSwitch.invalidates?.({ merchantId: 'mrc_uno', enabled: false }, { enabled: false }),
-    ).toEqual([allMerchants, oneMerchant('mrc_uno')])
+    ).toEqual([allMerchants, oneMerchant('mrc_uno'), merchantLog('mrc_uno')])
   })
 })

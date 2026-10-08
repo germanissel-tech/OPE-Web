@@ -74,6 +74,9 @@ function ope(options: {
       const page = query.cursor === undefined ? pages[0] : pages[1]
       return page ? { items: [...page.items], nextCursor: page.nextCursor } : { items: [] }
     },
+    async listMerchantAdminLog() {
+      return { items: [] }
+    },
     async getMerchant(merchantId) {
       return merchant(merchantId)
     },

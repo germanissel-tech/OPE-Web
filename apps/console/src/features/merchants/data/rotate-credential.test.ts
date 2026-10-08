@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { merchantLog } from './merchant-log'
 import { oneMerchant } from './merchants'
 import { rotateCredential, rotationConstraints } from './rotate-credential'
 
@@ -39,7 +40,7 @@ describe('rotar una credencial', () => {
           issuedAt: '2026-10-08T12:00:00Z',
         },
       ),
-    ).toEqual([oneMerchant('mrc_uno')])
+    ).toEqual([oneMerchant('mrc_uno'), merchantLog('mrc_uno')])
   })
 
   it('la gracia viene del contrato: entera y desde cero, sin máximo escrito acá', () => {

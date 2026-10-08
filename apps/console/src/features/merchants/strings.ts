@@ -121,6 +121,22 @@ export const merchantsStrings = {
   switchedOff: (merchantId: string) => `OPE quedó apagado para ${merchantId}`,
   switchedOn: (merchantId: string) => `OPE quedó encendido para ${merchantId}`,
 
+  /* El registro de administración del merchant (`ADR-031` del backend). Las
+     columnas que son campo del contrato (`operation`, `outcome`, `code`) se
+     llaman por el campo. */
+  log: 'Registro',
+  logCaption: 'Registro de administración del merchant, lo más nuevo primero',
+  atUtc: 'Instante (UTC)',
+  operator: 'Operador',
+  operation: 'Operación',
+  outcome: 'Resultado',
+  code: 'Código',
+  accepted: 'Aceptada',
+  rejected: 'Rechazada',
+  denied: 'Denegada',
+  logEmpty: 'Todavía nadie hizo nada sobre este merchant',
+  logEmptyHelp: 'Cada acción de administración que lo nombre aparece acá.',
+
   /* Cómo lo nombra un lector de pantalla, y lo que dice el globo del icono. */
   openMerchant: 'Ver la ficha',
   backToMerchants: 'Volver a merchants',

@@ -1,6 +1,7 @@
 import { useCollection, useService } from '@ope/core'
 import { useQuery } from '@tanstack/react-query'
 import {
+  type AdminEntry,
   type CredentialIssued,
   type CredentialKind,
   type KillSwitch,
@@ -18,6 +19,7 @@ import {
  */
 
 export type {
+  AdminEntry,
   CredentialIssued,
   CredentialKind,
   KillSwitch,

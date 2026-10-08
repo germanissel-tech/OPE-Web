@@ -68,6 +68,9 @@ function ope(options: { readonly createFails?: RequestFailed } = {}): OpeClient 
     async listMerchants() {
       return { items: [] }
     },
+    async listMerchantAdminLog() {
+      return { items: [] }
+    },
     async getMerchant(merchantId): Promise<Merchant> {
       return { ...ISSUED.merchant, merchantId }
     },

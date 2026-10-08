@@ -49,6 +49,9 @@ function ope(initial: Merchant['status'], options: { readonly switchFails?: Requ
     async listMerchants() {
       return { items: [{ ...base, status: state.status }] }
     },
+    async listMerchantAdminLog() {
+      return { items: [] }
+    },
     async getMerchant() {
       state.reads += 1
       return { ...base, status: state.status }

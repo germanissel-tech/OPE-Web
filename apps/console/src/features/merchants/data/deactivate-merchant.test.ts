@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Merchant } from '../../../api/ope/client'
 import { merchantsStrings } from '../strings'
 import { deactivateMerchant } from './deactivate-merchant'
+import { merchantLog } from './merchant-log'
 import { allMerchants, oneMerchant } from './merchants'
 
 /**
@@ -63,6 +64,7 @@ describe('desactivar un merchant', () => {
     expect(deactivateMerchant.invalidates?.(merchant('active'), merchant('deactivated'))).toEqual([
       allMerchants,
       oneMerchant('mrc_7f3k5d2q4m6x'),
+      merchantLog('mrc_7f3k5d2q4m6x'),
     ])
   })
 })

@@ -2,6 +2,7 @@ import { defineAction } from '@ope/core'
 import type { Merchant } from '../../../api/ope/client'
 import { opeOperation } from '../../../api/ope/operations'
 import { merchantsStrings } from '../strings'
+import { merchantLog } from './merchant-log'
 import { allMerchants, oneMerchant } from './merchants'
 
 /**
@@ -36,5 +37,9 @@ export const deactivateMerchant = defineAction({
     description: merchantsStrings.merchantDeactivatedDetail(updated.merchantId),
   }),
 
-  invalidates: (merchant) => [allMerchants, oneMerchant(merchant.merchantId)],
+  invalidates: (merchant) => [
+    allMerchants,
+    oneMerchant(merchant.merchantId),
+    merchantLog(merchant.merchantId),
+  ],
 })

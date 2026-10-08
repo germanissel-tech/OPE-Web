@@ -11,7 +11,17 @@ import {
   Table,
   Value,
 } from '@granito/ui'
-import { ActionButton, defineScreen, Result, useFlow, useOutcome, useScreenParams } from '@ope/core'
+import {
+  ActionButton,
+  defineScreen,
+  isEnabled,
+  Result,
+  useCapabilities,
+  useFlow,
+  useOutcome,
+  useScreenParams,
+} from '@ope/core'
+import type { ReactNode } from 'react'
 import {
   type CredentialKind,
   dayOf,
@@ -23,6 +33,7 @@ import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
 import { DeactivateButton } from './deactivate-button'
 import { KillSwitchButton } from './kill-switch-button'
+import { MerchantLog } from './merchant-log'
 
 /**
  * La ficha de un merchant, alcanzada desde la grilla con el parámetro
@@ -195,8 +206,27 @@ function MerchantCard({
           </Field>
         ) : null}
       </Section>
+
+      {/* Quién hizo qué sobre este merchant, debajo de lo que se le puede
+          hacer: se lee junto a su estado (`GR-38`). Sin `log:read`, la sección
+          no se dibuja y la ficha sí. */}
+      <Visible requires={['log:read']}>
+        <MerchantLog merchantId={merchant.merchantId} />
+      </Visible>
     </Form>
   )
+}
+
+/** Lo que una capacidad no habilita, no se muestra (`CU-3`); acá, una sección. */
+function Visible({
+  requires,
+  children,
+}: {
+  readonly requires: readonly string[]
+  readonly children: ReactNode
+}) {
+  const capabilities = useCapabilities()
+  return isEnabled({ requires }, capabilities) ? children : null
 }
 
 export const merchantScreen = defineScreen({

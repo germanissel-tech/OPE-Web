@@ -7,6 +7,7 @@ import {
 } from '../../../api/ope/client'
 import { opeOperation } from '../../../api/ope/operations'
 import { merchantsStrings } from '../strings'
+import { merchantLog } from './merchant-log'
 import { oneMerchant } from './merchants'
 
 /**
@@ -60,6 +61,7 @@ export const rotateCredential = defineAction({
     description: input.merchantId,
   }),
 
-  /* La ficha muestra el `issuedAt` nuevo; la grilla no muestra credenciales. */
-  invalidates: (input) => [oneMerchant(input.merchantId)],
+  /* La ficha muestra el `issuedAt` nuevo y el registro la rotación; la grilla
+     no muestra credenciales. */
+  invalidates: (input) => [oneMerchant(input.merchantId), merchantLog(input.merchantId)],
 })
