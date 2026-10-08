@@ -19,6 +19,11 @@ es de granito no encuentra nada, y lo más probable es que complete lo que cree 
 
 ## Las enmiendas, y qué cambió cada una
 
+**2026-10-08 — el merchant completo trae `OW-8`.** Un secreto que el backend entrega una sola vez se
+muestra una sola vez y en ningún otro lado: ni dirección, ni almacenamiento, ni aviso, ni telemetría.
+Decidida en el plan de la 006; `CU-38` gana su «Enmienda OPE» cuando la feature pague la deuda de las
+restricciones emitidas.
+
 **2026-10-08 — OPE-Web nace de cuarzo, y enmienda siete.** `CU-7`, `CU-10`, `CU-14`, `CU-20`, `CU-37`,
 `CU-40` y `CU-41` ganaron un párrafo **«Enmienda OPE»** debajo de su título: granito por `file:`, la
 puerta sin proveedor y con `signIn`/`observe`, Problem Details y cursor, la segunda aplicación copiada
@@ -129,6 +134,7 @@ siguiente, y ya lo había hecho: decía 42 cuando eran 48.
 | **OW-5** | decidida | El contrato llega como artefacto, y el módulo de capacidades lo publica el frontend | ope | CU-14, CU-37, TAN-7 *(plataforma)* |
 | **OW-6** | decidida | La consola habla con su propio origen, y un reenvío la lleva al backend | ope | CU-17, CU-22 |
 | **OW-7** | decidida | El operador se identifica por `operatorId`, y el nombre es opcional | ope | CU-27, OW-2 |
+| **OW-8** | decidida | Un secreto se muestra una sola vez, y en ningún otro lado | ope | CU-35, CU-43, OW-3 |
 
 ## Qué lo mantiene honesto
 
