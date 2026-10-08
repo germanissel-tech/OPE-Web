@@ -51,11 +51,14 @@ la constitución VII del backend acotada; y el emisor de `generated/contract/` c
 
 ## Lo que está roto o incómodo en el entorno
 
-- **La vista de ingreso y las vistas de `anonymous` y `ended` se dibujan sin el shell de granito**
-  (tipografía por omisión). Es herencia de cuarzo, cosmético, y queda para cuando se escriban las
-  vistas propias de la consola.
-- **La columna «Alta» muestra el instante ISO entero** aunque pide `format: 'date'`: granito espera
-  una fecha sin hora. Se resuelve con el formato de instante cuando granito lo tenga, o
-  formateando en `data/`.
+- **«Cargar más» sigue siendo texto compuesto sin la tarjeta de granito**: el `LoadMore` de granito
+  exige un total y OPE no lo tiene (`OW-4`). Se ve correcto pero no se parece al paginador; se
+  resuelve cuando granito acepte la propuesta.
+- **La barra de la grilla de merchants queda con la fila de filtros vacía**: `listMerchants` no
+  filtra, y granito reserva el renglón igual. Se llena cuando el contrato tenga filtro, o se pide a
+  granito una barra sólo de acciones.
+- **El alta de un merchant es un diálogo y descarta las credenciales que el backend devuelve una
+  sola vez.** Por `GR-37` y `GR-70` tiene que ser una pantalla que las muestre; va en la feature del
+  panel, por decisión del dueño (2026-10-08).
 - **El `409 merchant-deactivated` no se puede ver desde el hola mundo**: desactivar dos veces es
   `200` por contrato; el `409` lo dan operaciones del panel (`setKillSwitch`).

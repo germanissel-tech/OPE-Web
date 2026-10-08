@@ -77,6 +77,7 @@ describe('la vista de ingreso', () => {
 
 describe('la vista de anonymous', () => {
   const context = {
+    appName: 'OPE',
     waitThresholdMs: 0,
     endReason: undefined,
     application: null,
@@ -102,7 +103,7 @@ describe('la vista de anonymous', () => {
     )
 
     expect(screen.queryByLabelText(strings.credentialLabel)).toBeNull()
-    expect(screen.getByText(strings.noSession)).toBeDefined()
+    expect(screen.getAllByText(strings.noSession).length).toBeGreaterThan(0)
   })
 
   it('ended con la credencial rechazada en vuelo dice por qué', () => {

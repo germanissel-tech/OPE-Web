@@ -33,6 +33,14 @@ export type SessionViewContext = {
    * resolución que no vuelve deja la pantalla en blanco para siempre.
    */
   readonly waitThresholdMs: number
+  /**
+   * Cómo se llama la aplicación, para la marca del marco.
+   *
+   * Las vistas que no dejan ver la aplicación —ingreso, sin permisos,
+   * terminada— se dibujan **adentro del shell de granito** igual que una
+   * pantalla, y el shell necesita saber en qué aplicación está (`GR-12`).
+   */
+  readonly appName: string
   /** Por qué terminó, cuando terminó. */
   readonly endReason: string | undefined
   /** La aplicación, ya montada. Sólo la usan los estados que la dejan ver. */

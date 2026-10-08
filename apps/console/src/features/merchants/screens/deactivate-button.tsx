@@ -28,6 +28,7 @@ export function DeactivateButton({
 
   return (
     <ActionButton
+      type="button"
       size={compact ? 'compact' : undefined}
       tone="danger"
       requires={deactivateMerchant.requires}

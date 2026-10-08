@@ -206,11 +206,11 @@ resuelvan. **Describe lo que quedó, no lo que se planeó.**
 
 > **Hecho el 2026-10-08.** Desvíos: (1) `decisions.mjs` lee las `OW-n` como decisiones **propias** —mismo
 > formato de ficha, mismo índice— además de verificarlas como familia; por eso `docs/ope.md` entra en
-> `decisionDocs` y en el índice con `archivo: ope`. (2) Las citas de prueba a `OW-99` en los specs se
+> `decisionDocs` y en el índice con `archivo: ope`. (2) Las citas de prueba a `OW-<inexistente>` en los specs se
 > escriben sin el literal, porque ahora resolverían contra `docs/ope.md` y fallarían. (3) Dos comentarios
 > del núcleo que repetían frases de `OW-3` y `OW-4` se reformularon: la regla 5 de `quality` ya los
 > comparaba contra el documento nuevo. (4) `tests/icons.mjs` se conserva. (5) `requests` se fue de
-> `cli.mjs`: quedan ocho comprobaciones. Plantada `OW-99`, `decisions` la nombró con el archivo; un
+> `cli.mjs`: quedan ocho comprobaciones. Plantada `OW-<inexistente>`, `decisions` la nombró con el archivo; un
 > comentario que narra hizo fallar `quality` por su regla 7.
 
 ---

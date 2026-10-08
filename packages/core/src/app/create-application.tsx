@@ -216,7 +216,7 @@ export function createApplication(manifest: ApplicationManifest, chrome: Chrome)
 
   const views: SessionViews = { ...defaultSessionViews, ...manifest.sessionViews }
 
-  return { screens, router, navigation, outcome, views, forbidden, wiring }
+  return { name: manifest.name, screens, router, navigation, outcome, views, forbidden, wiring }
 }
 
 export type Application = ReturnType<typeof createApplication>
@@ -256,6 +256,7 @@ export function ApplicationView({
           <OutcomeProvider value={application.outcome}>
             <AuthorizationProvider capabilities={capabilities} forbidden={application.forbidden}>
               {view({
+                appName: application.name,
                 endReason,
                 reenter,
                 signIn,

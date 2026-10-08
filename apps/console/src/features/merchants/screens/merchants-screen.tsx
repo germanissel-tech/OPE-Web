@@ -1,4 +1,4 @@
-import { Badge, Block, Button, Page, Region, Table } from '@granito/ui'
+import { Badge, Block, Button, FilterBar, Page, Region, Table } from '@granito/ui'
 import {
   ActionButton,
   defineScreen,
@@ -14,7 +14,7 @@ import {
 import { useState } from 'react'
 import { createMerchant } from '../data/create-merchant'
 import { deactivateMerchant } from '../data/deactivate-merchant'
-import { type Merchant, useMerchants } from '../data/merchants'
+import { dayOf, type Merchant, useMerchants } from '../data/merchants'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
 import { NewMerchantDialog } from './new-merchant-dialog'
@@ -80,19 +80,28 @@ function MerchantsScreen() {
     <Page title={merchantsStrings.merchants}>
       <Region>
         <Block>
-          {/* Sin `FilterBar`: el alta va sola arriba. Es `ActionButton` y no
-              `Button` porque exige `merchants:write`, y lo que un permiso no
-              habilita **no se dibuja** (`CU-3`). */}
-          <ActionButton
-            tone="primary"
-            requires={createMerchant.requires}
-            onClick={() => setCreating(true)}
-          >
-            {merchantsStrings.newMerchant}
-          </ActionButton>
-
           <Table
             {...grid}
+            /* **Las acciones de la grilla viven en su barra** (`GR-38`), aunque
+               no haya filtros: la barra es el lugar donde el operador aprende a
+               buscar «nuevo». Es `ActionButton` y no `Button` porque exige
+               `merchants:write`, y lo que un permiso no habilita **no se dibuja**
+               (`CU-3`). `applyOnChange` es obligatorio en granito y acá no
+               aplica a nada: no hay filtro que aplicar. */
+            filters={
+              <FilterBar
+                applyOnChange
+                actions={
+                  <ActionButton
+                    tone="primary"
+                    requires={createMerchant.requires}
+                    onClick={() => setCreating(true)}
+                  >
+                    {merchantsStrings.newMerchant}
+                  </ActionButton>
+                }
+              />
+            }
             /* **Reintentar vuelve al principio**: un cursor viejo responde
                `400 validation-failed`, y pedir el mismo tramo otra vez daría lo
                mismo. `setCursor(undefined)` cambia la clave de la colección y
@@ -134,7 +143,7 @@ function MerchantsScreen() {
                 header: merchantsStrings.createdAt,
                 width: '160px',
                 format: 'date',
-                cell: (merchant) => merchant.createdAt,
+                cell: (merchant) => dayOf(merchant.createdAt),
               },
               ...actions,
             ]}

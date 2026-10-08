@@ -1,4 +1,4 @@
-import { Alert, Block, Button, Field, Page, Region, TextInput } from '@granito/ui'
+import { Alert, Block, Button, Field, Form, Page, Region, Section, TextInput } from '@granito/ui'
 import { type FormEvent, useState } from 'react'
 import type { SessionViewContext } from '../base/session-views'
 import type { Strings } from '../base/strings'
@@ -60,31 +60,45 @@ export function SignIn({ signIn, strings }: SignInProps) {
     <Page title={strings.signInTitle}>
       <Region>
         <Block>
-          <form onSubmit={(event) => void submit(event)}>
-            <p>{strings.signInDetail}</p>
-            {failure ? (
-              <Alert
-                severity={failure === 'rejected' ? 'warning' : 'error'}
-                title={strings.actionFailed}
+          {/* **El formulario de granito, no un `<form>` suelto** (`GR-27`): la
+              superficie, la reja de tramos, la sección con su cabecera al
+              costado y el pie con el botón de enviar. El rechazo va como aviso
+              en línea arriba del campo (`GR-43`). */}
+          <Form
+            onSubmit={(event) => void submit(event)}
+            saving={submitting}
+            actions={
+              <Button
+                type="submit"
+                tone="primary"
+                disabled={submitting || credential.trim() === ''}
               >
-                {failure === 'rejected' ? strings.signInRejected : strings.serverUnreachable}
-              </Alert>
-            ) : null}
-            <Field label={strings.credentialLabel} size="fill">
-              {(props) => (
-                <TextInput
-                  {...props}
-                  type="password"
-                  autoComplete="off"
-                  value={credential}
-                  onChange={(event) => setCredential(event.target.value)}
-                />
-              )}
-            </Field>
-            <Button type="submit" tone="primary" disabled={submitting || credential.trim() === ''}>
-              {submitting ? strings.waiting : strings.signIn}
-            </Button>
-          </form>
+                {submitting ? strings.waiting : strings.signIn}
+              </Button>
+            }
+          >
+            <Section title={strings.signInTitle} why={strings.signInDetail}>
+              {failure ? (
+                <Alert
+                  severity={failure === 'rejected' ? 'warning' : 'error'}
+                  title={strings.actionFailed}
+                >
+                  {failure === 'rejected' ? strings.signInRejected : strings.serverUnreachable}
+                </Alert>
+              ) : null}
+              <Field label={strings.credentialLabel} size="fill">
+                {(props) => (
+                  <TextInput
+                    {...props}
+                    type="password"
+                    autoComplete="off"
+                    value={credential}
+                    onChange={(event) => setCredential(event.target.value)}
+                  />
+                )}
+              </Field>
+            </Section>
+          </Form>
         </Block>
       </Region>
     </Page>

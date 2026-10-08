@@ -13,6 +13,16 @@ export type { Merchant, OpeClient }
 export { opeService }
 
 /**
+ * **El día de un instante**, para dibujarlo con el formato de fecha de granito.
+ *
+ * El contrato devuelve instantes ISO (`2026-10-06T21:00:27.783Z`) y granito
+ * formatea fechas (`YYYY-MM-DD`): un formato se define una sola vez (`GR-31`),
+ * y lo que la pantalla muestra es una fecha, no un instante. La hora se
+ * descarta a propósito: un alta se lee por su día.
+ */
+export const dayOf = (instant: string) => instant.slice(0, 10)
+
+/**
  * **Todas las listas de merchants**, sea cual sea el tramo.
  *
  * La clave de caché va de lo general a lo particular —sistema, recurso,
