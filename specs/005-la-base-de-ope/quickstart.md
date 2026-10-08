@@ -109,7 +109,7 @@ y **dónde**:
 |---|---|---|
 | `conformity` | cambiar un carácter de `contracts/ope/identity.json` | «el contrato y el módulo se despegaron: corré `npm run contract:sync`» |
 | `conformity` | borrar una operación de `capabilities.js` | la operación de `admin` que falta, por nombre |
-| `decisions` | citar `OW-99` en un comentario de `packages/core/src` | «cita que no resuelve», con el archivo |
+| `decisions` | citar `OW-<inexistente>` en un comentario de `packages/core/src` | «cita que no resuelve», con el archivo |
 | `boundaries` | un `className` en `apps/console/src/features/merchants/` | el archivo y la regla de estilos propios |
 | `artifact` | importar `@ope/session/fake` desde `main.tsx` sin el `import()` diferido, y compilar | «la implementación falsa está en el artefacto» |
 | `packaging` | apuntar un `exports` de `@ope/core` a un archivo que no existe | el paquete y la ruta |

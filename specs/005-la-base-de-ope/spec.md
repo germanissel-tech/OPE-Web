@@ -1,6 +1,6 @@
 # Especificación · La base de OPE
 
-**Carpeta**: `005-la-base-de-ope` · **Estado**: borrador · **Fecha**: 2026-10-07
+**Carpeta**: `005-la-base-de-ope` · **Estado**: construida · **Fecha**: 2026-10-07
 
 **Pedido**: "Cuarzo adaptado al backend de OPE, en un monorepo con dos aplicaciones. Decisión del dueño,
 2026-10-07, tras evaluar tres formas de usar cuarzo: como biblioteca con puertos para dos backends, como

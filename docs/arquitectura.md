@@ -97,6 +97,8 @@ que las otras — el valor sin la razón se cambia por capricho seis meses despu
 
 **Estado**: decidida
 
+> **Enmienda OPE (2026-10-08).** granito llega por `file:` a la carpeta hermana de Tandilia (`../../../../Bitbucket/Tandil Stone Pulse/tandilia/granito/packages/*`) hasta que esté publicado en npm; esa carpeta es **sólo lectura** desde OPE. Lo demás de esta decisión no cambia. Ver `docs/origen.md`.
+
 De **npm público**: `@granito/tokens` y `@granito/ui`, bajo la organización `granito`. No es
 software libre —la licencia es propietaria—; el registro público es el estante, no una cesión de
 derechos.
@@ -147,6 +149,8 @@ decisiones de las que depende.
 ### CU-14 · Cómo se piden los datos
 
 **Estado**: decidida · **Depende de**: CU-9, CU-10
+
+> **Enmienda OPE (2026-10-08).** OPE responde el recurso **pelado** y errores **Problem Details** (RFC 9457): el sobre `{ data, meta }`, `error.code` y `fields` de las-animas se reemplazan en el núcleo por `type`, `detail` y `errors[{ pointer, message }]` (`OW-3`). Pagina por **cursor opaco y sin total** (`ADR-020` del backend): no hay número de página ni tamaño que el servidor devuelva, y «cargar más» acumula tramos (`OW-4`). Lo que no cambia: quién cachea, qué se cancela, y que filtrar y paginar es del servidor.
 
 Buena parte de esto **no se elige: se hereda del contrato**. Se anota igual, porque una decisión
 que hay que ir a buscar a otro repositorio no se cumple.
@@ -289,6 +293,8 @@ pantalla.
 ### CU-20 · Cuarzo es la aplicación base, y se clona
 
 **Estado**: decidida · **Depende de**: CU-7
+
+> **Enmienda OPE (2026-10-08).** OPE-Web nace de la copia literal de cuarzo (`9bd4009`) y es un monorepo: la aplicación base es `apps/console`, y la segunda aplicación **la copia adentro del mismo repositorio** según `docs/segunda-aplicacion.md` en vez de clonar entre repositorios (`OW-1`). El ritual de clonar (`tests/clone.mjs`) se retiró.
 
 **Cuarzo es una aplicación que corre y no sabe de ningún negocio.** Autentica, navega, muestra los
 cuatro estados, trata errores, exporta archivos y sigue procesos largos.
@@ -1720,6 +1726,8 @@ pantalla vacía miente más que una que no lleva a ningún lado.*
 
 **Estado**: decidida · **Depende de**: CU-3, CU-15, CU-25, CU-34
 
+> **Enmienda OPE (2026-10-08).** `Operation.roles` pasa a **`capabilities`**, y salen del módulo del contrato que el backend emite por consumidor (`contracts/ope/capabilities`, `OW-5`) y no de un generador por expresión regular sobre `x-required-roles`. `idempotent` y `versioned` se omiten cuando el contrato no los declara: OPE repite por cuerpo idéntico y no tiene testigo. Lo demás —la unión de capacidades, escribir en un solo lugar, la invalidación declarada— no cambia.
+
 Una **acción** es lo que ejecuta un botón: el caso de uso. Vive en `features/<x>/data/`, que por
 CU-15 es lo único que puede importar de `api/`.
 
@@ -1962,6 +1970,8 @@ existe hoy en ningún contrato.
 
 **Estado**: decidida · **Depende de**: CU-7, CU-15, CU-20
 
+> **Enmienda OPE (2026-10-08).** `@ope/core` y `@ope/session` son **workspaces privados** del monorepo y no se publican: llegan a las aplicaciones por `npm workspaces`, en el mismo commit (`OW-1`). Lo que esta decisión dice de qué se comparte y qué se copia sigue valiendo; `npm update` deja de ser el mecanismo, y la comprobación de empaquetado exime de identidad publicable a los paquetes privados.
+
 CU-20 partió cuarzo en «lo que se copia» y «lo que se publica». Esto lo precisa pieza por pieza,
 porque al especificar el esqueleto apareció que **adentro hay dos cosas de naturaleza distinta**.
 
@@ -2103,6 +2113,8 @@ Esa última fila es **el único costo real**, y está acotado a seis archivos.
 ### CU-41 · El ruteador, y de dónde salen los tipos
 
 **Estado**: decidida · **Depende de**: CU-15, CU-23
+
+> **Enmienda OPE (2026-10-08).** Sin cambio de fondo. Se cita porque el estado de una grilla en la dirección lleva **el cursor del último tramo cargado** (`<grilla>.c`) en vez de un número de página (`.p`), y un enlace con cursor reproduce ese tramo (`OW-4`).
 
 **React Router como transporte, y los tipos salen del registro de CU-23.**
 

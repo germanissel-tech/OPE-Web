@@ -9,7 +9,6 @@
     "apps/*"
   ],
   "scripts": {
-    "avance": "node tests/progress.mjs",
     "build": "npm run build:paquetes && tsc -p tsconfig.json && npm run build --workspaces --if-present",
     "build:paquetes": "npm run build -w @ope/session -w @ope/core",
     "contract:sync": "node scripts/contract-sync.mjs",
@@ -45,6 +44,11 @@
       "apps/console/src/app/dev-session.ts",
       "packages/core/src/app/bootstrap.tsx",
       "packages/core/src/app/create-application.tsx"
+    ],
+    "decisionDocs": [
+      "docs/arquitectura.md",
+      "docs/seguridad.md",
+      "docs/ope.md"
     ]
   }
 }

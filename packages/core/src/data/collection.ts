@@ -43,7 +43,7 @@ export type CollectionOptions = {
   /**
    * El cursor desde el que arranca (`CU-47`): el que la dirección trae.
    *
-   * **Un enlace con cursor reproduce ese tramo, no la acumulación**: es lo que
+   * **Con cursor se muestra ese tramo solo**, sin los anteriores: es lo que
    * el servidor puede dar. Sin cursor arranca del principio.
    */
   readonly from?: string | undefined

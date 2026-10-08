@@ -68,7 +68,7 @@ enmienda:
 | **lo mira una persona** | Que la consola levante contra el backend real, entre con un token y muestre los cuatro estados con cursor; que la pantalla de ingreso diga lo que tiene que decir; que la prosa heredada no describa las-animas donde cambió |
 
 Y **tres comprobaciones nuevas o enmendadas se rompen a propósito antes de creerles**:
-`conformity` (con una `identity.json` tocada), `decisions` (con una cita `OW-99`) y `packaging` (con
+`conformity` (con una `identity.json` tocada), `decisions` (con una cita `OW-<inexistente>`) y `packaging` (con
 un `exports` que apunte a un archivo que no existe). Es la lección heredada que la spec repite.
 
 ## Estructura
@@ -145,7 +145,7 @@ está dicho; sin eso son casillas.
 | **3** | **Cuerpos pelados, Problem Details y cursor** en el núcleo: `envelope`, `notice`, `use-action`, `use-form`, `collection`, `use-table-query`, `result-of`, `LoadMoreCursor`; se retira `TablePagination` | Las pruebas del núcleo en verde sobre respuestas de OPE grabadas (un `MerchantPage`, un `422` con `errors[]`, un `403 merchant-out-of-scope`, un `401`). La ruta de `CU-29` sigue compilando sin que nadie la ejerza |
 | **4** | **La sesión agnóstica y el bearer**: `SessionConfig`, `signIn`, `observe`, `resolved` desde `anonymous`, `createBearerSession`, la vista de ingreso, `token-rejected`, `provide` con `session` | `tests/gate.mjs` y la máquina en verde; `npm run dev` con la falsa entra solo; **contra el backend real**, pegar un token acuñado entra, uno inventado dice «rechazado», y un `401` en vuelo termina la sesión diciendo por qué |
 | **5** | **El hola mundo de OPE**: `features/merchants` reemplaza a `catalog`; `identity.ts` con la sonda; `dev-session` con los papeles de `admin`; se retiran el simulado, `demo.yaml`, `roles.mjs`, `constraints.mjs`, `mock.mjs`, `prism` | Escenario 4 a mano: cargando, con datos, vacío (un backend recién levantado sin merchants) y error (backend apagado), con el cursor en la dirección y «cargar más». Escenarios 5, 6 y 7 con `?dev.papel=lectura` y contra el backend |
-| **6** | **Documentos y gobierno**: constitución 2.0.0, enmiendas a `CU-7/10/14/20/37/40/41`, `docs/ope.md` (`OW-1…7`), `origen.md`, `segunda-aplicacion.md`, `CLAUDE.md`, `README.md`, `estado.md`, `deuda.md`; se retiran `PEDIDOS.md`, `requests.mjs`, `catalogo`, `clone`, la regla 12 | `ope-check decisions` en verde con la familia `OW`, y **en rojo** con una cita `OW-99` plantada; `quality` ya no falla por «cliente» |
+| **6** | **Documentos y gobierno**: constitución 2.0.0, enmiendas a `CU-7/10/14/20/37/40/41`, `docs/ope.md` (`OW-1…7`), `origen.md`, `segunda-aplicacion.md`, `CLAUDE.md`, `README.md`, `estado.md`, `deuda.md`; se retiran `PEDIDOS.md`, `requests.mjs`, `catalogo`, `clone`, la regla 12 | `ope-check decisions` en verde con la familia `OW`, y **en rojo** con una cita `OW-<inexistente>` plantada; `quality` ya no falla por «cliente» |
 
 **El 1 se hace solo y entero antes que nada**: es puro movimiento y renombre, y mezclarlo con un
 cambio de conducta haría un diff que nadie puede revisar. **El 2 antes que el 3** porque el 3 prueba

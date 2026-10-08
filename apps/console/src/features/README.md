@@ -4,11 +4,11 @@
 > mostrando algo que anda, y para que la primera pantalla propia se copie de un ejemplo en vez de
 > escribirse de cero.
 >
-> **Se borran las dos** cuando la aplicación tiene pantallas propias. Es el paso 6 del ritual de
-> clonar, no un olvido.
+> **Se copian, no se borran**: las pantallas del panel nacen de `merchants/`. Lo que se borra es
+> `home/`, cuando la consola tenga su inicio propio.
 
 **Por lo que hace la aplicación, no por tipo de archivo** (`CU-15`). Con veinte pantallas —las que
-ya tiene especificado el panel de `las-animas`— agrupar por tipo deja cada funcionalidad
+tendrá el panel de OPE— agrupar por tipo deja cada funcionalidad
 desparramada en cuatro carpetas de veinte archivos.
 
 ## La forma
@@ -31,7 +31,7 @@ lados (`CU-23`), así que no hay nada más que tocar.
 
 ```tsx
 // screens/article-screen.tsx
-import { defineScreen, useScreenParams } from '@cuarzo/core'
+import { defineScreen, useScreenParams } from '@ope/core'
 import { Block, Page, Region } from '@granito/ui'
 
 function ArticleScreen() {
@@ -44,10 +44,10 @@ function ArticleScreen() {
 }
 
 export const articleScreen = defineScreen({
-  id: 'catalogArticle',
+  id: 'merchant',
   title: 'Ficha del artículo',
-  path: '/catalog/:id',            // tiene que empezar con barra, y el tipo lo exige
-  capability: 'catalog:read',      // sin ella no aparece en el menú NI deja entrar por URL
+  path: '/merchants/:merchantId',            // tiene que empezar con barra, y el tipo lo exige
+  capability: 'merchants:read',      // sin ella no aparece en el menú NI deja entrar por URL
   component: ArticleScreen,
 })
 ```
@@ -70,10 +70,10 @@ lo dice el paso del flujo activo, en `app/flows.ts` (`CU-44` enmendada, `CU-47`)
 
 ```ts
 // feature.ts — qué le puede pasar
-outcomes: { catalogRequested: outcome<{ from: string }>('home.catalogRequested') }
+outcomes: { merchantsRequested: outcome<{ from: string }>('home.merchantsRequested') }
 
 // la pantalla — informa, y no sabe a dónde va
-<Button onClick={() => emit(home.outcomes.catalogRequested({ from: 'home' }))}>Ir al catálogo</Button>
+<Button onClick={() => emit(home.outcomes.merchantsRequested({ from: 'home' }))}>Ir a merchants</Button>
 ```
 
 **El nombre dice qué pasó, no a dónde ir.** `issued`, no `goToInvoice`: si se nombra por el destino,
@@ -133,5 +133,5 @@ resuelve importando.
 ## Si no estás seguro
 
 **¿Esto va a ser igual en las cuatro aplicaciones de Tandilia?** Si sí, no va acá: va a
-`@cuarzo/core`. Ésa es la prueba de `CU-40`, y es la misma que decidió que el shell, las vistas de
+`@ope/core`. Ésa es la prueba de `CU-40`, y es la misma que decidió que el shell, las vistas de
 sesión y las comprobaciones se publiquen.

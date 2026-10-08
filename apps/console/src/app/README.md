@@ -1,7 +1,7 @@
 # Lo que esta aplicación declara
 
 **Nueve archivos, y ninguno es cableado.** El arranque, la raíz de composición, el shell, la
-configuración y las siete vistas de sesión los pone `@cuarzo/core` y llegan con `npm update`
+configuración y las siete vistas de sesión los pone `@ope/core` y llegan por workspace
 (`CU-42`).
 
 | | qué decide | cuándo se toca |
@@ -33,7 +33,7 @@ export function createManifest(config: BaseConfig): ApplicationManifest {
   const { screens, featureRootOf, userMenuEntries, outcomes } = composeFeatures(features)
 
   return defineApplication({
-    name: 'Cuarzo',                          // la marca de la barra
+    name: 'OPE-Console',                     // la marca de la barra
     screens,                                 // de lo que declara cada funcionalidad
     systems: Object.keys(config.systems),    // contra qué backends habla — CU-22
     ...identity(config),                     // claims → capacidades, y el rótulo — CU-10, CU-27
@@ -49,7 +49,7 @@ pantallas, rutas, menú y entradas propias salen de lo que ella declara (`CU-23`
 ## Las funcionalidades
 
 ```ts
-export const features: readonly Feature[] = [home, catalog]
+export const features: readonly Feature[] = [home, merchants]
 ```
 
 **Escritas a mano y no descubiertas.** Un `import.meta.glob` ahorraría el renglón y a cambio nadie
@@ -141,7 +141,7 @@ Sólo dice qué usa. Lo único con lógica es **elegir el proveedor de sesión**
 aplicación: es donde decide contra qué autentica.
 
 **La sesión de desarrollo se carga de forma diferida**, y por eso vive en su propio archivo: así no
-entra en el artefacto de producción (`CU-36`), y lo verifica `cuarzo-check` sobre la compilación.
+entra en el artefacto de producción (`CU-36`), y lo verifica `ope-check` sobre la compilación.
 
 ## Por qué `dev-session.ts` está aparte
 
@@ -151,7 +151,7 @@ son una fixture, y leerlos en el arranque los hace pasar por otra cosa.
 ## Cómo mirar la aplicación con menos permisos
 
 ```
-?dev.papel=lectura     lo que hay sin catalog:write
+?dev.papel=lectura     lo que hay sin merchants:write
 ?dev.papel=ninguno     lo que ve una sesión válida que no habilita nada
 ?dev.papel=todo        vuelve a lo de siempre
 ```
@@ -170,9 +170,9 @@ en vivo mostraría algo que en producción no puede pasar.
 
 ## Si no estás seguro de dónde va algo
 
-**¿Va a ser igual en las cuatro aplicaciones de Tandilia?**
+**¿Va a ser igual en las dos aplicaciones de OPE-Web?**
 
-- **Sí** → no va acá, va a `@cuarzo/core`. Ésa es la prueba de `CU-40`.
+- **Sí** → no va acá, va a `@ope/core`. Ésa es la prueba de `CU-40`.
 - **No** → si es una pantalla, va a [`../features/`](../features/README.md). Si es cableado que sólo
   esta aplicación necesita, va acá — y conviene preguntarse por qué sólo ésta lo necesita.
 

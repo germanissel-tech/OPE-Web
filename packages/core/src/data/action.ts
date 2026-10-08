@@ -84,7 +84,7 @@ export function operation<Service, Input, Output>(
   /**
    * Lo que el contrato le exige. Se genera; no se escribe (`CU-37`, `CU-34`).
    *
-   * `idempotent` y `versioned` se omiten cuando el contrato no los declara:
+   * Los dos últimos se pueden omitir si el contrato no los declara:
    * OPE no tiene testigo (`If-Match`) todavía, y obligar a escribir
    * `versioned: false` treinta veces es la casilla que se copia sin mirar.
    */

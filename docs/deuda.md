@@ -119,6 +119,26 @@ y verifique que **no pasa como buena** — hoy pasa.
 
 ---
 
+### 4 · Las restricciones del contrato (`CU-38`) no se emiten desde el bundle de OPE
+
+**Qué es.** Cuarzo generaba `constraints.ts` —obligatorios, largos, patrones e invariantes de cada
+mensaje— leyendo `demo.yaml` por líneas. Ese generador se retiró con el simulado (`docs/origen.md`),
+y el bundle de OPE no tiene la forma que leía. Hoy las restricciones del único formulario, el alta de
+merchant, están **escritas a mano con la cita del contrato** en
+`apps/console/src/features/merchants/data/create-merchant.ts`.
+
+**Qué produce.** Nada falla: `useForm` y `FieldConstraints` siguen en el núcleo, y la capa 1 valida
+con lo escrito. Lo que restringe es la promesa de `CU-38` —*si el contrato cambia, la copia deja de
+compilar*—: con una copia a mano, el backend puede subir `maxLength` y el formulario sigue bloqueando
+con el criterio de antes, que es el error que **no se descubre nunca**.
+
+**Qué costaría.** Un emisor sobre el bundle con `yaml` —el mismo que `contract-sync` ya usa para el
+módulo de capacidades—, que recorra `components.schemas` y emita `constraints.ts` por consumidor, o
+que el backend lo emita en `generated/contract/` junto con las capacidades (040). Medio día.
+
+**Cuándo se paga.** **Antes del primer formulario del panel**: con un formulario a mano se tolera;
+con cinco, la copia que un día no coincide ya está en producción.
+
 ## Lo que NO es deuda, y por qué se anota igual
 
 Para que nadie lo mueva a la lista de arriba pensando que se olvidó.

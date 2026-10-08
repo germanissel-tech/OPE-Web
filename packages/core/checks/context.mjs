@@ -47,6 +47,7 @@ const KNOWN = [
   'compositionLayer',
   'cuarzoDocs',
   'granitoDocs',
+  'opeDocs',
   'platformDocs',
 ]
 

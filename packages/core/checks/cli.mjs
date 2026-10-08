@@ -28,7 +28,6 @@ const CHECKS = [
   { name: 'labels', what: 'que el mismo campo se llame igual en todas las pantallas' },
   { name: 'artifact', what: 'que la sesión falsa no se despache' },
   { name: 'packaging', what: 'que lo publicable exista y esté versionado' },
-  { name: 'requests', what: 'los pedidos abiertos de otros repositorios' },
   { name: 'errors', what: 'que se ramifique por error.code y nunca por su mensaje' },
   { name: 'conformity', what: 'que el módulo de capacidades sea el del contrato sincronizado' },
 ]

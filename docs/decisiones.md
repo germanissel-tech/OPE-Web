@@ -1,6 +1,6 @@
 # Índice de decisiones
 
-Todas las decisiones de cuarzo con su estado y su documento. **Este archivo se lee entero**: existe
+Todas las decisiones de OPE-Web —las heredadas de cuarzo y las propias— con su estado y su documento. **Este archivo se lee entero**: existe
 para resolver una referencia sin abrir quinientas líneas, y para saber si un identificador existe
 antes de citarlo.
 
@@ -9,13 +9,22 @@ documento**.
 
 ## Cómo se cita una decisión
 
-**`CU-n`** es de cuarzo. **`GR-n`** es de granito, y vive en `../granito/docs/identidad-visual.md`.
+**`CU-n`** es de cuarzo, heredada tal cual o enmendada (`docs/arquitectura.md`, `docs/seguridad.md`).
+**`OW-n`** es de OPE-Web (`docs/ope.md`). **`GR-n`** es de granito y **`TAN-n`** de la plataforma de
+Tandilia: viven en sus repositorios, que desde acá son sólo lectura. **`ADR-nnn`** es de OPE-Backend.
 
 **Nunca un número pelado.** Un número solo es ambiguo —cuarzo y granito tienen los suyos y se
 pisan— y de ahí salen las citas inventadas: un agente que busca en cuarzo un número que en realidad
 es de granito no encuentra nada, y lo más probable es que complete lo que cree que dice.
 
 ## Las enmiendas, y qué cambió cada una
+
+**2026-10-08 — OPE-Web nace de cuarzo, y enmienda siete.** `CU-7`, `CU-10`, `CU-14`, `CU-20`, `CU-37`,
+`CU-40` y `CU-41` ganaron un párrafo **«Enmienda OPE»** debajo de su título: granito por `file:`, la
+puerta sin proveedor y con `signIn`/`observe`, Problem Details y cursor, la segunda aplicación copiada
+adentro del monorepo, capacidades del módulo del contrato, paquetes privados, y el cursor en la URL.
+Las decisiones nuevas son `OW-1` a `OW-7` en `docs/ope.md`, cada una con su origen. Qué se hereda, qué
+se enmienda y qué se retira está en `docs/origen.md`.
 
 **2026-08-21 — los nombres de API pasaron a inglés.** `CU-15`, `CU-23`, `CU-24`, `CU-25`,
 `CU-37` y `CU-40` nombraban su superficie en castellano —`ir()`, `<Resultado>`,
@@ -58,7 +67,7 @@ que pasó cuando las abiertas eran letras y una se convirtió en dos decisiones.
 
 ## El índice
 
-**Cuántas son y cuántas están abiertas lo informa `cuarzo-check`**, que ya las cuenta al verificar
+**Cuántas son y cuántas están abiertas lo informa `ope-check`**, que ya las cuenta al verificar
 que esta tabla coincida con los documentos. Escrito acá el número envejece con la decisión
 siguiente, y ya lo había hecho: decía 42 cuando eran 48.
 
@@ -113,6 +122,13 @@ siguiente, y ya lo había hecho: decía 42 cuando eran 48.
 | **CU-47** | decidida | Cómo se atraviesa una aplicación: el flujo, la pila y los cuatro verbos | arquitectura | CU-3, CU-14, CU-15, CU-23, CU-26, CU-41, CU-42, CU-44 |
 | **CU-48** | decidida | El menú lateral se declara, y es un nivel | arquitectura | CU-3, CU-23, CU-27, CU-43, CU-47 |
 | **CU-49** | decidida | Un rechazo que la pantalla no puede mostrar no se pierde | arquitectura | CU-5, CU-14, CU-25, CU-29, CU-38, TAN-9 *(plataforma)*, TAN-10 *(plataforma)* |
+| **OW-1** | decidida | OPE-Web nace de una copia de cuarzo, y es un monorepo | ope | CU-20, CU-40 |
+| **OW-2** | decidida | La puerta no supone proveedor, y entra con una credencial | ope | CU-10, OW-3 |
+| **OW-3** | decidida | El núcleo habla Problem Details y cuerpos pelados | ope | CU-14, CU-25, CU-38, CU-49 |
+| **OW-4** | decidida | El cursor viaja en la dirección, y «cargar más» se compone | ope | CU-14, CU-24, CU-41, CU-47 |
+| **OW-5** | decidida | El contrato llega como artefacto, y el módulo de capacidades lo publica el frontend | ope | CU-14, CU-37, TAN-7 *(plataforma)* |
+| **OW-6** | decidida | La consola habla con su propio origen, y un reenvío la lleva al backend | ope | CU-17, CU-22 |
+| **OW-7** | decidida | El operador se identifica por `operatorId`, y el nombre es opcional | ope | CU-27, OW-2 |
 
 ## Qué lo mantiene honesto
 
