@@ -11,11 +11,18 @@ import {
   Table,
   Value,
 } from '@granito/ui'
-import { defineScreen, Result, useOutcome, useScreenParams } from '@ope/core'
-import { dayOf, type Merchant, useMerchant } from '../data/merchants'
+import { ActionButton, defineScreen, Result, useFlow, useOutcome, useScreenParams } from '@ope/core'
+import {
+  type CredentialKind,
+  dayOf,
+  type Merchant,
+  STATUS_TONE,
+  useMerchant,
+} from '../data/merchants'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
 import { DeactivateButton } from './deactivate-button'
+import { KillSwitchButton } from './kill-switch-button'
 
 /**
  * La ficha de un merchant, alcanzada desde la grilla con el parámetro
@@ -51,7 +58,7 @@ function MerchantScreen() {
             filtered={false}
             isEmpty={(loaded) => loaded === undefined}
           >
-            {(loaded) => <MerchantCard merchant={loaded} />}
+            {(loaded) => <MerchantCard merchant={loaded} refresh={() => merchant.refetch()} />}
           </Result>
         </Block>
       </Region>
@@ -59,8 +66,20 @@ function MerchantScreen() {
   )
 }
 
-function MerchantCard({ merchant }: { readonly merchant: Merchant }) {
+function MerchantCard({
+  merchant,
+  refresh,
+}: {
+  readonly merchant: Merchant
+  /** Volver a pedir la ficha: lo que hace un `409` —el estado cambió debajo—. */
+  readonly refresh: () => void
+}) {
   const { emit } = useOutcome()
+  const flow = useFlow()
+  const alive = merchant.status !== 'deactivated'
+  const requestRotation = (kind: CredentialKind) =>
+    emit(merchants.outcomes.rotationRequested({ merchantId: merchant.merchantId, kind }))
+  const hasSigning = merchant.credentials.some((each) => each.kind === 'signing')
 
   return (
     <Form
@@ -70,9 +89,11 @@ function MerchantCard({ merchant }: { readonly merchant: Merchant }) {
          `Value`, que es lo mismo que el modo sólo lectura dibuja. */
       /* Un `<form>` de verdad: `Enter` enviaría, y acá no hay nada que enviar. */
       onSubmit={(event) => event.preventDefault()}
-      /* **Dos salidas, y la ficha no sabe a dónde lleva ninguna**: desactivar es
-         una acción que exige capacidad, y volver es un desenlace que el flujo
-         resuelve (`CU-47`). La primaria va última (`GR-27`). */
+      /* **Las salidas, y la ficha no sabe a dónde lleva ninguna**: apagar y
+         desactivar son acciones que exigen capacidad y confirman, y volver es
+         un desenlace que el flujo resuelve (`CU-47`). La más grave va última
+         (`GR-27`). Las dos acciones refrescan la ficha si el servidor dijo que
+         no: el estado cambió debajo. */
       actions={
         <>
           <Button
@@ -83,7 +104,8 @@ function MerchantCard({ merchant }: { readonly merchant: Merchant }) {
           >
             {merchantsStrings.backToMerchants}
           </Button>
-          <DeactivateButton merchant={merchant} />
+          <KillSwitchButton merchant={merchant} onRejected={refresh} />
+          <DeactivateButton merchant={merchant} onRejected={refresh} />
         </>
       }
     >
@@ -94,9 +116,7 @@ function MerchantCard({ merchant }: { readonly merchant: Merchant }) {
         {/* Un estado **cerrado** va como pastilla (`GR-67`), también en la ficha. */}
         <Field label={merchantsStrings.status} size="short">
           {() => (
-            <Badge tone={merchant.status === 'active' ? 'success' : 'neutral'}>
-              {merchantsStrings[merchant.status]}
-            </Badge>
+            <Badge tone={STATUS_TONE[merchant.status]}>{merchantsStrings[merchant.status]}</Badge>
           )}
         </Field>
         <Field label={merchantsStrings.origins} size="fill">
@@ -133,9 +153,47 @@ function MerchantCard({ merchant }: { readonly merchant: Merchant }) {
               format: 'date',
               cell: (credential) => dayOf(credential.issuedAt),
             },
+            /* **Rotar es un desenlace**: la fila no sabe que la rotación es una
+               pantalla ni cuál; qué exige llegar se lo pregunta al flujo
+               (`CU-47`, `CU-3`). Sobre un desactivado no se ofrece. */
+            {
+              id: 'rotate',
+              header: '',
+              width: '120px',
+              cell: (credential) =>
+                alive ? (
+                  <ActionButton
+                    type="button"
+                    size="compact"
+                    {...flow.toReach(merchants.outcomes.rotationRequested)}
+                    onClick={() => requestRotation(credential.kind)}
+                  >
+                    {merchantsStrings.rotate}
+                  </ActionButton>
+                ) : null,
+            },
           ]}
           caption={merchantsStrings.credentials}
         />
+        {/* Un merchant creado sin firma puede empezar a firmar: rotar el
+            secreto que no tiene lo acuña (contrato de `rotatePlatformSecret`). */}
+        {alive && !hasSigning ? (
+          <Field
+            label={merchantsStrings.platformSecret}
+            size="fill"
+            help={merchantsStrings.noSigning}
+          >
+            {() => (
+              <ActionButton
+                type="button"
+                {...flow.toReach(merchants.outcomes.rotationRequested)}
+                onClick={() => requestRotation('signing')}
+              >
+                {merchantsStrings.createSigning}
+              </ActionButton>
+            )}
+          </Field>
+        ) : null}
       </Section>
     </Form>
   )

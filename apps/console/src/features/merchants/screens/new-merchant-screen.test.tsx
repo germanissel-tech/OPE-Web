@@ -43,7 +43,7 @@ import { merchantsStrings } from '../strings'
 
 afterEach(cleanup)
 
-const [merchantsScreen, merchantScreen, newMerchantScreen] = merchants.screens
+const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen] = merchants.screens
 
 const ISSUED: MerchantCredentials = {
   merchant: {
@@ -77,6 +77,18 @@ function ope(options: { readonly createFails?: RequestFailed } = {}): OpeClient 
       return ISSUED
     },
     async deactivateMerchant() {
+      throw new Error('no se prueba acá')
+    },
+    async rotateIngestKey() {
+      throw new Error('no se prueba acá')
+    },
+    async rotatePlatformKey() {
+      throw new Error('no se prueba acá')
+    },
+    async rotatePlatformSecret() {
+      throw new Error('no se prueba acá')
+    },
+    async setKillSwitch() {
       throw new Error('no se prueba acá')
     },
   }
@@ -129,22 +141,35 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
         merchantId,
       })),
       closes(merchants.outcomes.newMerchantCancelled),
+      opens(merchants.outcomes.rotationRequested, rotateScreen, ({ merchantId, kind }) => ({
+        merchantId,
+        kind,
+      })),
+      finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [merchantsScreen, merchantScreen, newMerchantScreen],
+      screens: [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen],
       flows: [flow],
       menu: [flow],
-      featureRootOf: { merchants: 'merchants', merchant: 'merchants', 'new-merchant': 'merchants' },
+      featureRootOf: {
+        merchants: 'merchants',
+        merchant: 'merchants',
+        'new-merchant': 'merchants',
+        rotate: 'merchants',
+      },
       outcomesOf: {
         merchants: [merchants.outcomes.merchantChosen.id, merchants.outcomes.merchantRequested.id],
-        merchant: [merchants.outcomes.merchantClosed.id],
+        merchant: [merchants.outcomes.merchantClosed.id, merchants.outcomes.rotationRequested.id],
         'new-merchant': [
           merchants.outcomes.merchantCreated.id,
           merchants.outcomes.newMerchantCancelled.id,
         ],
+        rotate: [merchants.outcomes.rotationClosed.id],
       },
       outcomes: Object.values(merchants.outcomes),
       toCapabilities: () => new Set(capabilities),

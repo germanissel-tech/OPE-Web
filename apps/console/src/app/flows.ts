@@ -7,6 +7,7 @@ import { merchants } from '../features/merchants/feature'
 import { merchantScreen } from '../features/merchants/screens/merchant-screen'
 import { merchantsScreen } from '../features/merchants/screens/merchants-screen'
 import { newMerchantScreen } from '../features/merchants/screens/new-merchant-screen'
+import { rotateScreen } from '../features/merchants/screens/rotate-screen'
 import { merchantsStrings } from '../features/merchants/strings'
 
 /**
@@ -43,6 +44,15 @@ export const merchantsFlow = defineFlow({
       merchantId,
     })),
     closes(merchants.outcomes.newMerchantCancelled),
+
+    /* Rotar se apila sobre la ficha y vuelve a ella. */
+    opens(merchants.outcomes.rotationRequested, rotateScreen, ({ merchantId, kind }) => ({
+      merchantId,
+      kind,
+    })),
+    finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
+      merchantId,
+    })),
   ],
 })
 

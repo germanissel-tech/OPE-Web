@@ -69,6 +69,58 @@ export const merchantsStrings = {
   merchantDeactivated: 'El merchant se desactivó',
   merchantDeactivatedDetail: (merchantId: string) => `${merchantId} · no se puede reactivar`,
 
+  /* Rotar una credencial: es una pantalla (`GR-37`) con la gracia, y termina
+     mostrando el valor nuevo una sola vez (`OW-8`). */
+  rotate: 'Rotar',
+  createSigning: 'Crear el secreto de firma',
+  noSigning: 'Este merchant no firma sus notificaciones.',
+  rotateTitle: (kind: 'ingest' | 'platform' | 'signing') =>
+    ({
+      ingest: 'Rotar la llave del tag',
+      platform: 'Rotar la llave de la plataforma',
+      signing: 'Rotar el secreto de firma',
+    })[kind],
+  rotateConsequence: (kind: 'ingest' | 'platform' | 'signing') =>
+    ({
+      ingest:
+        'Se acuña una llave nueva para el tag. La anterior vale mientras dure la gracia; después el tag deja de autenticar hasta que use la nueva.',
+      platform:
+        'Se acuña una llave nueva para la plataforma. La anterior vale mientras dure la gracia; después sus pedidos se rechazan hasta que use la nueva.',
+      signing:
+        'Se acuña un secreto nuevo con el que la plataforma firma sus notificaciones. Si el merchant no firmaba, desde ahora firma.',
+    })[kind],
+  credentialLabel: (kind: 'ingest' | 'platform' | 'signing') =>
+    ({ ingest: 'Llave del tag', platform: 'Llave de la plataforma', signing: 'Secreto de firma' })[
+      kind
+    ],
+  graceSection: 'Gracia',
+  graceWhy:
+    'Cuánto sigue valiendo la credencial anterior, en segundos. Cero la revoca en el acto. El máximo lo fija la plataforma.',
+  graceSeconds: 'Gracia',
+  rotated: (kind: 'ingest' | 'platform' | 'signing') =>
+    ({
+      ingest: 'Se rotó la llave del tag',
+      platform: 'Se rotó la llave de la plataforma',
+      signing: 'Se rotó el secreto de firma',
+    })[kind],
+  issuedAtOf: 'Emitida',
+  previousExpiresAt: 'La anterior vale hasta',
+  noPrevious: 'No había una anterior',
+  backToMerchant: 'Volver a la ficha',
+  rotateNotFound: 'Esa credencial no existe',
+
+  /* El interruptor de apagado (01 §14.2): un sí/no con consecuencia, en un
+     diálogo (`GR-37`). */
+  turnOff: 'Apagar OPE',
+  turnOn: 'Encender OPE',
+  turnOffTitle: (merchantId: string) => `Apagar OPE para ${merchantId}`,
+  turnOnTitle: (merchantId: string) => `Encender OPE para ${merchantId}`,
+  turnOffConsequence:
+    'Desde el pedido siguiente no se toma ninguna decisión para este merchant: el SDK sigue recibiendo respuestas válidas, y el catálogo, los pedidos y las devoluciones se siguen aceptando. Los experimentos abiertos no cambian.',
+  turnOnConsequence: 'Desde el pedido siguiente OPE vuelve a decidir para este merchant.',
+  switchedOff: (merchantId: string) => `OPE quedó apagado para ${merchantId}`,
+  switchedOn: (merchantId: string) => `OPE quedó encendido para ${merchantId}`,
+
   /* Cómo lo nombra un lector de pantalla, y lo que dice el globo del icono. */
   openMerchant: 'Ver la ficha',
   backToMerchants: 'Volver a merchants',

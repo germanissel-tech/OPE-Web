@@ -12,7 +12,7 @@ import {
   useTableQuery,
 } from '@ope/core'
 import { deactivateMerchant } from '../data/deactivate-merchant'
-import { dayOf, type Merchant, useMerchants } from '../data/merchants'
+import { dayOf, type Merchant, STATUS_TONE, useMerchants } from '../data/merchants'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
 import { RowActions } from './row-actions'
@@ -173,13 +173,6 @@ function MerchantsScreen() {
     </Page>
   )
 }
-
-/** El tono de cada estado del contrato. `off` es el interruptor de apagado: avisa, no alarma. */
-const STATUS_TONE = {
-  active: 'success',
-  off: 'warning',
-  deactivated: 'neutral',
-} as const
 
 /**
  * **La declaración de una pantalla: de acá sale todo lo demás.**

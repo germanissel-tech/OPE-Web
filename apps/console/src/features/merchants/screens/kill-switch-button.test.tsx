@@ -4,12 +4,12 @@ import {
   closes,
   createApplication,
   createQueryClient,
-  DEFAULT_STRINGS,
   defineFlow,
   finishes,
   NoticesProvider,
   opens,
   QueryProvider,
+  RequestFailed,
   ServicesProvider,
   StringsProvider,
   TelemetryProvider,
@@ -22,19 +22,20 @@ import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
 
 /**
- * **Desactivar pide confirmación, con la consecuencia dicha** (`GR-37`).
+ * **El interruptor confirma, refleja el estado, y un `409` refresca la ficha**
+ * (`GR-37`, `CU-25`).
  *
- * Es terminal. Lo que se afirma es que un clic no desactiva nada: abre el
- * diálogo, y la acción corre sólo al confirmar. Montado en la aplicación de
- * verdad, porque la grilla informa desenlaces y los desenlaces necesitan su
- * flujo.
+ * Lo que se afirma es lo que no se ve con el caso feliz: que un clic no apaga
+ * nada, que sobre uno apagado se ofrece encender y sobre uno desactivado nada,
+ * y que cuando el servidor dice que no la ficha se vuelve a pedir y dice lo
+ * que ahora es cierto.
  */
 
 afterEach(cleanup)
 
 const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen] = merchants.screens
 
-const merchant: Merchant = {
+const base: Merchant = {
   merchantId: 'mrc_uno',
   status: 'active',
   origins: ['https://uno.example'],
@@ -42,21 +43,21 @@ const merchant: Merchant = {
   credentials: [],
 }
 
-function ope() {
-  const deactivated: string[] = []
+function ope(initial: Merchant['status'], options: { readonly switchFails?: RequestFailed } = {}) {
+  const state = { status: initial, reads: 0, switched: [] as boolean[] }
   const client: OpeClient = {
     async listMerchants() {
-      return { items: [merchant] }
+      return { items: [{ ...base, status: state.status }] }
     },
     async getMerchant() {
-      return merchant
+      state.reads += 1
+      return { ...base, status: state.status }
     },
     async createMerchant() {
       throw new Error('no se prueba acá')
     },
-    async deactivateMerchant(merchantId) {
-      deactivated.push(merchantId)
-      return { ...merchant, status: 'deactivated' }
+    async deactivateMerchant() {
+      throw new Error('no se prueba acá')
     },
     async rotateIngestKey() {
       throw new Error('no se prueba acá')
@@ -67,11 +68,18 @@ function ope() {
     async rotatePlatformSecret() {
       throw new Error('no se prueba acá')
     },
-    async setKillSwitch() {
-      throw new Error('no se prueba acá')
+    async setKillSwitch(_id, body) {
+      state.switched.push(body.enabled)
+      if (options.switchFails) {
+        /* Lo que un `409 merchant-deactivated` significa: otro lo desactivó. */
+        state.status = 'deactivated'
+        throw options.switchFails
+      }
+      state.status = body.enabled ? 'active' : 'off'
+      return body
     },
   }
-  return { client, deactivated }
+  return { client, state }
 }
 
 async function mount(client: OpeClient) {
@@ -127,7 +135,7 @@ async function mount(client: OpeClient) {
   )
 
   await act(async () => {
-    await application.router.navigate('/merchants')
+    await application.router.navigate('/merchants/mrc_uno')
   })
 
   render(
@@ -156,45 +164,73 @@ async function mount(client: OpeClient) {
   )
 }
 
-const deactivateButtons = () => screen.getAllByRole('button', { name: merchantsStrings.deactivate })
+const modal = () => {
+  const dialog = document.querySelector('[aria-modal="true"]')
+  if (!(dialog instanceof HTMLElement)) throw new Error('el diálogo no está abierto')
+  return within(dialog)
+}
 
-describe('desactivar', () => {
-  it('un clic abre la confirmación y no desactiva nada', async () => {
-    const { client, deactivated } = ope()
+describe('el interruptor', () => {
+  it('un clic abre la confirmación con la consecuencia, y no apaga nada', async () => {
+    const { client, state } = ope('active')
     await mount(client)
     await screen.findByText('mrc_uno')
 
     await act(async () => {
-      fireEvent.click(deactivateButtons()[0] as HTMLElement)
+      fireEvent.click(screen.getByRole('button', { name: merchantsStrings.turnOff }))
     })
 
-    expect(screen.getByText(merchantsStrings.deactivateConsequence)).toBeDefined()
-    expect(deactivated).toHaveLength(0)
+    expect(screen.getByText(merchantsStrings.turnOffConsequence)).toBeDefined()
+    expect(state.switched).toHaveLength(0)
   })
 
-  it('cancelar no desactiva; confirmar sí', async () => {
-    const { client, deactivated } = ope()
+  it('confirmar apaga, y la ficha pasa a decir «apagado» y ofrecer encender', async () => {
+    const { client, state } = ope('active')
     await mount(client)
     await screen.findByText('mrc_uno')
 
     await act(async () => {
-      fireEvent.click(deactivateButtons()[0] as HTMLElement)
+      fireEvent.click(screen.getByRole('button', { name: merchantsStrings.turnOff }))
     })
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: DEFAULT_STRINGS.cancel }))
-    })
-    expect(deactivated).toHaveLength(0)
-
-    await act(async () => {
-      fireEvent.click(deactivateButtons()[0] as HTMLElement)
-    })
-    /* El «Desactivar» del diálogo —lo modal—, no el de la fila que quedó debajo. */
-    const dialog = document.querySelector('[aria-modal="true"]')
-    if (!(dialog instanceof HTMLElement)) throw new Error('el diálogo no está abierto')
-    await act(async () => {
-      fireEvent.click(within(dialog).getByRole('button', { name: merchantsStrings.deactivate }))
+      fireEvent.click(modal().getByRole('button', { name: merchantsStrings.turnOff }))
     })
 
-    await waitFor(() => expect(deactivated).toEqual(['mrc_uno']))
+    await waitFor(() => expect(state.switched).toEqual([false]))
+    await screen.findByRole('button', { name: merchantsStrings.turnOn })
+    expect(screen.getByText(merchantsStrings.off)).toBeDefined()
+  })
+
+  it('sobre uno desactivado no se dibuja', async () => {
+    const { client } = ope('deactivated')
+    await mount(client)
+    await screen.findByText('mrc_uno')
+
+    expect(screen.queryByRole('button', { name: merchantsStrings.turnOff })).toBeNull()
+    expect(screen.queryByRole('button', { name: merchantsStrings.turnOn })).toBeNull()
+  })
+
+  it('con un 409 la ficha se vuelve a pedir y dice lo que ahora es cierto', async () => {
+    const { client, state } = ope('active', {
+      switchFails: new RequestFailed({
+        status: 409,
+        type: 'merchant-deactivated',
+        title: 'The merchant is deactivated',
+      }),
+    })
+    await mount(client)
+    await screen.findByText('mrc_uno')
+    const readsBefore = state.reads
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: merchantsStrings.turnOff }))
+    })
+    await act(async () => {
+      fireEvent.click(modal().getByRole('button', { name: merchantsStrings.turnOff }))
+    })
+
+    await waitFor(() => expect(state.reads).toBeGreaterThan(readsBefore))
+    await screen.findByText(merchantsStrings.deactivated)
+    expect(screen.queryByRole('button', { name: merchantsStrings.turnOff })).toBeNull()
   })
 })
