@@ -27,7 +27,7 @@ sin obligar a Tandilia a generalizar cuarzo para un segundo backend que no es su
 
 ## Quién la consume *(obligatoria)*
 
-- **El panel de administración de OPE** (`apps/admin`), que es la primera aplicación y la feature que
+- **OPE-Console, la consola de operación de OPE** (`apps/console`), que es la primera aplicación y la feature que
   sigue a ésta. Recibe una base que ya levanta contra el backend real de OPE y le agrega pantallas.
 - **El portal del merchant**, más adelante, como segunda aplicación del mismo monorepo (`apps/portal`).
   Recibe lo mismo y ejerce la segunda implementación de la sesión.
@@ -88,12 +88,12 @@ no se esconde), pero no se cierra sin ella.
    repositorio de Tandilia. Las citas `CU-n` de su código resuelven contra las decisiones que viajan en
    `@ope/core`.
 
-2. **Se levanta `apps/admin` contra el backend real de OPE** (`npm run dev` del backend, con el operador
+2. **Se levanta `apps/console` contra el backend real de OPE** (`npm run dev` del backend, con el operador
    de desarrollo) → la aplicación arranca, pide el token en su pantalla de ingreso, y con un token válido
    dibuja el marco con el operador identificado por su `operatorId` en la barra de usuario; con un token
    que el backend no reconoce (`401 operator-unknown`) vuelve al ingreso diciendo por qué.
 
-3. **Se levanta `apps/admin` sin backend** → la sesión falsa entra con las capacidades del consumidor
+3. **Se levanta `apps/console` sin backend** → la sesión falsa entra con las capacidades del consumidor
    `admin` y la aplicación se dibuja entera; la falsa no está en el artefacto de producción.
 
 4. **El hola mundo lista una colección real de OPE** (`listMerchants`) → cargando, con datos, vacío y
@@ -143,7 +143,7 @@ no se esconde), pero no se cierra sin ella.
 |---|---|
 | **Se genera** | Los tipos del contrato de OPE y el módulo de capacidades: nadie los escribe; salen del bundle del backend |
 | **No compila** | El manifiesto tipado, la navegación tipada, una operación con capacidad fuera del vocabulario del módulo, una acción sin operaciones |
-| **Se hereda** | La forma de una aplicación: `apps/admin` es el modelo que copia `apps/portal` |
+| **Se hereda** | La forma de una aplicación: `apps/console` es el modelo que copia `apps/portal` |
 | **Lo agarra una prueba** | `ope-check` renombrado sobre el monorepo (límites, decisiones, artefacto, calidad, empaquetado de workspaces); las pruebas del núcleo adaptadas al sobre pelado, a Problem Details y al cursor; el arranque contra la sesión falsa; que la constitución y las decisiones que viajan sean las enmendadas |
 | **Lo mira una persona** | Que la aplicación levante contra el backend real y muestre los cuatro estados con cursor; que la prosa heredada ya no describa `las-animas` donde cambió; que la pantalla de ingreso diga lo que tiene que decir |
 
@@ -167,8 +167,11 @@ un arreglo del núcleo les llega a las dos en el mismo commit.
   `CU-36` rechaza).
 - Las cuatro especificaciones heredadas de cuarzo (`001` a `004`) se conservan como historia de la base y
   no se re-ejecutan.
-- Los nombres de las dos aplicaciones son `admin` y `portal`, el vocabulario cerrado de piezas de
-  Tandilia que OPE adopta para sus carpetas.
+- Las dos aplicaciones se llaman por su función, en inglés: **OPE-Console** (la consola de operación de
+  OPE, para quien gestiona la plataforma) y **OPE-Portal** (el portal del merchant), en `apps/console` y
+  `apps/portal`. «Console» y no «admin» porque `admin` nombra un consumidor del contrato (una
+  credencial), no un producto. El repositorio que las contiene es **OPE-Web** (decisión del dueño,
+  2026-10-08).
 
 ## Lo que se cerró con el dueño (2026-10-07)
 
