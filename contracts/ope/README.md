@@ -5,12 +5,12 @@
 
 | | |
 |---|---|
-| Versión del contrato | `1.11.0` |
-| `sha256` del bundle | `404fa3c53649232b7323b7cb949c1d548336a7c18fae5cd565c2a2eb6db535b8` |
-| Commit de OPE-Backend | `4d8718305240d12bcf633e2dd7d15b555194945f` |
-| Sincronizado | 2026-10-08 |
-| Módulo de capacidades | emitido por `scripts/contract-sync.mjs` desde el bundle, hasta que OPE-Backend 040 lo emita |
-| Restricciones | emitido por `scripts/contract-sync.mjs` desde el bundle, hasta que OPE-Backend 040 lo emita |
+| Versión del contrato | `1.12.0` |
+| `sha256` del bundle | `08b9a75e6121f2a70331d8c4955924950bdc195dc8f6df61273aa694f6250017` |
+| Commit de OPE-Backend | `3c49649428f16328ef8adcd6f04943ced44decee` |
+| Sincronizado | 2026-10-09 |
+| Módulo de capacidades | copiado de `generated/contract/` del backend (feature 040) |
+| Restricciones | copiado de `generated/contract/` del backend (feature 040) |
 
 ## Los archivos
 

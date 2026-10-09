@@ -104,6 +104,21 @@ for (const [source, name] of COPIED) {
   console.log(`  copiado  ${source} → ${short(join(TARGET, name))}`)
 }
 
+/* ── Lo que el backend ya emite para consumidores (OPE-Backend 040) ─────── */
+
+/* Si existe, se copia entero y antes de leer la identidad: su `openapi.yaml`
+   lleva cabecera, y el `sha256` que `identity.json` declara es el de esa copia,
+   no el del bundle de `contracts/dist/`. */
+const EMITTED = join(BACKEND, 'generated', 'contract')
+const emitted = existsSync(EMITTED) && statSync(EMITTED).isDirectory()
+
+if (emitted) {
+  for (const name of readdirSync(EMITTED)) {
+    copyFileSync(join(EMITTED, name), join(TARGET, name))
+    console.log(`  copiado  generated/contract/${name} → ${short(join(TARGET, name))}`)
+  }
+}
+
 /* ── Identidad del bundle ───────────────────────────────────────────────── */
 
 const bundleBytes = readFileSync(join(TARGET, 'openapi.yaml'))
@@ -148,18 +163,13 @@ const FIELD_KEYS = [
   'format',
 ]
 
-const EMITTED = join(BACKEND, 'generated', 'contract')
 const INTERIM =
   'emitido por `scripts/contract-sync.mjs` desde el bundle, hasta que OPE-Backend 040 lo emita'
 let origin
 
 let constraintsOrigin
 
-if (existsSync(EMITTED) && statSync(EMITTED).isDirectory()) {
-  for (const name of readdirSync(EMITTED)) {
-    copyFileSync(join(EMITTED, name), join(TARGET, name))
-    console.log(`  copiado  generated/contract/${name} → ${short(join(TARGET, name))}`)
-  }
+if (emitted) {
   origin = 'copiado de `generated/contract/` del backend (feature 040)'
   /* La 040 puede llegar en dos partes: el módulo primero y las restricciones
      después. Lo que el backend no emita todavía, se sigue emitiendo acá. */
