@@ -2,9 +2,11 @@
 import {
   ApplicationView,
   type Collection,
+  closes,
   createApplication,
   createQueryClient,
   defineFlow,
+  finishes,
   NoticesProvider,
   opens,
   QueryProvider,
@@ -47,7 +49,7 @@ import { merchantsStrings } from '../strings'
 
 afterEach(cleanup)
 
-const [merchantsScreen, merchantScreen] = merchants.screens
+const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen] = merchants.screens
 
 const merchant = (merchantId: string): Merchant => ({
   merchantId,
@@ -72,6 +74,9 @@ function ope(options: {
       const page = query.cursor === undefined ? pages[0] : pages[1]
       return page ? { items: [...page.items], nextCursor: page.nextCursor } : { items: [] }
     },
+    async listMerchantAdminLog() {
+      return { items: [] }
+    },
     async getMerchant(merchantId) {
       return merchant(merchantId)
     },
@@ -81,6 +86,18 @@ function ope(options: {
     async deactivateMerchant(merchantId) {
       if (options.deactivateFails) throw options.deactivateFails
       return { ...merchant(merchantId), status: 'deactivated' }
+    },
+    async rotateIngestKey() {
+      throw new Error('no se prueba acá')
+    },
+    async rotatePlatformKey() {
+      throw new Error('no se prueba acá')
+    },
+    async rotatePlatformSecret() {
+      throw new Error('no se prueba acá')
+    },
+    async setKillSwitch() {
+      throw new Error('no se prueba acá')
     },
   }
 }
@@ -117,16 +134,41 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
       opens(merchants.outcomes.merchantChosen, merchantScreen, ({ merchantId }) => ({
         merchantId,
       })),
+      opens(merchants.outcomes.merchantRequested, newMerchantScreen),
+      finishes(merchants.outcomes.merchantCreated, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
+      closes(merchants.outcomes.newMerchantCancelled),
+      opens(merchants.outcomes.rotationRequested, rotateScreen, ({ merchantId, kind }) => ({
+        merchantId,
+        kind,
+      })),
+      finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [merchantsScreen, merchantScreen],
+      screens: [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen],
       flows: [flow],
       menu: [flow],
-      featureRootOf: { merchants: 'merchants', merchant: 'merchants' },
-      outcomesOf: { merchants: [merchants.outcomes.merchantChosen.id] },
+      featureRootOf: {
+        merchants: 'merchants',
+        merchant: 'merchants',
+        'new-merchant': 'merchants',
+        rotate: 'merchants',
+      },
+      outcomesOf: {
+        merchants: [merchants.outcomes.merchantChosen.id, merchants.outcomes.merchantRequested.id],
+        merchant: [merchants.outcomes.merchantClosed.id, merchants.outcomes.rotationRequested.id],
+        'new-merchant': [
+          merchants.outcomes.merchantCreated.id,
+          merchants.outcomes.newMerchantCancelled.id,
+        ],
+        rotate: [merchants.outcomes.rotationClosed.id],
+      },
       outcomes: Object.values(merchants.outcomes),
       toCapabilities: () => new Set(capabilities),
       systems: ['ope'],

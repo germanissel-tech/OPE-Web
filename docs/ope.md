@@ -182,3 +182,28 @@ y no dice quién es, así que la barra dice `operator`. La 040 publica `getOpera
 `displayName` opcional y `scope`, y la sonda se reemplaza por esa llamada. `displayName` es un dato
 de una persona: la constitución VII del backend se acota a las personas observadas y los operadores
 quedan como excepción declarada (`ope-no-pii`), pedido en el plan de la 005.
+
+### OW-8 · Un secreto se muestra una sola vez, y en ningún otro lado
+
+**Estado**: decidida · **Depende de**: CU-35, CU-43, OW-3
+
+**Origen**: nueva; la consecuencia en el frontend de `ADR-031` del backend (las credenciales viajan
+una vez y nunca más). Decidida en el plan de la 006 (2026-10-08).
+
+El backend entrega el valor de una credencial **en la respuesta que la acuña y nunca más**: al crear
+un merchant y al rotar una llave. La consola lo muestra en la pantalla que lo pidió, **como segundo
+paso de esa misma pantalla y sin ruta propia**, mientras el componente está montado, y lo olvida al
+desmontar. **No va a ningún otro lado**: ni a la dirección (un enlace a un secreto que ya no está es
+un enlace a nada), ni al almacenamiento del navegador, ni a un aviso (dura seis segundos y se lee de
+reojo), ni a la telemetría (`CU-35` registra acciones y fallos, nunca cuerpos). Recargar lo pierde,
+la pantalla lo advierte antes, y la salida es rotar.
+
+**Cómo se muestra**: con `SecretOnce` de `@ope/core`, que compone un `Alert` de advertencia y, por
+secreto, un `Field` con `Value` y un botón «copiar» que dice si copió o si no pudo. Es composición
+con piezas de granito (principio IV), no un estilo propio. **Propuesta a granito**: un componente
+para «un valor que se copia y se va» —valor, copiar, advertencia—; cuando exista, `SecretOnce` se
+reemplaza y esta decisión no cambia.
+
+**Cómo se verifica**: la prueba de cada pantalla que muestra un secreto intercepta la telemetría y
+los avisos, corre la acción con un valor conocido, y afirma que nada de lo registrado lo contiene.
+Cambiar la telemetría para que lleve cuerpos la rompe.

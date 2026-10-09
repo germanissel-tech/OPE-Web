@@ -32,20 +32,110 @@ export const merchantsStrings = {
   off: 'Apagado',
   deactivated: 'Desactivado',
 
-  /* El alta: el botón que la abre, el diálogo, sus campos y lo que anuncia. */
+  /* El alta: el botón que la abre, la pantalla con sus dos secciones, y lo que
+     anuncia. Es una pantalla y no un diálogo (`GR-70`). */
   newMerchant: 'Nuevo merchant',
-  origin: 'Origen de la tienda',
-  originHelp: 'Con esquema y host, sin ruta: https://tienda.example',
+  originsSection: 'Orígenes de la tienda',
+  originsWhy:
+    'Con esquema y host, sin ruta: https://tienda.example. Un origen pertenece a un solo merchant.',
+  originRow: (position: number) => `Origen ${position}`,
+  addOrigin: 'Agregar otro origen',
+  removeOrigin: 'Quitar',
+  signatureSection: 'Firma de las notificaciones',
+  signatureWhy:
+    'Si la plataforma firma, se acuña también un secreto de firma. Se puede crear después.',
   signature: 'La plataforma firma sus notificaciones',
   save: 'Crear',
+  cancel: 'Cancelar',
   merchantCreated: 'El merchant se creó',
-  merchantCreatedDetail: (merchantId: string) =>
-    `${merchantId} · las credenciales se muestran una sola vez`,
+  merchantCreatedDetail: (merchantId: string) => merchantId,
+  rejectedTitle: 'El servidor no lo aceptó',
 
-  /* Desactivar: la acción de fila. Es terminal y se dice. */
+  /* El segundo paso del alta: las credenciales, una sola vez (`OW-8`). Las
+     claves de cada una son las del contrato (`MerchantCredentials`). */
+  issuedTitle: 'Credenciales del merchant',
+  issuedWarning:
+    'Entregalas al merchant ahora: no vuelven a verse. Una que se pierda se rota desde la ficha.',
+  ingestKey: 'Llave del tag',
+  platformKey: 'Llave de la plataforma',
+  platformSecret: 'Secreto de firma',
+  continueToMerchant: 'Continuar a la ficha',
+
+  /* Desactivar: la acción de fila. Es terminal, se dice, y se confirma. */
   deactivate: 'Desactivar',
+  deactivateTitle: (merchantId: string) => `Desactivar ${merchantId}`,
+  deactivateConsequence:
+    'No se puede volver atrás: ninguna credencial del merchant vuelve a resolver, y no se puede recrear con el mismo identificador. Sus registros quedan.',
   merchantDeactivated: 'El merchant se desactivó',
   merchantDeactivatedDetail: (merchantId: string) => `${merchantId} · no se puede reactivar`,
+
+  /* Rotar una credencial: es una pantalla (`GR-37`) con la gracia, y termina
+     mostrando el valor nuevo una sola vez (`OW-8`). */
+  rotate: 'Rotar',
+  createSigning: 'Crear el secreto de firma',
+  noSigning: 'Este merchant no firma sus notificaciones.',
+  rotateTitle: (kind: 'ingest' | 'platform' | 'signing') =>
+    ({
+      ingest: 'Rotar la llave del tag',
+      platform: 'Rotar la llave de la plataforma',
+      signing: 'Rotar el secreto de firma',
+    })[kind],
+  rotateConsequence: (kind: 'ingest' | 'platform' | 'signing') =>
+    ({
+      ingest:
+        'Se acuña una llave nueva para el tag. La anterior vale mientras dure la gracia; después el tag deja de autenticar hasta que use la nueva.',
+      platform:
+        'Se acuña una llave nueva para la plataforma. La anterior vale mientras dure la gracia; después sus pedidos se rechazan hasta que use la nueva.',
+      signing:
+        'Se acuña un secreto nuevo con el que la plataforma firma sus notificaciones. Si el merchant no firmaba, desde ahora firma.',
+    })[kind],
+  credentialLabel: (kind: 'ingest' | 'platform' | 'signing') =>
+    ({ ingest: 'Llave del tag', platform: 'Llave de la plataforma', signing: 'Secreto de firma' })[
+      kind
+    ],
+  graceSection: 'Gracia',
+  graceWhy:
+    'Cuánto sigue valiendo la credencial anterior, en segundos. Cero la revoca en el acto. El máximo lo fija la plataforma.',
+  graceSeconds: 'Gracia',
+  rotated: (kind: 'ingest' | 'platform' | 'signing') =>
+    ({
+      ingest: 'Se rotó la llave del tag',
+      platform: 'Se rotó la llave de la plataforma',
+      signing: 'Se rotó el secreto de firma',
+    })[kind],
+  issuedAtOf: 'Emitida',
+  previousExpiresAt: 'La anterior vale hasta',
+  noPrevious: 'No había una anterior',
+  backToMerchant: 'Volver a la ficha',
+  rotateNotFound: 'Esa credencial no existe',
+
+  /* El interruptor de apagado (01 §14.2): un sí/no con consecuencia, en un
+     diálogo (`GR-37`). */
+  turnOff: 'Apagar OPE',
+  turnOn: 'Encender OPE',
+  turnOffTitle: (merchantId: string) => `Apagar OPE para ${merchantId}`,
+  turnOnTitle: (merchantId: string) => `Encender OPE para ${merchantId}`,
+  turnOffConsequence:
+    'Desde el pedido siguiente no se toma ninguna decisión para este merchant: el SDK sigue recibiendo respuestas válidas, y el catálogo, los pedidos y las devoluciones se siguen aceptando. Los experimentos abiertos no cambian.',
+  turnOnConsequence: 'Desde el pedido siguiente OPE vuelve a decidir para este merchant.',
+  switchedOff: (merchantId: string) => `OPE quedó apagado para ${merchantId}`,
+  switchedOn: (merchantId: string) => `OPE quedó encendido para ${merchantId}`,
+
+  /* El registro de administración del merchant (`ADR-031` del backend). Las
+     columnas que son campo del contrato (`operation`, `outcome`, `code`) se
+     llaman por el campo. */
+  log: 'Registro',
+  logCaption: 'Registro de administración del merchant, lo más nuevo primero',
+  atUtc: 'Instante (UTC)',
+  operator: 'Operador',
+  operation: 'Operación',
+  outcome: 'Resultado',
+  code: 'Código',
+  accepted: 'Aceptada',
+  rejected: 'Rechazada',
+  denied: 'Denegada',
+  logEmpty: 'Todavía nadie hizo nada sobre este merchant',
+  logEmptyHelp: 'Cada acción de administración que lo nombre aparece acá.',
 
   /* Cómo lo nombra un lector de pantalla, y lo que dice el globo del icono. */
   openMerchant: 'Ver la ficha',

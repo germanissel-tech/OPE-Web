@@ -29,6 +29,14 @@ export type FieldConstraints = {
   readonly minimum?: number
   readonly maximum?: number
   /**
+   * Para un campo que es una lista: cuántos renglones admite, y qué le exige a
+   * cada uno. Un renglón se valida con `items` como si fuera el campo; cuántos
+   * hay lo decide el formulario con `minItems` y `maxItems`.
+   */
+  readonly minItems?: number
+  readonly maxItems?: number
+  readonly items?: FieldConstraints
+  /**
    * Qué es el dato, en el vocabulario de granito.
    *
    * No se valida con esto: **se dibuja**. Vive acá porque sale del mismo lugar
@@ -106,6 +114,12 @@ export type Form<Values extends Readonly<Record<string, string>>> = {
   readonly values: Values
   /** Cambiar un campo. **No lo marca**: puede ser la primera vez que se escribe. */
   readonly set: <Name extends keyof Values>(name: Name, value: Values[Name]) => void
+  /**
+   * Sacar un renglón de una lista: el campo deja de existir, con su marca y su
+   * error. Es lo único que hace falta para que un formulario tenga renglones
+   * (`origins.0`, `origins.1`, …) sin saber nada de listas acá.
+   */
+  readonly unset: (name: string) => void
   /** Salió del campo. **Acá sí se marca**, si tiene algo mal. */
   readonly blur: (name: keyof Values) => void
   /** Lo que se le muestra al operador en ese campo, o nada si todavía no toca. */
@@ -162,19 +176,45 @@ export function useForm<Values extends Readonly<Record<string, string>>>(
     notify({ tone: 'error', title: strayTitle, description: strayDetail })
   }, [strayTitle, strayDetail, notify])
 
-  const shapeOf = (name: keyof Values) =>
-    shapeErrorOf(
-      values[name] ?? '',
-      constraints.fields[String(name)],
-      constraints.required.includes(String(name)),
-      strings,
-    )
+  /**
+   * Qué le exige el contrato a un campo, **también cuando el campo es un
+   * renglón**: `origins.1` no está en `fields`, pero `origins` sí y trae
+   * `items`; el renglón se valida con eso, y es obligatorio si la lista lo es
+   * —un renglón vacío no se manda, se quita—.
+   */
+  const demandsOn = (name: string) => {
+    const direct = constraints.fields[name]
+    if (direct) return { of: direct, required: constraints.required.includes(name) }
+    const at = name.lastIndexOf('.')
+    if (at > 0 && /^\d+$/.test(name.slice(at + 1))) {
+      const list = name.slice(0, at)
+      const items = constraints.fields[list]?.items
+      if (items) return { of: items, required: constraints.required.includes(list) }
+    }
+    return { of: undefined, required: constraints.required.includes(name) }
+  }
+
+  const shapeOf = (name: keyof Values) => {
+    const demands = demandsOn(String(name))
+    return shapeErrorOf(values[name] ?? '', demands.of, demands.required, strings)
+  }
 
   const hasShapeErrors = Object.keys(values).some((name) => shapeOf(name) !== undefined)
 
   return {
     values,
     set: (name, value) => setValues((current) => ({ ...current, [name]: value })),
+    unset: (name) => {
+      setValues((current) => {
+        const { [name]: _, ...rest } = current
+        return rest as Values
+      })
+      setMarked((current) => {
+        const rest = new Set(current)
+        rest.delete(name)
+        return rest
+      })
+    },
     blur: (name) => setMarked((current) => new Set(current).add(String(name))),
     errorOf: (name) => {
       /* El del servidor se muestra siempre: no lo produjo escribir, así que no

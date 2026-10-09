@@ -21,7 +21,7 @@ párrafo fechado **«Enmienda OPE»** debajo de su título; las nuevas son `OW-n
 | La regla de que nada exportado entrega una credencial | `packages/session/tests/gate.mjs`; `CU-10` | Es la razón de ser de la puerta, y vale con un bearer igual que con OIDC |
 | El registro de pantallas, la navegación tipada y los flujos | `packages/core/src/base/{registry,flow,go-to,…}`; `CU-23`, `CU-41`, `CU-44`, `CU-47`, `CU-48` | No saben de contrato ni de negocio |
 | Las acciones y la puerta de acciones | `packages/core/src/data/{action,use-action}.ts`; `CU-25`, `CU-34`, `CU-37`, `CU-46` | Cambia qué viaja adentro (`OW-3`, `OW-5`), no la forma |
-| Los cuatro estados y el formulario de tres capas | `packages/core/src/ui/{result,result-of,use-form}`; `CU-4`, `CU-5`, `CU-24`, `CU-38` | Igual; `resultOf` recibe filas aplanadas (`OW-4`) |
+| Los cuatro estados y el formulario de tres capas | `packages/core/src/ui/{result,result-of,use-form}`; `CU-4`, `CU-5`, `CU-24`, `CU-38` | Igual; `resultOf` recibe filas aplanadas (`OW-4`). `CU-38` está enmendada: la capa 1 se emite del bundle (`contract:sync`, feature 006) en vez de escribirse a mano |
 | El manifiesto, la raíz de composición y el arranque | `packages/core/src/{app,base/manifest}`; `CU-17`, `CU-36`, `CU-42` | Igual; `provide` recibe la sesión entera (`OW-2`) |
 | El catálogo de textos, las preferencias, los contextos de trabajo, la telemetría | `CU-26`, `CU-27`, `CU-35`, `CU-43` | Igual |
 | Las comprobaciones: decisiones, límites, calidad, rótulos, artefacto, empaquetado, errores | `packages/core/checks/`; `TAN-6` | Recorren cada aplicación declarada en `ope.apps` (`OW-1`); ganan `conformity` (`OW-5`) |

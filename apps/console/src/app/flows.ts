@@ -1,11 +1,13 @@
 import { TAG } from '@granito/ui'
-import { closes, defineFlow, group, omits, opens } from '@ope/core'
+import { closes, defineFlow, finishes, group, omits, opens } from '@ope/core'
 import { home } from '../features/home/feature'
 import { aboutScreen } from '../features/home/screens/about-screen'
 import { welcomeScreen } from '../features/home/screens/welcome-screen'
 import { merchants } from '../features/merchants/feature'
 import { merchantScreen } from '../features/merchants/screens/merchant-screen'
 import { merchantsScreen } from '../features/merchants/screens/merchants-screen'
+import { newMerchantScreen } from '../features/merchants/screens/new-merchant-screen'
+import { rotateScreen } from '../features/merchants/screens/rotate-screen'
 import { merchantsStrings } from '../features/merchants/strings'
 
 /**
@@ -33,6 +35,24 @@ export const merchantsFlow = defineFlow({
     /* Desapila. Con la pila vacía —un enlace pegado a la ficha— cae a la raíz
        de la funcionalidad, que es la grilla. */
     closes(merchants.outcomes.merchantClosed),
+
+    /* El alta se apila sobre la grilla, y **se termina** en la ficha del
+       merchant nuevo: la ficha ocupa su lugar en la pila, así que volver desde
+       ella cae en la grilla y no en un formulario vacío. Cancelar desapila. */
+    opens(merchants.outcomes.merchantRequested, newMerchantScreen),
+    finishes(merchants.outcomes.merchantCreated, merchantScreen, ({ merchantId }) => ({
+      merchantId,
+    })),
+    closes(merchants.outcomes.newMerchantCancelled),
+
+    /* Rotar se apila sobre la ficha y vuelve a ella. */
+    opens(merchants.outcomes.rotationRequested, rotateScreen, ({ merchantId, kind }) => ({
+      merchantId,
+      kind,
+    })),
+    finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
+      merchantId,
+    })),
   ],
 })
 

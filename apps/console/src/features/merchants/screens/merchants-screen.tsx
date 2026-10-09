@@ -11,13 +11,10 @@ import {
   useStrings,
   useTableQuery,
 } from '@ope/core'
-import { useState } from 'react'
-import { createMerchant } from '../data/create-merchant'
 import { deactivateMerchant } from '../data/deactivate-merchant'
-import { dayOf, type Merchant, useMerchants } from '../data/merchants'
+import { dayOf, type Merchant, STATUS_TONE, useMerchants } from '../data/merchants'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
-import { NewMerchantDialog } from './new-merchant-dialog'
 import { RowActions } from './row-actions'
 
 /**
@@ -40,7 +37,6 @@ function MerchantsScreen() {
   const { emit } = useOutcome()
   const flow = useFlow()
   const strings = useStrings()
-  const [creating, setCreating] = useState(false)
 
   /* **El nombre es obligatorio** (`CU-14`): la dirección dice de qué grilla es
      cada cosa — `?merchants.c=…&merchants.row=mrc_7f`. */
@@ -54,6 +50,10 @@ function MerchantsScreen() {
     (merchant: Merchant) => <RowActions merchant={merchant} />,
   )
 
+  /* «Nuevo» es un desenlace: la grilla no sabe que el alta es una pantalla ni
+     cuál (`CU-47`); qué capacidad exige llegar se lo pregunta al flujo. */
+  const requestMerchant = (from: string) => emit(merchants.outcomes.merchantRequested({ from }))
+
   /* Un solo vacío de verdad: sin filtro, «el filtro no da» no puede pasar. El
      tipo exige los dos y se declaran iguales, con `filtered: false` fijo. */
   const states: GridStates = {
@@ -63,8 +63,8 @@ function MerchantsScreen() {
       action: (
         <ActionButton
           tone="primary"
-          requires={createMerchant.requires}
-          onClick={() => setCreating(true)}
+          {...flow.toReach(merchants.outcomes.merchantRequested)}
+          onClick={() => requestMerchant('empty')}
         >
           {merchantsStrings.newMerchant}
         </ActionButton>
@@ -84,18 +84,18 @@ function MerchantsScreen() {
             {...grid}
             /* **Las acciones de la grilla viven en su barra** (`GR-38`), aunque
                no haya filtros: la barra es el lugar donde el operador aprende a
-               buscar «nuevo». Es `ActionButton` y no `Button` porque exige
-               `merchants:write`, y lo que un permiso no habilita **no se dibuja**
-               (`CU-3`). `applyOnChange` es obligatorio en granito y acá no
-               aplica a nada: no hay filtro que aplicar. */
+               buscar «nuevo». Es `ActionButton` y no `Button` porque llegar al
+               alta exige `merchants:write`, y lo que un permiso no habilita
+               **no se dibuja** (`CU-3`). `applyOnChange` es obligatorio en
+               granito y acá no aplica a nada: no hay filtro que aplicar. */
             filters={
               <FilterBar
                 applyOnChange
                 actions={
                   <ActionButton
                     tone="primary"
-                    requires={createMerchant.requires}
-                    onClick={() => setCreating(true)}
+                    {...flow.toReach(merchants.outcomes.merchantRequested)}
+                    onClick={() => requestMerchant('grid')}
                   >
                     {merchantsStrings.newMerchant}
                   </ActionButton>
@@ -170,18 +170,9 @@ function MerchantsScreen() {
           ) : null}
         </Block>
       </Region>
-
-      {creating ? <NewMerchantDialog onClose={() => setCreating(false)} /> : null}
     </Page>
   )
 }
-
-/** El tono de cada estado del contrato. `off` es el interruptor de apagado: avisa, no alarma. */
-const STATUS_TONE = {
-  active: 'success',
-  off: 'warning',
-  deactivated: 'neutral',
-} as const
 
 /**
  * **La declaración de una pantalla: de acá sale todo lo demás.**

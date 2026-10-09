@@ -17,8 +17,11 @@
  *    consumidor en el bundle está en `OPERATIONS`. Una de más o de menos falla
  *    nombrándola.
  * 4. `CAPABILITIES` es exactamente la unión ordenada de las de `OPERATIONS`.
- * 5. Cuántas operaciones y capacidades revisó. Con cero, falla: aprobar sin
- *    sujetos es enseñar a no leer los aprobados (`TAN-6`, regla 4).
+ * 5. `constraints.js` salió del mismo bundle: cada esquema que declara existe y
+ *    es un objeto, su `required` es el del bundle, y cada objeto que un cuerpo
+ *    de pedido del consumidor nombra está declarado (`CU-38`, capa 1).
+ * 6. Cuántas operaciones, capacidades y esquemas revisó. Con cero, falla:
+ *    aprobar sin sujetos es enseñar a no leer los aprobados (`TAN-6`, regla 4).
  *
  * Todo lo que falla termina en la misma instrucción: **corré
  * `npm run contract:sync`**.
@@ -40,7 +43,13 @@ const fail = (que, donde) => fallas.push([que, donde])
 
 console.log('')
 
-for (const name of ['openapi.yaml', 'api.d.ts', 'capabilities.js', 'identity.json']) {
+for (const name of [
+  'openapi.yaml',
+  'api.d.ts',
+  'capabilities.js',
+  'identity.json',
+  'constraints.js',
+]) {
   if (!existsSync(join(DIR, name))) {
     console.log(`  FALLA  falta contracts/ope/${name}`)
     console.log('         corré npm run contract:sync')
@@ -148,9 +157,62 @@ for (const id of declared) {
   }
 }
 
-/* 5 · Sin sujetos no se aprueba */
+/* 5 · Las restricciones: del módulo contra el bundle, y del bundle contra el módulo */
+const constraints = await import(pathToFileURL(join(DIR, 'constraints.js')).href)
+const CONSTRAINTS = constraints.CONSTRAINTS ?? {}
+const schemas = bundle?.components?.schemas ?? {}
+const constrained = Object.keys(CONSTRAINTS)
+
+if (constraints.CONTRACT?.sha256 !== sha256) {
+  fail(
+    'constraints.js no salió de este bundle',
+    `CONTRACT.sha256 ${String(constraints.CONTRACT?.sha256).slice(0, 12)}… ≠ ${sha256.slice(0, 12)}…`,
+  )
+}
+
+for (const name of constrained) {
+  const schema = schemas[name]
+  if (schema?.type !== 'object') {
+    fail(
+      `el esquema ${name} está en constraints.js y no es un objeto del bundle`,
+      'las restricciones salieron de otro contrato, o se editaron a mano',
+    )
+    continue
+  }
+  const expectedRequired = [...(schema.required ?? [])].sort()
+  const declaredRequired = [...(CONSTRAINTS[name]?.required ?? [])].sort()
+  if (JSON.stringify(expectedRequired) !== JSON.stringify(declaredRequired)) {
+    fail(
+      `${name}.required no es el del bundle`,
+      `esperaba [${expectedRequired.join(', ')}], hay [${declaredRequired.join(', ')}]`,
+    )
+  }
+}
+
+const SCHEMA_REF = '#/components/schemas/'
+const refName = (ref) =>
+  typeof ref === 'string' && ref.startsWith(SCHEMA_REF) ? ref.slice(SCHEMA_REF.length) : undefined
+for (const [path, item] of Object.entries(bundle?.paths ?? {})) {
+  for (const method of METHODS) {
+    const op = item?.[method]
+    if (!op || typeof op !== 'object') continue
+    if (!Array.isArray(op.tags) || !op.tags.includes(consumer)) continue
+    const name = refName(op.requestBody?.content?.['application/json']?.schema?.$ref)
+    if (name && schemas[name]?.type === 'object' && !(name in CONSTRAINTS)) {
+      fail(
+        `el cuerpo de ${op.operationId} (${method.toUpperCase()} ${path}) es ${name} y no está en constraints.js`,
+        'un formulario validaría a mano lo que el contrato ya dice (CU-38)',
+      )
+    }
+  }
+}
+
+/* 6 · Sin sujetos no se aprueba */
 if (declared.length === 0 || listed.length === 0) {
   fail('el módulo no declara operaciones o capacidades', 'con cero no hay nada que verificar')
+}
+if (constrained.length === 0) {
+  fail('constraints.js no declara ningún esquema', 'con cero no hay nada que verificar')
 }
 
 if (fallas.length > 0) {
@@ -171,6 +233,9 @@ console.log(
   `  ok     ${declared.length} operaciones del consumidor ${consumer}, todas en api.d.ts y todas en el bundle`,
 )
 console.log(`  ok     ${listed.length} capacidades, la unión ordenada de lo que exigen`)
+console.log(
+  `  ok     ${constrained.length} esquemas de pedido con sus restricciones, todos objetos del bundle`,
+)
 if (identity.backendCommit) {
   console.log(`  --     sincronizado de OPE-Backend ${String(identity.backendCommit).slice(0, 7)}`)
 }

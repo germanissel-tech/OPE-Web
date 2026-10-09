@@ -230,6 +230,17 @@ export type ActionOptions<Output> = {
    */
   readonly onDone?: (output: Output) => void
   /**
+   * Qué hace la pantalla cuando **el servidor contestó que no**: volver a pedir
+   * lo que mostraba, porque un rechazo suele significar que el estado cambió
+   * debajo de ella y lo que dibuja ya no es cierto.
+   *
+   * Corre **después del aviso** y sólo con una respuesta del servidor: un fallo
+   * de red no dice nada del estado, y refrescar tras él pediría otra vez lo que
+   * acaba de no llegar. Lo que la pantalla decide con esto es suyo; la puerta
+   * no invalida nada por su cuenta, igual que con `onDone`.
+   */
+  readonly onRejected?: (failed: RequestFailed) => void
+  /**
    * Con qué comparar si el servidor rechaza por versión vieja (`CU-29`).
    *
    * **Sin esto, un rechazo por conflicto se trata como cualquier otro error**:
@@ -243,7 +254,7 @@ export function useAction<Input, Output, Ops extends Operations>(
   action: Action<Input, Output, Ops>,
   options: ActionOptions<Output> = {},
 ): ActionResult<Input> {
-  const { onDone, concurrency } = options
+  const { onDone, onRejected, concurrency } = options
   const [clash, setClash] = useState<readonly Clash[]>([])
   const queries = useQueryClient()
   const services = useServices()
@@ -343,9 +354,13 @@ export function useAction<Input, Output, Ops extends Operations>(
          no son de ningún campo sí**: un puntero bajo `/query` o `/headers` no
          tiene control donde dibujarse, y callarlo sería perderlo. */
       const { toForm, offForm } = failed ? splitErrors(failed.errors) : { toForm: [], offForm: [] }
-      if (toForm.length > 0 && offForm.length === 0) return
+      if (!(toForm.length > 0 && offForm.length === 0)) {
+        notify(failureNotice(failed, strings, offForm))
+      }
 
-      notify(failureNotice(failed, strings, offForm))
+      /* Último, y sólo con respuesta: lo que la pantalla haga con esto va
+         después de que el operador tenga el aviso a la vista. */
+      if (failed) onRejected?.(failed)
     },
   })
 

@@ -1,6 +1,15 @@
 import { useCollection, useService } from '@ope/core'
 import { useQuery } from '@tanstack/react-query'
-import { type Merchant, type OpeClient, opeService } from '../../../api/ope/client'
+import {
+  type AdminEntry,
+  type CredentialIssued,
+  type CredentialKind,
+  type KillSwitch,
+  type Merchant,
+  type MerchantCredentials,
+  type OpeClient,
+  opeService,
+} from '../../../api/ope/client'
 
 /**
  * Los datos de los merchants.
@@ -9,8 +18,31 @@ import { type Merchant, type OpeClient, opeService } from '../../../api/ope/clie
  * y no sabe de qué sistema vino lo que recibe.
  */
 
-export type { Merchant, OpeClient }
+export type {
+  AdminEntry,
+  CredentialIssued,
+  CredentialKind,
+  KillSwitch,
+  Merchant,
+  MerchantCredentials,
+  OpeClient,
+}
+
+/** Las tres clases del contrato, para validar lo que llega por una ruta. */
+export const CREDENTIAL_KINDS: readonly CredentialKind[] = ['ingest', 'platform', 'signing']
+export const isCredentialKind = (value: string): value is CredentialKind =>
+  (CREDENTIAL_KINDS as readonly string[]).includes(value)
 export { opeService }
+
+/**
+ * El tono de cada estado del contrato, **el mismo en la grilla y en la ficha**
+ * (`GR-67`). `off` es el interruptor de apagado: avisa, no alarma.
+ */
+export const STATUS_TONE = {
+  active: 'success',
+  off: 'warning',
+  deactivated: 'neutral',
+} as const satisfies Record<Merchant['status'], string>
 
 /**
  * **El día de un instante**, para dibujarlo con el formato de fecha de granito.
@@ -21,6 +53,14 @@ export { opeService }
  * descarta a propósito: un alta se lee por su día.
  */
 export const dayOf = (instant: string) => instant.slice(0, 10)
+
+/**
+ * La hora de un instante del contrato, **en UTC y dicho así donde se muestra**:
+ * granito formatea fechas y no instantes, y convertir a la zona del navegador
+ * sin decirlo es mentir en un registro.
+ */
+export const timeOf = (instant: string) => instant.slice(11, 16)
+export const whenOf = (instant: string) => `${dayOf(instant)} ${timeOf(instant)} UTC`
 
 /**
  * **Todas las listas de merchants**, sea cual sea el tramo.

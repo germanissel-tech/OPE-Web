@@ -45,8 +45,10 @@ no resuelve; las `GR` y `TAN` se verifican cuando sus documentos están al lado.
 Granito y cuarzo viven en `../../../../Bitbucket/Tandil Stone Pulse/tandilia/`. **Se leen y no se
 tocan**: ni compilar, ni instalar, ni publicar, ni checkout, ni commitear ahí. `@granito/ui` y
 `@granito/tokens` llegan por `file:` a esa carpeta hasta que granito esté en npm (`CU-7`
-enmendada). Lo que haga falta cambiar de granito es **una propuesta anotada en `docs/ope.md`** —
-`OW-4` es la primera— y la lleva el dueño desde granito.
+enmendada). Lo que haga falta cambiar de granito es **una propuesta**: la decisión que la motiva va
+en `docs/ope.md` (`OW-4` fue la primera) y el pedido, con su evidencia y qué se borra de acá cuando
+llegue, en [`docs/propuestas-a-granito.md`](docs/propuestas-a-granito.md). La lleva el dueño desde
+granito.
 
 ## El ciclo de trabajo
 
@@ -89,18 +91,20 @@ feature, además, la tabla de «romperle algo a cada comprobación» de su quick
 **Commits**: convencionales, en castellano, un tramo por commit, con `Co-Authored-By` del agente. No
 se commitea con las pruebas en rojo. Se publica cuando el dueño lo pidió.
 
-## Las dos muletas de la 040
+## Las tres muletas de la 040
 
-Hasta que OPE-Backend publique su feature 040, dos cosas viven acá **con nombre y comentario** y se
+Hasta que OPE-Backend publique su feature 040, tres cosas viven acá **con nombre y comentario** y se
 sacan cuando llegue:
 
 | muleta | dónde | la reemplaza |
 |---|---|---|
 | `identify` es una sonda a `listMerchants` y la barra dice `operator` | `apps/console/src/api/ope/identity.ts` | `getOperator` con `operatorId`, `displayName` y `scope` |
 | `contract-sync` **emite** el módulo de capacidades desde el bundle | `scripts/contract-sync.mjs` | copiar `generated/contract/` del backend |
+| `contract-sync` **emite** las restricciones de cada cuerpo de pedido (`CU-38`, capa 1) | `scripts/contract-sync.mjs`, `emitConstraints` | copiar `constraints.{js,d.ts}` de `generated/contract/` |
 
 Y lo que la 040 agrega además: `X-Request-Id` y `requestId` en el problema (hoy el aviso dice «sin
-identificador»), y `errors[]` con `pointer` en el `422 origin-already-registered`.
+identificador»), y `errors[]` con `pointer` en los `422` de invariante —`origin-already-registered`,
+`rotation-grace-too-long`— que hoy llegan sin campo y caen al pie del formulario o al aviso.
 
 ## Cuando algo del código está mal, primero se tría
 

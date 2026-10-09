@@ -3,6 +3,7 @@ import { createContext, type MouseEvent, type ReactNode, useContext, useEffect }
 import { createBrowserRouter, Outlet, RouterProvider, useLocation } from 'react-router'
 import { Failure } from '../base/failure'
 import { buildUrl, NavigationProvider } from '../base/go-to'
+import { screenAt } from '../base/here'
 import type { ApplicationManifest, UserMenuEntry } from '../base/manifest'
 import { createRegistry } from '../base/registry'
 import { AuthorizationProvider, buildRoutes, useCapabilities } from '../base/routes'
@@ -77,7 +78,7 @@ export function createApplication(manifest: ApplicationManifest, chrome: Chrome)
      * corra esto.
      */
     useEffect(() => {
-      const current = screens.find(({ path }) => matchesPath(path, location.pathname))
+      const current = screenAt(screens, location.pathname)
       document.title = current ? `${current.title} · ${manifest.name}` : manifest.name
     }, [location.pathname])
     return chrome({
@@ -270,14 +271,6 @@ export function ApplicationView({
       </NavigationProvider>
     </UserCaptionContext.Provider>
   )
-}
-
-/** Si la ruta declarada coincide con la URL, contando los parámetros. */
-function matchesPath(declared: string, actual: string): boolean {
-  const a = declared.split('/')
-  const b = actual.split('/')
-  if (a.length !== b.length) return false
-  return a.every((part, i) => part.startsWith(':') || part === b[i])
 }
 
 /**

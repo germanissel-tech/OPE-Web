@@ -46,8 +46,21 @@ describe('crear un merchant', () => {
   })
 })
 
+describe('las restricciones del alta', () => {
+  it('vienen del contrato: obligatorios y largos, no escritos acá', () => {
+    /* `CU-38`, capa 1 emitida: si el backend cambia el largo, esto lo sigue en
+       el próximo `contract:sync` sin tocar una línea. */
+    expect(merchantConstraints.required).toEqual(['origins', 'signature'])
+    expect(merchantConstraints.fields.origins?.minItems).toBe(1)
+    expect(merchantConstraints.fields.origins?.maxItems).toBe(20)
+    expect(merchantConstraints.fields.origins?.items?.maxLength).toBe(255)
+  })
+})
+
 describe('la forma del origen, antes de mandar', () => {
-  const origin = merchantConstraints.fields.origin
+  /* Cada renglón se valida con lo que el contrato le exige a un elemento de
+     `origins`, más la capa 2 (`invalid-origin`) escrita a mano con su cita. */
+  const origin = merchantConstraints.fields.origins?.items
 
   it('acepta esquema y host, con o sin puerto', () => {
     expect(
