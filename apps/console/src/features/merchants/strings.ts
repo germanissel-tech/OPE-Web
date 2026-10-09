@@ -41,6 +41,14 @@ export const merchantsStrings = {
   identityWhy:
     'El nombre de la tienda o su razón social. Es lo que la grilla lista y la ficha encabeza.',
   name: 'Nombre',
+  storeUrl: 'Tienda',
+  contact: 'Contacto',
+  contactName: 'Nombre del contacto',
+  contactEmail: 'Email del contacto',
+  contactPhone: 'Teléfono del contacto',
+  contactRole: 'Rol del contacto',
+  notes: 'Notas',
+  noIdentity: 'Todavía no tiene identidad: ni nombre, ni URL, ni contacto, ni notas.',
   originsSection: 'Orígenes de la tienda',
   originsWhy:
     'Con esquema y host, sin ruta: https://tienda.example. Un origen pertenece a un solo merchant.',

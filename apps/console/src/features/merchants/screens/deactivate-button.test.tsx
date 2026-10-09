@@ -168,7 +168,7 @@ describe('desactivar', () => {
   it('un clic abre la confirmación y no desactiva nada', async () => {
     const { client, deactivated } = ope()
     await mount(client)
-    await screen.findByText('mrc_uno')
+    await screen.findAllByText('mrc_uno')
 
     await act(async () => {
       fireEvent.click(deactivateButtons()[0] as HTMLElement)
@@ -181,7 +181,7 @@ describe('desactivar', () => {
   it('cancelar no desactiva; confirmar sí', async () => {
     const { client, deactivated } = ope()
     await mount(client)
-    await screen.findByText('mrc_uno')
+    await screen.findAllByText('mrc_uno')
 
     await act(async () => {
       fireEvent.click(deactivateButtons()[0] as HTMLElement)

@@ -29,45 +29,52 @@ termina con algo que se puede correr, y es un commit.
 **Meta**: que el contrato sincronizado sea el de la 041 copiado tal cual, que la barra diga quién es
 el operador, y que no quede código con fecha de vencimiento cumplida.
 
-- [ ] T001 [E1] `npm run contract:sync` y versionar `contracts/ope/` (1.13.0): `capabilities.*`,
+- [x] T001 [E1] `npm run contract:sync` y versionar `contracts/ope/` (1.13.0): `capabilities.*`,
       `constraints.*`, `identity.json`, `openapi.yaml`, `api.d.ts`, `problem-types.d.ts`; revisar que
       `CONSTRAINTS.MerchantContact` y `MerchantProfileInput` digan lo que el bundle dice
-- [ ] T002 [E1] `scripts/contract-sync.mjs`: se borran `emitModule`, `emitConstraints`, `FIELD_KEYS`,
+- [x] T002 [E1] `scripts/contract-sync.mjs`: se borran `emitModule`, `emitConstraints`, `FIELD_KEYS`,
       `refName`, `INTERIM`, `origin`/`constraintsOrigin` y la rama que emite; si `generated/contract/` no
       existe o no es carpeta, `fail` con «corré `npm run contract:types` en <backend>»; el README que
       escribe dice «copiado de `generated/contract/` del backend» y pierde la fila de restricciones
       interinas; la cabecera del archivo deja de decir «interino»
-- [ ] T003 [E1] `tests/contract-sync.test.mjs` (NUEVO; se corre con `node --test` desde `npm test`, al
+- [x] T003 [E1] `tests/contract-sync.test.mjs` (NUEVO; se corre con `node --test` desde `npm test`, al
       lado de `icons.mjs`): con `--from` sobre una carpeta de mentira que tiene `contracts/dist/openapi.yaml`,
       `generated/api.d.ts`, `generated/problem-types.d.ts` y `generated/contract/` con los ocho archivos,
       copia los ocho y escribe el README; sin `generated/contract/`, sale con código distinto de cero y
       el mensaje nombra `contract:types`; **romperla a propósito** volviendo a poner una emisión de
       mentira y ver que la prueba la detecta (no quedan archivos que el backend no tenga)
-- [ ] T004 [E1] `apps/console/src/api/ope/client.ts`: `getOperator() → Operator` no va acá (la identidad
+- [x] T004 [E1] `apps/console/src/api/ope/client.ts`: `getOperator() → Operator` no va acá (la identidad
       usa su conector mínimo); gana `updateMerchantProfile(merchantId, body: MerchantProfileInput) →
       Merchant` y los tipos `Operator`, `MerchantContact`, `MerchantProfileInput` de `api.d.ts`
-- [ ] T005 [E1] `apps/console/src/api/ope/identity.ts`: `probeOperator` pasa a `fetchOperator`, misma
+- [x] T005 [E1] `apps/console/src/api/ope/identity.ts`: `probeOperator` pasa a `fetchOperator`, misma
       firma, mismo conector mínimo; `GET /v1/admin/operator` y los claims de `OW-7`:
       `{ sub: operatorId, operatorId, name: displayName ?? operatorId, scope }`; el comentario deja de
       hablar de sonda; `apps/console/src/app/identity.ts` lo llama
-- [ ] T006 [E1] `apps/console/src/api/ope/identity.test.ts` (NUEVO): con un `fetch` de mentira que
+- [x] T006 [E1] `apps/console/src/api/ope/identity.test.ts` (NUEVO): con un `fetch` de mentira que
       responde `Operator` con `displayName`, los claims traen `name: displayName`; sin `displayName`,
       `name: operatorId`; `scope` tal cual (`'*'` y lista); con `401` tira `RequestFailed` con
       `status: 401`; el pedido lleva lo que `authorize` puso
-- [ ] T007 [P] [E1] `docs/ope.md`: `OW-5` y `OW-7` ganan «**Enmienda OPE (2026-10-09).**» como las `CU`
+- [x] T007 [P] [E1] `docs/ope.md`: `OW-5` y `OW-7` ganan «**Enmienda OPE (2026-10-09).**» como las `CU`
       enmendadas: en `OW-5`, OPE-Backend emite `generated/contract/` (su 040, `ADR-044`) y
       `contract:sync` sólo copia, fallando si no la encuentra; en `OW-7`, `identify` es `getOperator` y la
       barra dice `displayName` o `operatorId`. El estado sigue «decidida»
-- [ ] T008 [P] [E1] `.specify/memory/estado.md`: «Las muletas de la 040» pasa a «Lo que la 040 y la
+- [x] T008 [P] [E1] `.specify/memory/estado.md`: «Las muletas de la 040» pasa a «Lo que la 040 y la
       041 trajeron» (qué se sacó y qué entró); «Qué hay hoy» nombra la 007 en curso; se saca de «roto o
       incómodo» el `422` de la gracia que iba al aviso. `CLAUDE.md`: se borra «Las tres muletas de la
       040»; la fila de `contract:sync` en «Cómo se corren las cosas» dice que copia
-- [ ] T009 [E1] `npm test` en verde (`conformity` con `contracts/ope/` copiada: 35 operaciones, 35
+- [x] T009 [E1] `npm test` en verde (`conformity` con `contracts/ope/` copiada: 35 operaciones, 35
       esquemas); contra el backend real, entrar con `?dev.bearer=1` y ver «Operador de desarrollo» en la
       barra
 
 **Punto de control**: la barra dice el nombre; `contract-sync` copia y falla sin carpeta; `npm test`.
 Commit: `feat(007): la identidad es getOperator y el sincronizador sólo copia`.
+
+> **Hecho el 2026-10-09.** Desvíos: (1) **el contrato nuevo exige `displayName` al crear**, así que
+> el alta ganó en este tramo el campo del nombre —lo mínimo para compilar contra `MerchantCreate`—;
+> el resto de la identidad en el alta es del tramo 3. (2) La prueba del sincronizador corre bajo
+> Vitest (`tests/**/*.test.mjs` ya estaba en su `include`) y no con `node --test`: una forma menos.
+> (3) El sincronizador exige los **ocho** archivos: copiar siete sería sincronizar a medias. Contra el
+> backend: la barra dice «Operador de desarrollo · Todos los merchants» con una sola llamada.
 
 ---
 
@@ -76,35 +83,45 @@ Commit: `feat(007): la identidad es getOperator y el sincronizador sólo copia`.
 **Meta**: que la grilla liste por nombre y que la ficha encabece por nombre y muestre la identidad,
 sin que nada se escriba todavía.
 
-- [ ] T010 [E2] `apps/console/src/features/merchants/data/merchants.ts`: reexporta `MerchantContact`;
+- [x] T010 [E2] `apps/console/src/features/merchants/data/merchants.ts`: reexporta `MerchantContact`;
       `displayNameOf(merchant) → string | undefined`; `hasIdentity(merchant)` (alguno de los cuatro)
-- [ ] T011 [P] [E2] `apps/console/src/features/merchants/strings.ts`: `name`, `storeUrl`, `contact`,
+- [x] T011 [P] [E2] `apps/console/src/features/merchants/strings.ts`: `name`, `storeUrl`, `contact`,
       `contactName`, `contactEmail`, `contactPhone`, `contactRole`, `notes`, `identity` (la sección),
       `noName` («sin nombre»), `noIdentity` («todavía no tiene identidad»); las claves de la grilla y la
       ficha siguen siendo las del contrato donde las hay (`displayName` → `name` es el rótulo, no la clave)
-- [ ] T012 [E2] `apps/console/src/features/merchants/screens/merchants-screen.tsx`: primera columna
+- [x] T012 [E2] `apps/console/src/features/merchants/screens/merchants-screen.tsx`: primera columna
       `displayName` (rótulo `name`, `width 260px`): el nombre, o `<code>{merchantId}</code>` cuando no
       hay; la de `merchantId` queda segunda; la de `origins` **se va**; estado y alta sin cambio
-- [ ] T013 [E2] `apps/console/src/features/merchants/screens/identity-section.tsx` (NUEVO): `Section
+- [x] T013 [E2] `apps/console/src/features/merchants/screens/identity-section.tsx` (NUEVO): `Section
 title={identity} columns={2}` con los `Field` que el merchant tiene —nombre, URL (un `<a href
 target="_blank" rel="noreferrer">` dentro de `Value`), contacto (cuatro campos, los ausentes sin
       dibujar), notas (`size="fill"`, texto tal cual)—; sin identidad, un solo `Field` con `noIdentity`
-- [ ] T014 [E2] `apps/console/src/features/merchants/screens/merchant-screen.tsx`: `Page title=
+- [x] T014 [E2] `apps/console/src/features/merchants/screens/merchant-screen.tsx`: `Page title=
 {displayNameOf(merchant) ?? merchantId} context={merchantId}` (el `Result` carga antes del título:
       mientras carga, el identificador); `IdentitySection` antes de la sección «Merchant»
-- [ ] T015 [E2] `apps/console/src/features/merchants/screens/merchants-screen.test.tsx`: la grilla
+- [x] T015 [E2] `apps/console/src/features/merchants/screens/merchants-screen.test.tsx`: la grilla
       muestra el nombre y, sin nombre, el identificador en `<code>`; ya no muestra orígenes;
       `apps/console/src/features/merchants/screens/merchant-screen.test.tsx` (NUEVO, montada como las
       demás): con identidad completa dibuja los siete valores y el enlace con `target="_blank"`; sin
       contacto no dibuja los campos del contacto; sin identidad dibuja `noIdentity`; el título es el
       nombre
-- [ ] T016 [E2] Contra el backend real (quickstart, escenario 2): «Tienda de desarrollo» en la grilla
+- [x] T016 [E2] Contra el backend real (quickstart, escenario 2): «Tienda de desarrollo» en la grilla
       y en la ficha con su URL; un merchant creado con `curl` sin `displayName` no existe (el alta lo
       exige): usar uno del almacén anterior a la 041 si lo hay, o afirmar el caso sólo en la prueba.
       Anotar lo visto
 
 **Punto de control**: escenario 2 a mano; `npm test`. Commit:
 `feat(007): la grilla y la ficha reconocen al merchant por su nombre`.
+
+> **Hecho el 2026-10-09.** Desvíos: ninguno de forma. Lo visto: (1) un merchant sin nombre ocupa con
+> su identificador la columna del nombre **y** la suya, y las pruebas que lo buscaban por texto pasan
+> a buscarlo «entre varios». (2) El ancla dentro de `Value` compone bien: se ve como enlace y abre en
+> otra pestaña; no hace falta propuesta. (3) La sección de identidad con `columns={2}` dibuja un campo
+> por renglón porque los campos son `medium`; se ve correcto y no se toca. Contra el backend: la grilla
+> lista «Tienda Norte», «Tienda Norte», «Tienda Norte SA» (el almacén de desarrollo, donde
+> `test:contract` y el quickstart de la 041 escribieron identidades); la ficha de `dev-merchant`
+> encabeza por nombre y muestra la URL como enlace, el contacto y las notas. Recargar la ficha por URL
+> pierde la sesión y muestra el `401` **con su identificador de pedido y «copiar»**: la 040 se ve.
 
 ---
 

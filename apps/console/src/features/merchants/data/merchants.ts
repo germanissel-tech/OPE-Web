@@ -6,7 +6,9 @@ import {
   type CredentialKind,
   type KillSwitch,
   type Merchant,
+  type MerchantContact,
   type MerchantCredentials,
+  type MerchantProfileInput,
   type OpeClient,
   opeService,
 } from '../../../api/ope/client'
@@ -24,9 +26,26 @@ export type {
   CredentialKind,
   KillSwitch,
   Merchant,
+  MerchantContact,
   MerchantCredentials,
+  MerchantProfileInput,
   OpeClient,
 }
+
+/**
+ * **El nombre con el que se reconoce a un merchant** (feature 007, `ADR-045`):
+ * su `displayName`, o nada. Un merchant creado antes de la 041 y nunca editado
+ * no tiene nombre, y la pantalla muestra el identificador en su lugar — **nunca
+ * un nombre inventado**.
+ */
+export const displayNameOf = (merchant: Merchant): string | undefined => merchant.displayName
+
+/** Si el merchant tiene algo de identidad para mostrar (`ADR-045`). */
+export const hasIdentity = (merchant: Merchant): boolean =>
+  merchant.displayName !== undefined ||
+  merchant.storeUrl !== undefined ||
+  merchant.contact !== undefined ||
+  merchant.notes !== undefined
 
 /** Las tres clases del contrato, para validar lo que llega por una ruta. */
 export const CREDENTIAL_KINDS: readonly CredentialKind[] = ['ingest', 'platform', 'signing']
