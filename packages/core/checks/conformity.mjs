@@ -114,12 +114,16 @@ for (const id of declared) {
 }
 
 const inBundle = []
+/* Las que identifican al principal (`x-identifies-principal`, OPE-Backend 040): la única
+   operación que puede no exigir capacidad, porque decir quién sos no es un botón. */
+const identifies = new Set()
 for (const [path, item] of Object.entries(bundle?.paths ?? {})) {
   for (const method of METHODS) {
     const op = item?.[method]
     if (!op || typeof op !== 'object') continue
     if (!Array.isArray(op.tags) || !op.tags.includes(consumer)) continue
     inBundle.push({ id: op.operationId, where: `${method.toUpperCase()} ${path}` })
+    if (op['x-identifies-principal'] === true) identifies.add(op.operationId)
   }
 }
 
@@ -143,7 +147,12 @@ if (JSON.stringify(expected) !== JSON.stringify(listed)) {
 
 for (const id of declared) {
   const requirement = OPERATIONS[id]
-  if (!Array.isArray(requirement?.capabilities) || requirement.capabilities.length === 0) {
+  if (!Array.isArray(requirement?.capabilities)) {
+    fail(
+      `la operación ${id} no dice qué capacidades exige`,
+      'el módulo no tiene la forma de contract-artifact.md',
+    )
+  } else if (requirement.capabilities.length === 0 && !identifies.has(id)) {
     fail(
       `la operación ${id} no exige ninguna capacidad`,
       'su botón se dibujaría para cualquiera (CU-37)',
