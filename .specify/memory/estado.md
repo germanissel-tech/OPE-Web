@@ -77,6 +77,8 @@ acotada; y el emisor de `generated/contract/` con la forma de
   control.
 - **El `422` de la gracia de rotación va al aviso y no al campo**: el backend no manda `errors[]`
   (040). La prueba con `pointer /body/graceSeconds` ya está y pasa con el servicio de mentira.
-- **El almacén de desarrollo de esta máquina tiene una versión de plataforma con
-  `rotationGraceMaxMs: 1`** (`platform-85`, de pruebas del backend): toda gracia mayor que cero da
-  `422`. Con `config/platform.json` limpio el máximo son siete días. No es de la consola.
+- **Un almacén de desarrollo puede traer una versión de plataforma de pruebas** (pasó el
+  2026-10-09: `platform-85` con `rotationGraceMaxMs: 1`, y toda gracia mayor que cero daba `422`).
+  Se limpió borrando `data/ope.db*` con el backend parado; con `config/platform.json` el máximo
+  vuelve a siete días. No es de la consola; si vuelve a pasar, `GET /v1/admin/platform-configuration`
+  lo dice.
