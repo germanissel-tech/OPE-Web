@@ -216,14 +216,18 @@ merchantId })` e `identityClosed({ merchantId })`; `editIdentityScreen` en `scre
 
 **Meta**: que los documentos describan lo que quedó, y que todo esté en verde.
 
-- [ ] T029 [E4] `specs/007-la-identidad-en-el-panel/quickstart.md` con «Lo corrido» fechado, tramo
+- [x] T029 [E4] `specs/007-la-identidad-en-el-panel/quickstart.md` con «Lo corrido» fechado, tramo
       por tramo, incluido lo que difirió; `spec.md`: **Estado**: construida
-- [ ] T030 [P] [E4] `.specify/memory/estado.md`: «Qué hay hoy» dice que la 007 está construida; «Lo
+- [x] T030 [P] [E4] `.specify/memory/estado.md`: «Qué hay hoy» dice que la 007 está construida; «Lo
       que sigue» queda en configuración versionada; `docs/propuestas-a-granito.md` sólo si el ancla en
       `Value` o el nombre con secundario no compusieron
-- [ ] T031 [E4] `npm test` entero, `npm run revisar`, `npm run build`
+- [x] T031 [E4] `npm test` entero, `npm run revisar`, `npm run build`
 
 **Punto de control**: todo en verde. Commit: `docs(007): cierre — estado y quickstart`.
+
+> **Hecho el 2026-10-09.** Sin desvíos. No hubo propuesta a granito: el ancla dentro de `Value` y el
+> nombre con el identificador como secundario compusieron bien (tramo 2). «Lo que sigue» ya empezaba
+> por la configuración versionada y queda así.
 
 ---
 

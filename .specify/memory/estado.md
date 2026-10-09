@@ -30,9 +30,11 @@ ficha. Trajo al núcleo `ConfirmDialog`, `SecretOnce`, `onRejected` en `useActio
 `useForm` y `screenAt`; y pagó la deuda de `CU-38`: las restricciones se emiten del bundle. Los
 cuatro tramos están en `specs/006-el-merchant-completo/tasks.md`, con sus notas fechadas.
 
-**La feature 007 —la identidad en el panel— está en curso**: saca las muletas de la 040, lista y
-encabeza al merchant por su nombre, y edita su identidad entera. Sus tramos están en
-`specs/007-la-identidad-en-el-panel/tasks.md`.
+**La feature 007 —la identidad en el panel— está construida**: sacó las muletas de la 040 (`OW-5` y
+`OW-7`, enmendadas), lista y encabeza al merchant por su nombre, pide el nombre en el alta y edita
+la identidad entera desde la ficha con `updateMerchantProfile`. Trajo al núcleo las restricciones
+como función de los valores y la forma `email` en `useForm`. Los cuatro tramos están en
+`specs/007-la-identidad-en-el-panel/tasks.md`, con sus notas fechadas.
 
 **Los números no se escriben acá.** `npm test` informa cuántas decisiones hay, cuántas abiertas,
 cuántas citas resuelven, y cuántas operaciones, capacidades y esquemas tiene el módulo del contrato.

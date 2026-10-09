@@ -89,4 +89,24 @@ Abrir `http://localhost:5173/?dev.bearer=1`, pegar el token del operador de desa
 
 ## Lo corrido
 
-_(se completa al implementar, con fecha, tramo por tramo)_
+**Tramo 1 (2026-10-09)** · `npm run contract:sync` copió los ocho archivos del backend en `main`
+con la 041; con `generated/contract/` movida a un lado falló diciendo que hay que correr
+`contract:types` en el backend (escenario 6). Escenario 1: la barra dice «Operador de desarrollo».
+
+**Tramo 2 (2026-10-09)** · Escenario 2: la grilla lista por nombre, con el identificador en código al
+lado; los merchants anteriores a la 041 que había en el almacén ocupan el lugar del nombre con su
+identificador. La ficha de `dev-merchant` encabeza por nombre, la URL abre en otra pestaña, y el
+contacto y las notas se ven. Recargar por URL pierde la sesión y el `401` muestra su identificador de
+pedido con «copiar»: la 040 se ve.
+
+**Tramo 3 (2026-10-09)** · Escenario 3: sin nombre, el campo marca obligatorio y no se envía; con
+nombre, URL y contacto, `201`, credenciales una vez, y la ficha de «Tienda Sur» con su identidad.
+Escenario 4: el editor precarga los siete valores; `" Tienda Sur "` da `422` en el nombre y
+`https://` da `422` en la URL, cada uno con el texto del servidor (llegan de a uno: el backend juzga
+un campo por vez); vaciar la URL y agregar una nota guarda con `200`, el aviso dice «La identidad se
+guardó · Tienda Sur» y la ficha ya no muestra la URL; vaciar sólo el email deja «Es obligatorio.» sin
+ninguna petición. El paso 6 (vaciar el contacto), el 7 (editar un desactivado) y el escenario 5 no
+se corrieron a mano: los afirman las pruebas de `data/identity`, de la ficha (sin `merchants:write`
+no hay botón, también sobre un desactivado) y de la ruta de edición (responde «sin permisos»).
+
+**Tramo 4 (2026-10-09)** · `npm test`, `npm run revisar` y `npm run build` en verde.

@@ -1,6 +1,6 @@
 # Especificación · La identidad en el panel
 
-**Carpeta**: `007-la-identidad-en-el-panel` · **Estado**: borrador · **Fecha**: 2026-10-09
+**Carpeta**: `007-la-identidad-en-el-panel` · **Estado**: construida · **Fecha**: 2026-10-09
 
 **Pedido**: "Lo que las features 040 y 041 de OPE-Backend le dan al panel, tomado entero. Decisión
 del dueño, 2026-10-09, después de unir las dos: (1) se sacan las tres muletas de la 040 —la sonda de
