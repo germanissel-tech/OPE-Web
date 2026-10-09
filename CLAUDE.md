@@ -45,8 +45,10 @@ no resuelve; las `GR` y `TAN` se verifican cuando sus documentos están al lado.
 Granito y cuarzo viven en `../../../../Bitbucket/Tandil Stone Pulse/tandilia/`. **Se leen y no se
 tocan**: ni compilar, ni instalar, ni publicar, ni checkout, ni commitear ahí. `@granito/ui` y
 `@granito/tokens` llegan por `file:` a esa carpeta hasta que granito esté en npm (`CU-7`
-enmendada). Lo que haga falta cambiar de granito es **una propuesta anotada en `docs/ope.md`** —
-`OW-4` es la primera— y la lleva el dueño desde granito.
+enmendada). Lo que haga falta cambiar de granito es **una propuesta**: la decisión que la motiva va
+en `docs/ope.md` (`OW-4` fue la primera) y el pedido, con su evidencia y qué se borra de acá cuando
+llegue, en [`docs/propuestas-a-granito.md`](docs/propuestas-a-granito.md). La lleva el dueño desde
+granito.
 
 ## El ciclo de trabajo
 

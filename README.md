@@ -55,3 +55,4 @@ sea el del bundle sincronizado.
 | [`apps/console/src/app/README.md`](apps/console/src/app/README.md) | Lo que una aplicación declara |
 | [`apps/console/src/features/README.md`](apps/console/src/features/README.md) | Cómo se agrega una pantalla |
 | [`docs/segunda-aplicacion.md`](docs/segunda-aplicacion.md) | Cómo nace `apps/portal` |
+| [`docs/propuestas-a-granito.md`](docs/propuestas-a-granito.md) | Lo que se compone hoy y granito podría dar, con su evidencia |
