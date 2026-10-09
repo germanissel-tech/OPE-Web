@@ -43,12 +43,24 @@ export const merchantsStrings = {
   name: 'Nombre',
   storeUrl: 'Tienda',
   contact: 'Contacto',
-  contactName: 'Nombre del contacto',
-  contactEmail: 'Email del contacto',
-  contactPhone: 'Teléfono del contacto',
-  contactRole: 'Rol del contacto',
+  contactName: 'Persona de contacto',
+  contactEmail: 'Email',
+  contactPhone: 'Teléfono',
+  contactRole: 'Rol',
   notes: 'Notas',
   noIdentity: 'Todavía no tiene identidad: ni nombre, ni URL, ni contacto, ni notas.',
+  contactWhy:
+    'La persona con la que se lleva la relación comercial. Si hay contacto, nombre y email van; teléfono y rol son opcionales.',
+  notesWhy:
+    'Texto libre del operador: por qué se dio de alta, en qué etapa está, con quién se habla.',
+  /* La edición de la identidad (feature 007): una pantalla que guarda la identidad entera. */
+  editIdentity: 'Editar identidad',
+  editIdentityTitle: (name: string) => `Editar la identidad de ${name}`,
+  editIdentityWhy:
+    'Se guarda entera: lo que se deje vacío se borra. Orígenes, estado y credenciales no cambian desde acá.',
+  saveIdentity: 'Guardar',
+  identitySaved: 'La identidad se guardó',
+  identitySavedDetail: (name: string) => name,
   originsSection: 'Orígenes de la tienda',
   originsWhy:
     'Con esquema y host, sin ruta: https://tienda.example. Un origen pertenece a un solo merchant.',
@@ -165,6 +177,7 @@ export const merchantsStrings = {
     required: 'Es obligatorio.',
     tooLong: (max: number) => `No puede pasar de ${max} caracteres.`,
     badFormat: 'Va con esquema y host, sin ruta: https://tienda.example',
+    badEmail: 'No tiene forma de email: nombre@dominio',
     outOfRange: (min: number | undefined, max: number | undefined) =>
       `Va entre ${min ?? 0} y ${max ?? '∞'}.`,
   },

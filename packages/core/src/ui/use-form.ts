@@ -37,6 +37,12 @@ export type FieldConstraints = {
   readonly maxItems?: number
   readonly items?: FieldConstraints
   /**
+   * La forma de un dato que un patrón no dice bien: hoy sólo `email`, que es
+   * lo mínimo que un formulario puede verificar antes de que el servidor lo
+   * rechace. Otros valores no se juzgan acá.
+   */
+  readonly format?: string
+  /**
    * Qué es el dato, en el vocabulario de granito.
    *
    * No se valida con esto: **se dibuja**. Vive acá porque sale del mismo lugar
@@ -44,6 +50,9 @@ export type FieldConstraints = {
    */
   readonly displayAs?: 'money' | 'percent' | 'date' | 'integer' | 'number'
 }
+
+/** Lo mínimo de un email: un `@` con algo a cada lado, y un punto en el dominio. */
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /** Lo que el contrato le exige a un mensaje. Sale generado; no se escribe. */
 export type MessageConstraints = {
@@ -59,6 +68,8 @@ export type ShapeStrings = {
   readonly required: string
   readonly tooLong: (max: number) => string
   readonly badFormat: string
+  /** Un email que no tiene forma de tal; sin esto se dice `badFormat`. */
+  readonly badEmail?: string
   /** Fuera del rango que el contrato declara. Se dice **cuál es**, no «inválido». */
   readonly outOfRange: (min: number | undefined, max: number | undefined) => string
 }
@@ -90,6 +101,11 @@ export function shapeErrorOf(
   }
   if (constraints?.pattern !== undefined && !new RegExp(constraints.pattern).test(trimmed)) {
     return strings.badFormat
+  }
+  /* La forma de un email es la de un dato, no la de un negocio: «algo@algo.algo»
+     y nada más. Lo demás lo decide el servidor, en su campo. */
+  if (constraints?.format === 'email' && !EMAIL_SHAPE.test(trimmed)) {
+    return strings.badEmail ?? strings.badFormat
   }
 
   /* El rango, que es tan del contrato como el largo. Se mira **después** del
@@ -137,7 +153,12 @@ export type Form<Values extends Readonly<Record<string, string>>> = {
 
 export function useForm<Values extends Readonly<Record<string, string>>>(
   initial: Values,
-  constraints: MessageConstraints,
+  /**
+   * Lo que el contrato exige, fijo o **en función de los valores**: hay reglas
+   * de forma que dependen de lo que ya se escribió —«si hay contacto, nombre y
+   * email van»— y siguen siendo capa 1. Se evalúa en cada dibujo.
+   */
+  constraints: MessageConstraints | ((values: Values) => MessageConstraints),
   strings: ShapeStrings,
   /**
    * Lo que el servidor rechazó, **ya traducido a nombres de campo** por la
@@ -182,16 +203,18 @@ export function useForm<Values extends Readonly<Record<string, string>>>(
    * `items`; el renglón se valida con eso, y es obligatorio si la lista lo es
    * —un renglón vacío no se manda, se quita—.
    */
+  const demanded = typeof constraints === 'function' ? constraints(values) : constraints
+
   const demandsOn = (name: string) => {
-    const direct = constraints.fields[name]
-    if (direct) return { of: direct, required: constraints.required.includes(name) }
+    const direct = demanded.fields[name]
+    if (direct) return { of: direct, required: demanded.required.includes(name) }
     const at = name.lastIndexOf('.')
     if (at > 0 && /^\d+$/.test(name.slice(at + 1))) {
       const list = name.slice(0, at)
-      const items = constraints.fields[list]?.items
-      if (items) return { of: items, required: constraints.required.includes(list) }
+      const items = demanded.fields[list]?.items
+      if (items) return { of: items, required: demanded.required.includes(list) }
     }
-    return { of: undefined, required: constraints.required.includes(name) }
+    return { of: undefined, required: demanded.required.includes(name) }
   }
 
   const shapeOf = (name: keyof Values) => {

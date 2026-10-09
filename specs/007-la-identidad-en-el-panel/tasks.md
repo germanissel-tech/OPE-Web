@@ -130,11 +130,11 @@ target="_blank" rel="noreferrer">` dentro de `Value`), contacto (cuatro campos, 
 **Meta**: que el alta pida el nombre y admita el resto, y que la identidad se edite entera desde la
 ficha, con el `422` en su campo.
 
-- [ ] T017 [E3] `packages/core/src/ui/use-form.ts`: `FieldConstraints.format?: string`; `shapeErrorOf`
+- [x] T017 [E3] `packages/core/src/ui/use-form.ts`: `FieldConstraints.format?: string`; `shapeErrorOf`
       trata `format: 'email'` como un patrón mínimo (`^[^\s@]+@[^\s@]+\.[^\s@]+$`) → `badFormat`;
       `packages/core/tests/use-form.test.ts`: un email sin `@` o sin punto en el dominio es `badFormat`,
       uno válido pasa; otros `format` no validan nada. El comentario no nombra negocio
-- [ ] T018 [E3] `apps/console/src/features/merchants/data/identity.ts` (NUEVO): `IDENTITY_FIELDS`
+- [x] T018 [E3] `apps/console/src/features/merchants/data/identity.ts` (NUEVO): `IDENTITY_FIELDS`
       (los siete nombres), `identityConstraints(values) → MessageConstraints` (de
       `CONSTRAINTS.MerchantProfileInput` y `CONSTRAINTS.MerchantContact` con prefijo `contact.`;
       `required = ['displayName']` más `contact.name` y `contact.email` cuando algún `contact.*` tiene
@@ -143,53 +143,72 @@ ficha, con el `422` en su campo.
       (la precarga; ausentes como `''`); `apps/console/src/features/merchants/data/identity.test.ts`
       (NUEVO): las tres funciones, incluido que un espacio en el borde viaja como está y que
       `required` cambia con el contacto
-- [ ] T019 [E3] `apps/console/src/features/merchants/data/update-merchant-profile.ts` (NUEVO):
+- [x] T019 [E3] `apps/console/src/features/merchants/data/update-merchant-profile.ts` (NUEVO):
       `updateMerchantProfile` con `opeOperation('updateMerchantProfile', …)`, entrada `{ merchantId,
 body }`, anuncia `identitySaved` con `displayName` (**nunca** el contacto), invalida `allMerchants`,
       `oneMerchant` y `merchantLog`; `update-merchant-profile.test.ts`: exige `merchants:write`,
       invalida lo que debe, el anuncio no contiene el email
-- [ ] T020 [E3] `apps/console/src/features/merchants/data/create-merchant.ts`: `merchantConstraints`
+- [x] T020 [E3] `apps/console/src/features/merchants/data/create-merchant.ts`: `merchantConstraints`
       suma las de identidad (`fields` y `required` de `CONSTRAINTS.MerchantCreate` ya traen
       `displayName`; el contacto con prefijo, como en `identity.ts`: una sola función las arma);
       `create-merchant.test.ts`: `required` incluye `displayName`
-- [ ] T021 [E3] `apps/console/src/features/merchants/strings.ts`: `editIdentity`, `editIdentityTitle`,
+- [x] T021 [E3] `apps/console/src/features/merchants/strings.ts`: `editIdentity`, `editIdentityTitle`,
       `identityWhy` («se guarda entera: lo que se vacía se borra»), `contactWhy` («si hay contacto, nombre
       y email van»), `notesWhy`, `identitySaved`, `identitySavedDetail(name)`, `cancel` ya está
-- [ ] T022 [E3] `apps/console/src/features/merchants/screens/identity-fields.tsx` (NUEVO): los siete
+- [x] T022 [E3] `apps/console/src/features/merchants/screens/identity-fields.tsx` (NUEVO): los siete
       campos en tres `Section` (nombre y URL · contacto · notas con `TextArea`), cada uno `Field` con su
       rótulo, `required` según `constraints.required`, `error={form.errorOf(name)}`, `TextInput` con
       `onBlur`; recibe `form` y `constraints`; lo usan el alta y la edición
-- [ ] T023 [E3] `apps/console/src/features/merchants/screens/new-merchant-screen.tsx`: `IdentityFields`
+- [x] T023 [E3] `apps/console/src/features/merchants/screens/new-merchant-screen.tsx`: `IdentityFields`
       **antes** de los orígenes; los valores iniciales suman los siete campos en `''`; `submit` manda
       `{ origins, signature, ...profileBodyOf(form.values) }`; `merchantConstraints` pasa a depender de
       los valores; `new-merchant-screen.test.tsx`: sin nombre no envía; con los cuatro campos los manda;
       `422 invalid-merchant-profile` con `/body/displayName` cae en el nombre
-- [ ] T024 [E3] `apps/console/src/features/merchants/feature.ts`: desenlaces `identityEditRequested({
+- [x] T024 [E3] `apps/console/src/features/merchants/feature.ts`: desenlaces `identityEditRequested({
 merchantId })` e `identityClosed({ merchantId })`; `editIdentityScreen` en `screens`;
       `apps/console/src/app/flows.ts`: `opens(identityEditRequested, editIdentityScreen, …)` y
       `finishes(identityClosed, merchantScreen, …)`
-- [ ] T025 [E3] `apps/console/src/features/merchants/screens/edit-identity-screen.tsx` (NUEVO):
+- [x] T025 [E3] `apps/console/src/features/merchants/screens/edit-identity-screen.tsx` (NUEVO):
       `defineScreen({ id: 'edit-identity', path: '/merchants/:merchantId/identity', capability:
 'merchants:write' })`; `Result` sobre `useMerchant` para la precarga; `Form` con `IdentityFields`,
       `note` con `rejectedTitle` para un `422` sin campo, pie «Cancelar» (informa `identityClosed`) y
       «Guardar» (`tone="primary"`, apagado mientras corre); `useAction(updateMerchantProfile, { onDone:
 → identityClosed })`
-- [ ] T026 [E3] `apps/console/src/features/merchants/screens/merchant-screen.tsx`: al pie, «Editar
+- [x] T026 [E3] `apps/console/src/features/merchants/screens/merchant-screen.tsx`: al pie, «Editar
       identidad» como `ActionButton` con `flow.toReach(identityEditRequested)`, **antes** de apagar y
       desactivar; también en un merchant desactivado
-- [ ] T027 [E3] `apps/console/src/features/merchants/screens/edit-identity-screen.test.tsx` (NUEVO):
+- [x] T027 [E3] `apps/console/src/features/merchants/screens/edit-identity-screen.test.tsx` (NUEVO):
       precarga los siete valores; guardar manda el cuerpo sin vacíos; `422` con `/body/storeUrl` cae en
       la URL y con `/body/contact/email` en el email; sólo nombre de contacto → el email marca
       «obligatorio» y no se envía; vaciar nombre y email manda sin `contact`; «cancelar» informa
       `identityClosed`; sin `merchants:write` la ruta responde «sin permisos»; **ni la telemetría ni
       los avisos contienen el email del contacto**; `merchant-screen.test.tsx`: sin `merchants:write`
       no hay «editar»
-- [ ] T028 [E3] Contra el backend real (quickstart, escenarios 3, 4 y 5): alta con contacto; editar,
+- [x] T028 [E3] Contra el backend real (quickstart, escenarios 3, 4 y 5): alta con contacto; editar,
       vaciar la URL, `" Tienda "`, `https://`, contacto a medias, vaciar el contacto, editar un
       desactivado; `?dev.papel=lectura`; el `403` con su identificador. Anotar lo visto
 
 **Punto de control**: escenarios 3, 4 y 5 a mano; `npm test`. Commit:
 `feat(007): el alta pide el nombre y la identidad se edita entera desde la ficha`.
+
+> **Hecho el 2026-10-09.** Desvíos: (1) **`useForm` del núcleo admite las restricciones como función
+> de los valores** (`constraints: MessageConstraints | ((values) => MessageConstraints)`), que se
+> evalúa en cada render: es lo que vuelve obligatorios nombre y email del contacto sólo cuando algún
+> campo del contacto tiene algo, sin un segundo mecanismo de validación. (2) El texto del email sin
+> forma (`shape.badEmail`) vive en las `ShapeStrings` del núcleo, junto a los demás textos de forma.
+> (3) Los rótulos del contacto pasan a «Persona de contacto», «Email», «Teléfono» y «Rol»: «Nombre
+> del contacto» chocaba por prefijo con «Nombre» en las pruebas que buscan por `^rótulo`. (4) Todo
+> arnés de prueba que monta la funcionalidad suma los dos pasos de la identidad: `flow.toReach`
+> lanza si el flujo activo no tiene paso para el desenlace, y la ficha ahora lo emite. Contra el
+> backend: el alta con nombre, URL y contacto crea «Tienda Sur» (`201`, credenciales una sola vez);
+> la ficha encabeza por nombre con la URL como enlace; el editor precarga los siete valores; con
+> `" Tienda Sur "` el `422` cae en el nombre con el mensaje del backend, y con `https://` cae en
+> la URL (el backend juzga un campo por vez, así que llegan de a uno); vaciar la URL y agregar una
+> nota guarda (`200`), vuelve a la ficha sin «Tienda», con la nota y el aviso «La identidad se
+> guardó · Tienda Sur»; vaciar sólo el email deja «Es obligatorio.» en el campo sin ninguna petición.
+> `?dev.papel=lectura` y el `403` no se corrieron a mano porque recargar por URL pierde la sesión:
+> los afirman las pruebas de la ficha (sin `merchants:write` no hay botón) y de la ruta (responde
+> «sin permisos»).
 
 ---
 

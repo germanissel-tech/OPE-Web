@@ -32,7 +32,8 @@ import { merchantsStrings } from '../strings'
 
 afterEach(cleanup)
 
-const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen] = merchants.screens
+const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen, editIdentityScreen] =
+  merchants.screens
 
 const base: Merchant = {
   merchantId: 'mrc_ficha',
@@ -122,12 +123,24 @@ async function mount(client: OpeClient, capabilities: readonly string[]) {
       finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
         merchantId,
       })),
+      opens(merchants.outcomes.identityEditRequested, editIdentityScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
+      finishes(merchants.outcomes.identityClosed, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen],
+      screens: [
+        merchantsScreen,
+        merchantScreen,
+        newMerchantScreen,
+        rotateScreen,
+        editIdentityScreen,
+      ],
       flows: [flow],
       menu: [flow],
       featureRootOf: {
@@ -135,10 +148,16 @@ async function mount(client: OpeClient, capabilities: readonly string[]) {
         merchant: 'merchants',
         'new-merchant': 'merchants',
         rotate: 'merchants',
+        'edit-identity': 'merchants',
       },
       outcomesOf: {
         merchants: [merchants.outcomes.merchantChosen.id, merchants.outcomes.merchantRequested.id],
-        merchant: [merchants.outcomes.merchantClosed.id, merchants.outcomes.rotationRequested.id],
+        merchant: [
+          merchants.outcomes.merchantClosed.id,
+          merchants.outcomes.rotationRequested.id,
+          merchants.outcomes.identityEditRequested.id,
+        ],
+        'edit-identity': [merchants.outcomes.identityClosed.id],
         'new-merchant': [
           merchants.outcomes.merchantCreated.id,
           merchants.outcomes.newMerchantCancelled.id,
@@ -197,6 +216,16 @@ describe('la ficha de un merchant con identidad', () => {
     await screen.findByText('Pilot since October.')
     expect(screen.queryByText(merchantsStrings.contactName)).toBeNull()
     expect(screen.queryByText(merchantsStrings.contactEmail)).toBeNull()
+  })
+
+  it('ofrece «editar identidad» con merchants:write, también sobre un desactivado, y no sin ella', async () => {
+    await mount(ope({ ...full, status: 'deactivated' }), ALL)
+    await screen.findByText('Ana Smith')
+    expect(screen.getByRole('button', { name: merchantsStrings.editIdentity })).toBeDefined()
+    cleanup()
+    await mount(ope(full), ['merchants:read'])
+    await screen.findByText('Ana Smith')
+    expect(screen.queryByRole('button', { name: merchantsStrings.editIdentity })).toBeNull()
   })
 
   it('sin identidad lo dice, encabeza por identificador y no inventa un nombre', async () => {

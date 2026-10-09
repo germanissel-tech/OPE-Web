@@ -121,6 +121,17 @@ function MerchantCard({
           >
             {merchantsStrings.backToMerchants}
           </Button>
+          {/* Editar la identidad es un desenlace (feature 007): exige llegar a la
+              pantalla de edición (`merchants:write`), también sobre un desactivado. */}
+          <ActionButton
+            type="button"
+            {...flow.toReach(merchants.outcomes.identityEditRequested)}
+            onClick={() =>
+              emit(merchants.outcomes.identityEditRequested({ merchantId: merchant.merchantId }))
+            }
+          >
+            {merchantsStrings.editIdentity}
+          </ActionButton>
           <KillSwitchButton merchant={merchant} onRejected={refresh} />
           <DeactivateButton merchant={merchant} onRejected={refresh} />
         </>

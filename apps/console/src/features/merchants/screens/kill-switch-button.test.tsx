@@ -33,7 +33,8 @@ import { merchantsStrings } from '../strings'
 
 afterEach(cleanup)
 
-const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen] = merchants.screens
+const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen, editIdentityScreen] =
+  merchants.screens
 
 const base: Merchant = {
   merchantId: 'mrc_uno',
@@ -110,12 +111,25 @@ async function mount(client: OpeClient) {
       finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
         merchantId,
       })),
+      /* La edición de la identidad (feature 007): la ficha la ofrece, así que el flujo la cablea. */
+      opens(merchants.outcomes.identityEditRequested, editIdentityScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
+      finishes(merchants.outcomes.identityClosed, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen],
+      screens: [
+        merchantsScreen,
+        merchantScreen,
+        newMerchantScreen,
+        rotateScreen,
+        editIdentityScreen,
+      ],
       flows: [flow],
       menu: [flow],
       featureRootOf: {
@@ -123,10 +137,16 @@ async function mount(client: OpeClient) {
         merchant: 'merchants',
         'new-merchant': 'merchants',
         rotate: 'merchants',
+        'edit-identity': 'merchants',
       },
       outcomesOf: {
         merchants: [merchants.outcomes.merchantChosen.id, merchants.outcomes.merchantRequested.id],
-        merchant: [merchants.outcomes.merchantClosed.id, merchants.outcomes.rotationRequested.id],
+        merchant: [
+          merchants.outcomes.merchantClosed.id,
+          merchants.outcomes.rotationRequested.id,
+          merchants.outcomes.identityEditRequested.id,
+        ],
+        'edit-identity': [merchants.outcomes.identityClosed.id],
         'new-merchant': [
           merchants.outcomes.merchantCreated.id,
           merchants.outcomes.newMerchantCancelled.id,
