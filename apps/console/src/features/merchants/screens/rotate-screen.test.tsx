@@ -81,6 +81,9 @@ function ope(options: { readonly rotateFails?: RequestFailed } = {}) {
     async setKillSwitch() {
       throw new Error('no se prueba acá')
     },
+    async updateMerchantProfile() {
+      throw new Error('no se prueba acá')
+    },
   }
   return { client, rotated }
 }

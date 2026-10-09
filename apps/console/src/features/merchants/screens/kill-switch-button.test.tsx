@@ -71,6 +71,9 @@ function ope(initial: Merchant['status'], options: { readonly switchFails?: Requ
     async rotatePlatformSecret() {
       throw new Error('no se prueba acá')
     },
+    async updateMerchantProfile() {
+      throw new Error('no se prueba acá')
+    },
     async setKillSwitch(_id, body) {
       state.switched.push(body.enabled)
       if (options.switchFails) {

@@ -1,28 +1,29 @@
 import { unwrap } from '@ope/core'
 import createClient from 'openapi-fetch'
-import type { paths } from '../../../../../contracts/ope/api'
+import type { components, paths } from '../../../../../contracts/ope/api'
 import { CAPABILITIES } from '../../../../../contracts/ope/capabilities'
 
+type Operator = components['schemas']['Operator']
+
 /**
- * **Quién es el operador, preguntado al backend.**
+ * **Quién es el operador, preguntado al backend** (`OW-7`, `ADR-044`).
  *
  * Es lo que el adaptador bearer recibe como `identify`: la única pieza de la
  * sesión que sabe qué operación de OPE contesta «de quién es esta credencial».
  * Vive en `api/` y no en `app/` porque toca el contrato (`contracts/ope/`), y
  * sólo `api/` lo lee (`boundaries`).
  *
- * **Hoy es una sonda** (`listMerchants` con `limit=1`): un `200` dice que la
- * credencial sirve y **no dice quién es**. Los claims quedan `operator`, y la
- * barra dice eso. Se reemplaza por `getOperator` cuando OPE-Backend 040 lo
- * publique: ahí llegan `operatorId`, `displayName` y `scope`, y esto pasa a
- * ser una llamada en vez de una deducción.
+ * `getOperator` no exige capacidad: identificarse no es un botón. Devuelve
+ * `operatorId`, `displayName` si el operador lo tiene configurado, y `scope`.
+ * Los claims conservan la clave `name` que `UserBar` ya lee: el nombre para
+ * mostrar, o el identificador cuando no hay nombre — **nunca inventado**.
  *
  * Arma su propio conector mínimo con `authorize` y **sin `observe`**: un `401`
  * acá es «la credencial no sirve para entrar», que `signIn` ya trata como
  * rechazo — no es un `401` en vuelo que termine una sesión que todavía no
  * empezó.
  */
-export async function probeOperator(
+export async function fetchOperator(
   baseUrl: string,
   authorize: (request: Request) => Promise<Request>,
 ): Promise<Readonly<Record<string, unknown>>> {
@@ -31,9 +32,19 @@ export async function probeOperator(
 
   /* Tira `RequestFailed` con `status: 401` si no la reconoce; cualquier otra
      cosa —red, 5xx— también tira, y el adaptador lo lee como «inalcanzable». */
-  unwrap(await client.GET('/v1/admin/merchants', { params: { query: { limit: 1 } } }))
+  const operator = unwrap<Operator>(await client.GET('/v1/admin/operator'))
 
-  return { sub: 'operator', operatorId: 'operator', name: 'operator', scope: '*' }
+  return claimsOf(operator)
+}
+
+/** Los claims de `OW-7`, de lo que el contrato devuelve. */
+export function claimsOf(operator: Operator): Readonly<Record<string, unknown>> {
+  return {
+    sub: operator.operatorId,
+    operatorId: operator.operatorId,
+    name: operator.displayName ?? operator.operatorId,
+    scope: operator.scope,
+  }
 }
 
 /**

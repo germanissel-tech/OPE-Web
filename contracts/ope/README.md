@@ -5,9 +5,9 @@
 
 | | |
 |---|---|
-| Versión del contrato | `1.12.0` |
-| `sha256` del bundle | `08b9a75e6121f2a70331d8c4955924950bdc195dc8f6df61273aa694f6250017` |
-| Commit de OPE-Backend | `3c49649428f16328ef8adcd6f04943ced44decee` |
+| Versión del contrato | `1.13.0` |
+| `sha256` del bundle | `06ea91708eac4c2b4f3e2447c8026b030a49e2963ae0d43c7ac4cba13eb06289` |
+| Commit de OPE-Backend | `ec881d9aaec46282877b9fc2c9745304a340d242` |
 | Sincronizado | 2026-10-09 |
 | Módulo de capacidades | copiado de `generated/contract/` del backend (feature 040) |
 | Restricciones | copiado de `generated/contract/` del backend (feature 040) |

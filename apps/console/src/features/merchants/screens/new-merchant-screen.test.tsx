@@ -94,6 +94,9 @@ function ope(options: { readonly createFails?: RequestFailed } = {}): OpeClient 
     async setKillSwitch() {
       throw new Error('no se prueba acá')
     },
+    async updateMerchantProfile() {
+      throw new Error('no se prueba acá')
+    },
   }
 }
 
@@ -216,7 +219,14 @@ function type(position: number, value: string) {
   fireEvent.blur(row(position))
 }
 
-const create = () => fireEvent.click(screen.getByRole('button', { name: merchantsStrings.save }))
+/* El nombre es obligatorio (feature 007): se completa antes de crear, salvo que la prueba diga otra cosa. */
+const name = () => screen.getByLabelText(new RegExp(`^${merchantsStrings.name}`))
+const create = () => {
+  if ((name() as HTMLInputElement).value === '') {
+    fireEvent.change(name(), { target: { value: 'Tienda Nueva' } })
+  }
+  fireEvent.click(screen.getByRole('button', { name: merchantsStrings.save }))
+}
 
 describe('el alta de un merchant', () => {
   afterEach(() => {
@@ -259,7 +269,11 @@ describe('el alta de un merchant', () => {
     expect(row(2).getAttribute('aria-invalid')).toBe('true')
     expect(row(1).getAttribute('aria-invalid')).not.toBe('true')
     expect(client.created).toEqual([
-      { origins: ['https://uno.example', 'https://dos.example'], signature: false },
+      {
+        displayName: 'Tienda Nueva',
+        origins: ['https://uno.example', 'https://dos.example'],
+        signature: false,
+      },
     ])
   })
 

@@ -78,7 +78,7 @@ function NewMerchantForm({
     onRejected: (failed) => setRejected(failed.errors.length === 0 ? failed.message : undefined),
   })
   const form = useForm<Record<string, string>>(
-    { [`${ROW}0`]: '' },
+    { displayName: '', [`${ROW}0`]: '' },
     merchantConstraints,
     merchantsStrings.shape,
     action.fields,
@@ -97,7 +97,10 @@ function NewMerchantForm({
     event.preventDefault()
     setRejected(undefined)
     if (!form.attempt()) return
+    /* El nombre viaja como se escribió: lo que el esquema no dice —espacios
+       en los bordes— lo dice el backend en el campo (`ADR-045`). */
     void action.run({
+      displayName: form.values.displayName ?? '',
       origins: rows.map((key) => (form.values[key] ?? '').trim()),
       signature,
     })
@@ -128,6 +131,24 @@ function NewMerchantForm({
         </>
       }
     >
+      <Section title={merchantsStrings.identitySection} why={merchantsStrings.identityWhy}>
+        <Field
+          label={merchantsStrings.name}
+          size="fill"
+          required
+          error={form.errorOf('displayName')}
+        >
+          {(props) => (
+            <TextInput
+              {...props}
+              value={form.values.displayName ?? ''}
+              onChange={(event) => form.set('displayName', event.target.value)}
+              onBlur={() => form.blur('displayName')}
+            />
+          )}
+        </Field>
+      </Section>
+
       <Section title={merchantsStrings.originsSection} why={merchantsStrings.originsWhy}>
         {rows.map((key, at) => (
           <Field

@@ -35,6 +35,12 @@ export const merchantsStrings = {
   /* El alta: el botón que la abre, la pantalla con sus dos secciones, y lo que
      anuncia. Es una pantalla y no un diálogo (`GR-70`). */
   newMerchant: 'Nuevo merchant',
+  /* La identidad (feature 007, `ADR-045`): el nombre va primero, es lo que la
+     grilla lista y la ficha encabeza. */
+  identitySection: 'Identidad',
+  identityWhy:
+    'El nombre de la tienda o su razón social. Es lo que la grilla lista y la ficha encabeza.',
+  name: 'Nombre',
   originsSection: 'Orígenes de la tienda',
   originsWhy:
     'Con esquema y host, sin ruta: https://tienda.example. Un origen pertenece a un solo merchant.',

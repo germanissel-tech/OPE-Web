@@ -89,6 +89,9 @@ function ope(options: {
     async setKillSwitch() {
       throw new Error('no se prueba acá')
     },
+    async updateMerchantProfile() {
+      throw new Error('no se prueba acá')
+    },
   }
   return client
 }

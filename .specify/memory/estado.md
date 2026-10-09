@@ -30,6 +30,10 @@ ficha. Trajo al núcleo `ConfirmDialog`, `SecretOnce`, `onRejected` en `useActio
 `useForm` y `screenAt`; y pagó la deuda de `CU-38`: las restricciones se emiten del bundle. Los
 cuatro tramos están en `specs/006-el-merchant-completo/tasks.md`, con sus notas fechadas.
 
+**La feature 007 —la identidad en el panel— está en curso**: saca las muletas de la 040, lista y
+encabeza al merchant por su nombre, y edita su identidad entera. Sus tramos están en
+`specs/007-la-identidad-en-el-panel/tasks.md`.
+
 **Los números no se escriben acá.** `npm test` informa cuántas decisiones hay, cuántas abiertas,
 cuántas citas resuelven, y cuántas operaciones, capacidades y esquemas tiene el módulo del contrato.
 
@@ -43,25 +47,15 @@ cuántas citas resuelven, y cuántas operaciones, capacidades y esquemas tiene e
 2. **El portal** (`apps/portal`), copiando `apps/console` según `docs/segunda-aplicacion.md`.
 3. **Granito en npm**, que se prepara aparte y reemplaza el `file:`.
 
-## Las muletas de la 040
+## Lo que la 040 y la 041 trajeron
 
-Tres cosas viven acá con nombre y comentario **hasta que OPE-Backend publique su feature 040**, y se
-sacan cuando llegue:
-
-| muleta | dónde | se reemplaza por |
-|---|---|---|
-| `identify` sondea `listMerchants?limit=1` y la barra dice `operator` | `apps/console/src/api/ope/identity.ts` | `getOperator` → `{ operatorId, displayName?, scope }` |
-| `contract-sync` emite `capabilities.*` e `identity.json` desde el bundle | `scripts/contract-sync.mjs` | copiar `generated/contract/` del backend |
-| `contract-sync` emite `constraints.{js,d.ts}` desde `components.schemas` (`CU-38`, capa 1) | `scripts/contract-sync.mjs`, `emitConstraints` | copiar `constraints.*` de `generated/contract/` |
-
-Lo que la 040 tiene que traer además, pedido en `specs/005-la-base-de-ope/plan.md` y
-`specs/006-el-merchant-completo/plan.md`: `X-Request-Id` en toda respuesta y `requestId` en el
-problema; `errors[]` con `pointer` bajo `/body` en los `422` de invariante
-(`origin-already-registered`, `rotation-grace-too-long`: hoy llegan sin ellos y caen al pie del
-formulario o al aviso); `displayName` opcional en los operadores con la constitución VII del backend
-acotada; y el emisor de `generated/contract/` con la forma de
-`specs/005-la-base-de-ope/contracts/contract-artifact.md` más
-`specs/006-el-merchant-completo/contracts/constraints-artifact.md`.
+OPE-Backend publicó la 040 (`ADR-044`) y la 041 (`ADR-045`), y **las tres muletas se sacaron en la
+007**: `identify` es `getOperator` y la barra dice el nombre del operador (`OW-7`, enmendada);
+`contract-sync` copia `generated/contract/` entera y falla si no está (`OW-5`, enmendada). Lo que la
+040 trajo además ya se ve solo: `requestId` en todo aviso de error, y `errors[]` con `pointer` bajo
+`/body` en los `422` de invariante, que caen en su campo. La 041 trae la identidad del merchant
+—`displayName`, `storeUrl`, `contact`, `notes`— y `updateMerchantProfile`, que es lo que la 007
+muestra y edita.
 
 ## Lo que está roto o incómodo en el entorno
 
@@ -75,8 +69,6 @@ acotada; y el emisor de `generated/contract/` con la forma de
   aparecer**: `SecretOnce` compone `Value` y `Button` dentro de un `Field`, y granito no tiene una
   pieza para «un valor que se copia y se va» (`OW-8`, propuesta). Se ve correcto; no se parece a un
   control.
-- **El `422` de la gracia de rotación va al aviso y no al campo**: el backend no manda `errors[]`
-  (040). La prueba con `pointer /body/graceSeconds` ya está y pasa con el servicio de mentira.
 - **Un almacén de desarrollo puede traer una versión de plataforma de pruebas** (pasó el
   2026-10-09: `platform-85` con `rotationGraceMaxMs: 1`, y toda gracia mayor que cero daba `422`).
   Se limpió borrando `data/ope.db*` con el backend parado; con `config/platform.json` el máximo
