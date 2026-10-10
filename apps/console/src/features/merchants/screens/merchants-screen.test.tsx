@@ -49,7 +49,8 @@ import { merchantsStrings } from '../strings'
 
 afterEach(cleanup)
 
-const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen] = merchants.screens
+const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen, editIdentityScreen] =
+  merchants.screens
 
 const merchant = (merchantId: string): Merchant => ({
   merchantId,
@@ -99,6 +100,9 @@ function ope(options: {
     async setKillSwitch() {
       throw new Error('no se prueba acá')
     },
+    async updateMerchantProfile() {
+      throw new Error('no se prueba acá')
+    },
   }
 }
 
@@ -146,12 +150,25 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
       finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
         merchantId,
       })),
+      /* La edición de la identidad (feature 007): la ficha la ofrece, así que el flujo la cablea. */
+      opens(merchants.outcomes.identityEditRequested, editIdentityScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
+      finishes(merchants.outcomes.identityClosed, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen],
+      screens: [
+        merchantsScreen,
+        merchantScreen,
+        newMerchantScreen,
+        rotateScreen,
+        editIdentityScreen,
+      ],
       flows: [flow],
       menu: [flow],
       featureRootOf: {
@@ -159,10 +176,16 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
         merchant: 'merchants',
         'new-merchant': 'merchants',
         rotate: 'merchants',
+        'edit-identity': 'merchants',
       },
       outcomesOf: {
         merchants: [merchants.outcomes.merchantChosen.id, merchants.outcomes.merchantRequested.id],
-        merchant: [merchants.outcomes.merchantClosed.id, merchants.outcomes.rotationRequested.id],
+        merchant: [
+          merchants.outcomes.merchantClosed.id,
+          merchants.outcomes.rotationRequested.id,
+          merchants.outcomes.identityEditRequested.id,
+        ],
+        'edit-identity': [merchants.outcomes.identityClosed.id],
         'new-merchant': [
           merchants.outcomes.merchantCreated.id,
           merchants.outcomes.newMerchantCancelled.id,
@@ -224,10 +247,38 @@ describe('la grilla de merchants', () => {
       ALL,
     )
 
-    await screen.findByText('mrc_uno')
-    expect(screen.getByText('https://mrc_uno.example')).toBeDefined()
+    /* Sin nombre, el identificador ocupa la columna del nombre **y** la suya. */
+    await screen.findAllByText('mrc_uno')
+    expect(screen.getAllByText('mrc_uno')).toHaveLength(2)
+    expect(screen.queryByText('https://mrc_uno.example')).toBeNull()
     expect(screen.getByText('1 cargado')).toBeDefined()
     expect(screen.getByRole('button', { name: 'Cargar más' })).toBeDefined()
+  })
+
+  it('lista por nombre cuando lo hay, y por identificador en código cuando no (feature 007)', async () => {
+    await mount(
+      ope({
+        pages: [
+          {
+            items: [
+              {
+                ...merchant('mrc_con'),
+                displayName: 'Tienda Norte',
+                storeUrl: 'https://norte.example',
+              },
+              merchant('mrc_sin'),
+            ],
+          },
+        ],
+      }),
+      ALL,
+    )
+
+    await screen.findByText('Tienda Norte')
+    expect(screen.getAllByText('mrc_con')).toHaveLength(1)
+    const inCode = screen.getAllByText('mrc_sin').filter((each) => each.tagName === 'CODE')
+    expect(inCode).toHaveLength(1)
+    expect(screen.queryByText('https://norte.example')).toBeNull()
   })
 
   it('cargar más acumula y anota el cursor del tramo que llegó en la dirección', async () => {
@@ -240,14 +291,14 @@ describe('la grilla de merchants', () => {
       }),
       ALL,
     )
-    await screen.findByText('mrc_uno')
+    await screen.findAllByText('mrc_uno')
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Cargar más' }))
     })
 
-    await screen.findByText('mrc_dos')
-    expect(screen.getByText('mrc_uno')).toBeDefined()
+    await screen.findAllByText('mrc_dos')
+    expect(screen.getAllByText('mrc_uno').length).toBeGreaterThan(0)
     expect(application.router.state.location.search).toContain(`merchants.c=${CURSOR}`)
     /* El último tramo no trajo cursor: se dice, en vez de dejar un botón muerto. */
     expect(screen.getByText('No hay más')).toBeDefined()
@@ -265,7 +316,7 @@ describe('la grilla de merchants', () => {
       `/merchants?merchants.c=${CURSOR}`,
     )
 
-    await screen.findByText('mrc_dos')
+    await screen.findAllByText('mrc_dos')
     expect(screen.queryByText('mrc_uno')).toBeNull()
   })
 

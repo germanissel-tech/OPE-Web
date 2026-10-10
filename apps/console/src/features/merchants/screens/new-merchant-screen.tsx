@@ -13,9 +13,11 @@ import {
 import { defineScreen, SecretOnce, useAction, useForm, useOutcome } from '@ope/core'
 import { type FormEvent, useState } from 'react'
 import { createMerchant, merchantConstraints } from '../data/create-merchant'
+import { identityValuesOf, profileBodyOf, withIdentity } from '../data/identity'
 import type { MerchantCredentials } from '../data/merchants'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
+import { IdentityFields } from './identity-fields'
 
 /**
  * **El alta de un merchant, en dos pasos y en una pantalla** (`GR-70`, `OW-8`).
@@ -78,8 +80,9 @@ function NewMerchantForm({
     onRejected: (failed) => setRejected(failed.errors.length === 0 ? failed.message : undefined),
   })
   const form = useForm<Record<string, string>>(
-    { [`${ROW}0`]: '' },
-    merchantConstraints,
+    { ...identityValuesOf(), [`${ROW}0`]: '' },
+    /* Las del alta más las de la identidad, que dependen de lo escrito (feature 007). */
+    (values) => withIdentity(merchantConstraints, values),
     merchantsStrings.shape,
     action.fields,
   )
@@ -97,7 +100,10 @@ function NewMerchantForm({
     event.preventDefault()
     setRejected(undefined)
     if (!form.attempt()) return
+    /* La identidad viaja como se escribió: lo que el esquema no dice —espacios
+       en los bordes— lo dice el backend en el campo (`ADR-045`). */
     void action.run({
+      ...profileBodyOf(form.values),
       origins: rows.map((key) => (form.values[key] ?? '').trim()),
       signature,
     })
@@ -128,6 +134,8 @@ function NewMerchantForm({
         </>
       }
     >
+      <IdentityFields form={form} constraints={withIdentity(merchantConstraints, form.values)} />
+
       <Section title={merchantsStrings.originsSection} why={merchantsStrings.originsWhy}>
         {rows.map((key, at) => (
           <Field

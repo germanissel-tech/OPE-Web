@@ -12,7 +12,7 @@ import {
   useTableQuery,
 } from '@ope/core'
 import { deactivateMerchant } from '../data/deactivate-merchant'
-import { dayOf, type Merchant, STATUS_TONE, useMerchants } from '../data/merchants'
+import { dayOf, displayNameOf, type Merchant, STATUS_TONE, useMerchants } from '../data/merchants'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
 import { RowActions } from './row-actions'
@@ -112,10 +112,20 @@ function MerchantsScreen() {
             }}
             rowId={(merchant) => merchant.merchantId}
             columns={[
+              /* **El nombre reconoce al merchant** (feature 007, `ADR-045`); sin
+                 nombre, el identificador en tipografía de código y nada
+                 inventado. El identificador sigue en su columna: es lo que las
+                 rutas, el registro y `curl` nombran. */
+              {
+                id: 'displayName',
+                header: merchantsStrings.name,
+                width: '260px',
+                cell: (merchant) => displayNameOf(merchant) ?? <code>{merchant.merchantId}</code>,
+              },
               {
                 id: 'merchantId',
                 header: merchantsStrings.merchantId,
-                width: '260px',
+                width: '220px',
                 cell: (merchant) => merchant.merchantId,
               },
               /* Un estado **cerrado** —tres valores— va como pastilla (`GR-67`).
@@ -129,12 +139,6 @@ function MerchantsScreen() {
                     {merchantsStrings[merchant.status]}
                   </Badge>
                 ),
-              },
-              {
-                id: 'origins',
-                header: merchantsStrings.origins,
-                width: '320px',
-                cell: (merchant) => merchant.origins.join(', '),
               },
               /* La celda devuelve el valor **crudo** y granito pone el formato
                  de fecha: definido una sola vez (`GR-32`). */

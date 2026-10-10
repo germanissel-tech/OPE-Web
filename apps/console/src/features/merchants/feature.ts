@@ -1,4 +1,5 @@
 import { defineFeature, outcome } from '@ope/core'
+import { editIdentityScreen } from './screens/edit-identity-screen'
 import { merchantScreen } from './screens/merchant-screen'
 import { merchantsScreen } from './screens/merchants-screen'
 import { newMerchantScreen } from './screens/new-merchant-screen'
@@ -17,7 +18,7 @@ import { rotateScreen } from './screens/rotate-screen'
  * suyo, y la raíz junta las funcionalidades.
  */
 export const merchants = defineFeature({
-  screens: [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen],
+  screens: [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen, editIdentityScreen],
 
   /* A dónde cae un cerrar sin pila (`CU-47`): una ficha abierta por un enlace
      pegado no tiene escalón abajo, y cerrarla tiene que hacer algo. */
@@ -43,5 +44,10 @@ export const merchants = defineFeature({
        vuelve. Es pantalla y no diálogo (`GR-37`), así que es un desenlace. */
     rotationRequested: outcome<{ merchantId: string; kind: string }>('merchants.rotationRequested'),
     rotationClosed: outcome<{ merchantId: string }>('merchants.rotationClosed'),
+
+    /* Editar la identidad (feature 007): la ficha la pide, y la pantalla de
+       edición vuelve, haya guardado o cancelado. */
+    identityEditRequested: outcome<{ merchantId: string }>('merchants.identityEditRequested'),
+    identityClosed: outcome<{ merchantId: string }>('merchants.identityClosed'),
   },
 })

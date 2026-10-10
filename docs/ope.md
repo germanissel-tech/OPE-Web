@@ -148,6 +148,15 @@ bundle esté en el módulo, y que `CAPABILITIES` sea la unión ordenada. Falla d
 dependencia git al backend (instala el repositorio entero por cinco archivos), y generar `api.d.ts`
 acá con `openapi-typescript` (un segundo generador para lo mismo).
 
+> **Enmienda OPE (2026-10-09).** OPE-Backend emite `generated/contract/` con su feature 040
+> (`ADR-044`): el bundle con cabecera, `api.d.ts`, `problem-types.d.ts`, `capabilities.{js,d.ts}`,
+> `constraints.{js,d.ts}` e `identity.json`, con la forma que este repositorio publicó. El
+> sincronizador **sólo copia** los ocho archivos y **falla** si el backend no tiene la carpeta,
+> diciendo que hay que correr `npm run contract:types` allá; el emisor interino se retiró en la 007.
+> El `sha256` de `identity.json` es el de la copia del bundle, que lleva cabecera. Lo demás de esta
+> decisión no cambia: `contracts/ope/` se versiona, `conformity` vigila, y la forma la publica el
+> frontend.
+
 ### OW-6 · La consola habla con su propio origen, y un reenvío la lleva al backend
 
 **Estado**: decidida · **Depende de**: CU-17, CU-22
@@ -182,6 +191,12 @@ y no dice quién es, así que la barra dice `operator`. La 040 publica `getOpera
 `displayName` opcional y `scope`, y la sonda se reemplaza por esa llamada. `displayName` es un dato
 de una persona: la constitución VII del backend se acota a las personas observadas y los operadores
 quedan como excepción declarada (`ope-no-pii`), pedido en el plan de la 005.
+
+> **Enmienda OPE (2026-10-09).** `identify` es `getOperator` (`ADR-044`): `fetchOperator` en
+> `api/ope/identity.ts` pide `GET /v1/admin/operator` con el conector mínimo de siempre y devuelve
+> los claims de arriba tal cual —`name` es `displayName` cuando el backend lo manda y `operatorId`
+> cuando no, nunca inventado—. La barra dice el nombre del operador; la sonda se retiró en la 007. El
+> backend acotó su constitución VII a las personas observadas (1.5.0) y lo documentó en `ADR-044`.
 
 ### OW-8 · Un secreto se muestra una sola vez, y en ningún otro lado
 

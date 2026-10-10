@@ -4,6 +4,7 @@ import { home } from '../features/home/feature'
 import { aboutScreen } from '../features/home/screens/about-screen'
 import { welcomeScreen } from '../features/home/screens/welcome-screen'
 import { merchants } from '../features/merchants/feature'
+import { editIdentityScreen } from '../features/merchants/screens/edit-identity-screen'
 import { merchantScreen } from '../features/merchants/screens/merchant-screen'
 import { merchantsScreen } from '../features/merchants/screens/merchants-screen'
 import { newMerchantScreen } from '../features/merchants/screens/new-merchant-screen'
@@ -51,6 +52,14 @@ export const merchantsFlow = defineFlow({
       kind,
     })),
     finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
+      merchantId,
+    })),
+
+    /* Editar la identidad se apila sobre la ficha y termina en ella (feature 007). */
+    opens(merchants.outcomes.identityEditRequested, editIdentityScreen, ({ merchantId }) => ({
+      merchantId,
+    })),
+    finishes(merchants.outcomes.identityClosed, merchantScreen, ({ merchantId }) => ({
       merchantId,
     })),
   ],

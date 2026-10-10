@@ -25,6 +25,7 @@ import type { ReactNode } from 'react'
 import {
   type CredentialKind,
   dayOf,
+  displayNameOf,
   type Merchant,
   STATUS_TONE,
   useMerchant,
@@ -32,6 +33,7 @@ import {
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
 import { DeactivateButton } from './deactivate-button'
+import { IdentitySection } from './identity-section'
 import { KillSwitchButton } from './kill-switch-button'
 import { MerchantLog } from './merchant-log'
 
@@ -53,9 +55,13 @@ import { MerchantLog } from './merchant-log'
 function MerchantScreen() {
   const { merchantId } = useScreenParams(merchantScreen)
   const merchant = useMerchant(merchantId)
+  /* El encabezado es el nombre (feature 007); mientras carga, o sin nombre, el
+     identificador: nunca uno inventado. El contexto es el identificador siempre. */
+  const title =
+    (merchant.data === undefined ? undefined : displayNameOf(merchant.data)) ?? merchantId
 
   return (
-    <Page title={merchantsStrings.merchant} context={merchantId}>
+    <Page title={title} context={merchantId}>
       <Region>
         <Block>
           {/* Los cuatro estados. El vacío **no se parte en dos** acá y está bien:
@@ -115,11 +121,25 @@ function MerchantCard({
           >
             {merchantsStrings.backToMerchants}
           </Button>
+          {/* Editar la identidad es un desenlace (feature 007): exige llegar a la
+              pantalla de edición (`merchants:write`), también sobre un desactivado. */}
+          <ActionButton
+            type="button"
+            {...flow.toReach(merchants.outcomes.identityEditRequested)}
+            onClick={() =>
+              emit(merchants.outcomes.identityEditRequested({ merchantId: merchant.merchantId }))
+            }
+          >
+            {merchantsStrings.editIdentity}
+          </ActionButton>
           <KillSwitchButton merchant={merchant} onRejected={refresh} />
           <DeactivateButton merchant={merchant} onRejected={refresh} />
         </>
       }
     >
+      {/* La identidad va primero: es lo que reconoce al merchant (`ADR-045`). */}
+      <IdentitySection merchant={merchant} />
+
       <Section title={merchantsStrings.merchant} columns={2}>
         <Field label={merchantsStrings.merchantId} size="code">
           {() => <Value>{merchant.merchantId}</Value>}

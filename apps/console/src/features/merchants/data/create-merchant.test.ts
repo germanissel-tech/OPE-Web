@@ -32,6 +32,7 @@ describe('crear un merchant', () => {
     const announced = createMerchant.announces?.(created as never, {
       origins: ['https://tienda.example'],
       signature: true,
+      displayName: 'Tienda',
     })
     if (typeof announced !== 'object') throw new Error('el aviso tiene que llevar descripción')
 
@@ -40,9 +41,12 @@ describe('crear un merchant', () => {
   })
 
   it('invalida todas las listas', () => {
-    expect(createMerchant.invalidates?.({ origins: [], signature: true }, {} as never)).toEqual([
-      allMerchants,
-    ])
+    expect(
+      createMerchant.invalidates?.(
+        { origins: [], signature: true, displayName: 'Tienda' },
+        {} as never,
+      ),
+    ).toEqual([allMerchants])
   })
 })
 
@@ -50,7 +54,7 @@ describe('las restricciones del alta', () => {
   it('vienen del contrato: obligatorios y largos, no escritos acá', () => {
     /* `CU-38`, capa 1 emitida: si el backend cambia el largo, esto lo sigue en
        el próximo `contract:sync` sin tocar una línea. */
-    expect(merchantConstraints.required).toEqual(['origins', 'signature'])
+    expect(merchantConstraints.required).toEqual(['origins', 'signature', 'displayName'])
     expect(merchantConstraints.fields.origins?.minItems).toBe(1)
     expect(merchantConstraints.fields.origins?.maxItems).toBe(20)
     expect(merchantConstraints.fields.origins?.items?.maxLength).toBe(255)

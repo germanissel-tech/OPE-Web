@@ -43,7 +43,8 @@ import { merchantsStrings } from '../strings'
 
 afterEach(cleanup)
 
-const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen] = merchants.screens
+const [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen, editIdentityScreen] =
+  merchants.screens
 
 const ISSUED: MerchantCredentials = {
   merchant: {
@@ -92,6 +93,9 @@ function ope(options: { readonly createFails?: RequestFailed } = {}): OpeClient 
       throw new Error('no se prueba acá')
     },
     async setKillSwitch() {
+      throw new Error('no se prueba acá')
+    },
+    async updateMerchantProfile() {
       throw new Error('no se prueba acá')
     },
   }
@@ -151,12 +155,25 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
       finishes(merchants.outcomes.rotationClosed, merchantScreen, ({ merchantId }) => ({
         merchantId,
       })),
+      /* La edición de la identidad (feature 007): la ficha la ofrece, así que el flujo la cablea. */
+      opens(merchants.outcomes.identityEditRequested, editIdentityScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
+      finishes(merchants.outcomes.identityClosed, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [merchantsScreen, merchantScreen, newMerchantScreen, rotateScreen],
+      screens: [
+        merchantsScreen,
+        merchantScreen,
+        newMerchantScreen,
+        rotateScreen,
+        editIdentityScreen,
+      ],
       flows: [flow],
       menu: [flow],
       featureRootOf: {
@@ -164,10 +181,16 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
         merchant: 'merchants',
         'new-merchant': 'merchants',
         rotate: 'merchants',
+        'edit-identity': 'merchants',
       },
       outcomesOf: {
         merchants: [merchants.outcomes.merchantChosen.id, merchants.outcomes.merchantRequested.id],
-        merchant: [merchants.outcomes.merchantClosed.id, merchants.outcomes.rotationRequested.id],
+        merchant: [
+          merchants.outcomes.merchantClosed.id,
+          merchants.outcomes.rotationRequested.id,
+          merchants.outcomes.identityEditRequested.id,
+        ],
+        'edit-identity': [merchants.outcomes.identityClosed.id],
         'new-merchant': [
           merchants.outcomes.merchantCreated.id,
           merchants.outcomes.newMerchantCancelled.id,
@@ -216,7 +239,14 @@ function type(position: number, value: string) {
   fireEvent.blur(row(position))
 }
 
-const create = () => fireEvent.click(screen.getByRole('button', { name: merchantsStrings.save }))
+/* El nombre es obligatorio (feature 007): se completa antes de crear, salvo que la prueba diga otra cosa. */
+const name = () => screen.getByLabelText(new RegExp(`^${merchantsStrings.name}`))
+const create = () => {
+  if ((name() as HTMLInputElement).value === '') {
+    fireEvent.change(name(), { target: { value: 'Tienda Nueva' } })
+  }
+  fireEvent.click(screen.getByRole('button', { name: merchantsStrings.save }))
+}
 
 describe('el alta de un merchant', () => {
   afterEach(() => {
@@ -259,7 +289,11 @@ describe('el alta de un merchant', () => {
     expect(row(2).getAttribute('aria-invalid')).toBe('true')
     expect(row(1).getAttribute('aria-invalid')).not.toBe('true')
     expect(client.created).toEqual([
-      { origins: ['https://uno.example', 'https://dos.example'], signature: false },
+      {
+        displayName: 'Tienda Nueva',
+        origins: ['https://uno.example', 'https://dos.example'],
+        signature: false,
+      },
     ])
   })
 
@@ -307,6 +341,65 @@ describe('el alta de un merchant', () => {
 
     expect(application.router.state.location.pathname).toBe('/merchants/mrc_nuevo')
     expect(document.body.innerHTML).not.toContain('SECRETA')
+  })
+
+  it('manda la identidad entera y sin vacíos, y un 422 sobre el nombre cae en su campo (feature 007)', async () => {
+    const client = ope()
+    await mount(client, ALL)
+    await screen.findByText(merchantsStrings.originsSection)
+    const field = (label: string) => screen.getByLabelText(new RegExp(`^${label}`))
+    await act(async () => {
+      type(1, 'https://uno.example')
+      fireEvent.change(field(merchantsStrings.name), { target: { value: 'Tienda Uno' } })
+      fireEvent.change(field(merchantsStrings.storeUrl), {
+        target: { value: 'https://uno.example/es' },
+      })
+      fireEvent.change(field(merchantsStrings.contactName), { target: { value: 'Ana' } })
+      fireEvent.change(field(merchantsStrings.contactEmail), {
+        target: { value: 'ana@uno.example' },
+      })
+    })
+    await act(async () => create())
+    await waitFor(() => expect(client.created).toHaveLength(1))
+    expect(client.created[0]).toEqual({
+      displayName: 'Tienda Uno',
+      storeUrl: 'https://uno.example/es',
+      contact: { name: 'Ana', email: 'ana@uno.example' },
+      origins: ['https://uno.example'],
+      signature: false,
+    })
+  })
+
+  it('un contacto a medias no se manda: el email lo dice (capa 1)', async () => {
+    const client = ope()
+    await mount(client, ALL)
+    await screen.findByText(merchantsStrings.originsSection)
+    const field = (label: string) => screen.getByLabelText(new RegExp(`^${label}`))
+    await act(async () => {
+      type(1, 'https://uno.example')
+      fireEvent.change(field(merchantsStrings.contactName), { target: { value: 'Ana' } })
+    })
+    await act(async () => create())
+    expect(client.created).toHaveLength(0)
+    expect(field(merchantsStrings.contactEmail).getAttribute('aria-invalid')).toBe('true')
+  })
+
+  it('un 422 invalid-merchant-profile con /body/displayName cae en el nombre', async () => {
+    const client = ope({
+      createFails: new RequestFailed({
+        status: 422,
+        type: 'invalid-merchant-profile',
+        title: 'A field of the merchant identity is not what it says it is',
+        errors: [{ pointer: '/body/displayName', message: 'Con espacios en los bordes.' }],
+      }),
+    })
+    await mount(client, ALL)
+    await screen.findByText(merchantsStrings.originsSection)
+    await act(async () => type(1, 'https://uno.example'))
+    await act(async () => create())
+    await screen.findByText('Con espacios en los bordes.')
+    const field = screen.getByLabelText(new RegExp(`^${merchantsStrings.name}`))
+    expect(field.getAttribute('aria-invalid')).toBe('true')
   })
 
   it('cancelar vuelve a la grilla sin crear nada', async () => {

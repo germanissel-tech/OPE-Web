@@ -1,5 +1,5 @@
 import type { ApplicationManifest, BaseConfig } from '@ope/core'
-import { ADMIN_CAPABILITIES, probeOperator } from '../api/ope/identity'
+import { ADMIN_CAPABILITIES, fetchOperator } from '../api/ope/identity'
 import { appStrings } from './strings'
 
 /**
@@ -46,8 +46,8 @@ export function identity(config: BaseConfig): Pick<
       return appStrings.devMode
     },
 
-    /* La sonda, hasta que 040 publique `getOperator`. Ver `api/ope/identity.ts`. */
-    identify: (authorize) => probeOperator(config.systems.ope ?? '/api', authorize),
+    /* `getOperator`: quién es, con nombre si lo tiene (`OW-7`). Ver `api/ope/identity.ts`. */
+    identify: (authorize) => fetchOperator(config.systems.ope ?? '/api', authorize),
   }
 }
 

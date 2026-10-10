@@ -60,6 +60,15 @@ export type AdminLogQuery = NonNullable<operations['listMerchantAdminLog']['para
 export type AdminEntry = components['schemas']['AdminEntry']
 export type AdminEntryPage = components['schemas']['AdminEntryPage']
 
+/** Quién es el operador autenticado: identificador, nombre para mostrar si lo tiene, alcance (ADR-044). */
+export type Operator = components['schemas']['Operator']
+
+/** La persona de contacto del merchant: una persona identificada de la relación comercial (ADR-045). */
+export type MerchantContact = components['schemas']['MerchantContact']
+
+/** La identidad de un merchant como se escribe, entera: lo que se omite se borra (ADR-045). */
+export type MerchantProfileInput = components['schemas']['MerchantProfileInput']
+
 export type OpeClient = {
   /** Los merchants del alcance del operador, por cursor. */
   readonly listMerchants: (query: MerchantQuery) => Promise<MerchantPage>
@@ -82,6 +91,11 @@ export type OpeClient = {
   ) => Promise<CredentialIssued>
   /** Idempotente por estado: pedir el que ya tiene es `200` otra vez. */
   readonly setKillSwitch: (merchantId: string, body: KillSwitch) => Promise<KillSwitch>
+  /** Reemplaza la identidad entera; no toca orígenes, estado ni credenciales (ADR-045). */
+  readonly updateMerchantProfile: (
+    merchantId: string,
+    body: MerchantProfileInput,
+  ) => Promise<Merchant>
   /** El registro de administración del merchant, lo más nuevo primero, por cursor. */
   readonly listMerchantAdminLog: (
     merchantId: string,
@@ -153,6 +167,15 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
     async setKillSwitch(merchantId, body) {
       return unwrap<KillSwitch>(
         await client.PUT('/v1/admin/merchants/{merchantId}/kill-switch', {
+          params: { path: { merchantId } },
+          body,
+        }),
+      )
+    },
+
+    async updateMerchantProfile(merchantId, body) {
+      return unwrap<Merchant>(
+        await client.PUT('/v1/admin/merchants/{merchantId}/profile', {
           params: { path: { merchantId } },
           body,
         }),

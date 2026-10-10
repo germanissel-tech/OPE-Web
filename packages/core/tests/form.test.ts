@@ -80,6 +80,37 @@ describe('la forma de un valor', () => {
   })
 })
 
+describe('la forma de un email, y las restricciones que dependen de los valores (feature 007 de la consola)', () => {
+  const email = { type: 'string', format: 'email' }
+
+  it('un email sin arroba o sin punto en el dominio no tiene forma, con su texto propio si lo hay', () => {
+    const withEmail = { ...strings, badEmail: 'No tiene forma de email.' }
+    expect(shapeErrorOf('ana', email, false, withEmail)).toBe('No tiene forma de email.')
+    expect(shapeErrorOf('ana@sin-punto', email, false, withEmail)).toBe('No tiene forma de email.')
+    expect(shapeErrorOf('ana@a.example', email, false, withEmail)).toBeUndefined()
+    /* Sin texto propio, es un formato más. */
+    expect(shapeErrorOf('ana', email, false, strings)).toBe(strings.badFormat)
+    /* Otro `format` no juzga nada: el contrato puede decir más de lo que se valida acá. */
+    expect(shapeErrorOf('x', { type: 'string', format: 'uri' }, false, strings)).toBeUndefined()
+  })
+
+  it('las restricciones pueden ser una función de los valores, evaluada en cada dibujo', () => {
+    const conditional = (values: Record<string, string>) => ({
+      required: ['name', ...(values.note === '' ? [] : ['price'])],
+      fields: constraints.fields,
+    })
+    const { result } = renderHook(
+      () => useForm({ name: 'ok', price: '', note: '', stock: '' }, conditional, strings),
+      { wrapper },
+    )
+    expect(result.current.hasShapeErrors).toBe(false)
+    act(() => result.current.set('note', 'algo'))
+    expect(result.current.hasShapeErrors).toBe(true)
+    act(() => result.current.blur('price'))
+    expect(result.current.errorOf('price')).toBe(strings.required)
+  })
+})
+
 describe('cuándo se marca un campo', () => {
   it('**nunca** mientras se escribe por primera vez', () => {
     /* Marcar en rojo al segundo carácter es hostigar a alguien que todavía está
