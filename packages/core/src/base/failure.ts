@@ -28,6 +28,9 @@ export type FailureCode =
   | 'declaration.badUnit'
   /** Una restricción emitida nombra un esquema que no está entre las emitidas. */
   | 'declaration.unknownConstraint'
+  /* Al leer — la respuesta no trae lo que el contrato dice que trae */
+  /** Una lectura que el contrato declara con testigo llegó sin `ETag` (`CU-29`). */
+  | 'response.missingWitness'
   /* Al arrancar */
   | 'startup.missingContainer'
   | 'startup.incompleteConfig'

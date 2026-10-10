@@ -5,6 +5,7 @@ import {
   type MerchantConfigurationDeclared,
   type MerchantConfigurationInput,
 } from '../../../api/ope/client'
+import { contractOfComparable } from './comparable'
 import { type OperativeLeaf, TREATMENT_GROUPS } from './groups'
 import {
   constraintsIn,
@@ -113,7 +114,32 @@ export function merchantBodyOf(
     const value = valueFrom(values, nameOf(leaf), kindOfLeaf(leaf), shown[leaf])
     if (value !== undefined) setAt(declared, leaf, value)
   }
+  return bodyWith(declared, inForce, values)
+}
 
+/**
+ * **El cuerpo del reintento tras un choque** (feature 009, research §4): las
+ * hojas operativas fusionadas por la puerta, y **lo no editado de la
+ * relectura**, no de lo que regía al abrir. El operador nunca tocó la política
+ * de decisión, el riesgo de devolución, los anclajes ni las etiquetas: son de
+ * quien escribió en el medio, y mandar los de al abrir los pisaría.
+ *
+ * El modo correctivo y el motivo no son del recurso: salen de la pantalla.
+ */
+export function mergedMerchantBodyOf(
+  merged: Readonly<Record<string, unknown>>,
+  reread: MerchantConfigurationDeclared,
+  values: Readonly<Record<string, string>>,
+): MerchantConfigurationInput {
+  return bodyWith(contractOfComparable(merged, OPERATIVE_LEAVES), reread, values)
+}
+
+/** Las hojas operativas ya en el contrato, más lo que no se edita y el modo correctivo. */
+function bodyWith(
+  declared: Record<string, unknown>,
+  inForce: MerchantConfigurationDeclared,
+  values: Readonly<Record<string, string>>,
+): MerchantConfigurationInput {
   /* Lo que no se edita, colgado entero y sin tocar: es el mismo objeto que
      vino, así que no puede perder nada en el camino. */
   if (inForce.decisionPolicy !== undefined) declared['decisionPolicy'] = inForce.decisionPolicy

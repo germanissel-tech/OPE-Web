@@ -18,6 +18,8 @@ export type OperationRequirement<Capability extends string = string> = {
   readonly capabilities: readonly Capability[]
   /** Si la operación declara `x-idempotency`: repetirla con el mismo cuerpo no duplica. */
   readonly idempotent: boolean
+  /** Si exige el testigo de lo que reemplaza (`If-Match`): lo emite el módulo del contrato (`CU-29`). */
+  readonly versioned?: boolean
 }
 
 /**

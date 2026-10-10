@@ -11,6 +11,7 @@ import {
   opens,
   outcome,
   QueryProvider,
+  RequestFailed,
   ServicesProvider,
   StringsProvider,
   TelemetryProvider,
@@ -128,7 +129,11 @@ const v3: MerchantConfigurationVersion = {
   reason: 'Experiment restarted on purpose.',
   publishedAt: '2026-10-09T12:00:00Z',
   operatorId: 'ops-1',
+  windowsRestarted: ['exp_spring'],
 }
+
+/** Cuántas veces se recorrió el historial: abrir una versión por número no lo recorre (research §6). */
+const calls = { listConfigurationVersions: 0 }
 
 function ope(served: MerchantConfiguration, versions: readonly MerchantConfigurationVersion[]) {
   const no = () => {
@@ -138,6 +143,7 @@ function ope(served: MerchantConfiguration, versions: readonly MerchantConfigura
     listMerchants: no,
     async getMerchant() {
       return {
+        witness: '"w-1"',
         merchantId: 'mrc_conf',
         status: 'active',
         origins: ['https://conf.example'],
@@ -155,10 +161,20 @@ function ope(served: MerchantConfiguration, versions: readonly MerchantConfigura
     updateMerchantProfile: no,
     listMerchantAdminLog: no,
     async getMerchantConfiguration() {
-      return served
+      return { ...served, witness: '"w-1"' }
     },
     async listConfigurationVersions() {
+      calls.listConfigurationVersions += 1
       return { items: [...versions] }
+    },
+    async getMerchantConfigurationVersion(_merchantId, version) {
+      const found = versions.find((each) => each.version === version)
+      if (found !== undefined) return found
+      throw new RequestFailed({
+        status: 404,
+        type: 'configuration-version-not-found',
+        title: 'The configuration version does not exist',
+      })
     },
     publishMerchantConfiguration: no,
     getPlatformConfiguration: no,
@@ -330,6 +346,13 @@ describe('la configuración de un merchant', () => {
     expect(screen.getByText(sharedStrings.corrective)).toBeDefined()
   })
 
+  it('el historial dice qué medición reinició cada versión (feature 009)', async () => {
+    await mount(ope(declaredHoldout, [v3]), ['configuration:read'])
+    await screen.findByText('Experiment restarted on purpose.')
+    expect(screen.getByText(configurationStrings.windowsRestarted)).toBeDefined()
+    expect(screen.getByText('exp_spring')).toBeDefined()
+  })
+
   it('una versión del historial se abre: lo que declaraba, y lo demás heredado', async () => {
     await mount(ope(declaredHoldout, [v3]), ['configuration:read'])
     await screen.findByText('Experiment restarted on purpose.')
@@ -337,10 +360,16 @@ describe('la configuración de un merchant', () => {
       fireEvent.click(screen.getByRole('button', { name: sharedStrings.openVersion }))
     })
 
+    calls.listConfigurationVersions = 0
     await screen.findByText(configurationStrings.versionSection)
     expect(mounted?.router.state.location.pathname).toBe(
       '/merchants/mrc_conf/configuration/versions/3',
     )
+    /* Por número, en una petición: el historial no se recorre (feature 009). */
+    expect(calls.listConfigurationVersions).toBe(0)
+    expect(
+      within(fieldOf(configurationStrings.windowsRestarted)).getByText('exp_spring'),
+    ).toBeDefined()
     expect(
       within(fieldOf(sharedStrings.reason)).getByText('Experiment restarted on purpose.'),
     ).toBeDefined()
@@ -358,6 +387,14 @@ describe('la configuración de un merchant', () => {
     await waitFor(() =>
       expect(mounted?.router.state.location.pathname).toBe('/merchants/mrc_conf/configuration'),
     )
+  })
+
+  it('un número que el merchant no publicó dice que esa versión no existe', async () => {
+    await mount(ope(declaredHoldout, [v3]), ['configuration:read'])
+    await act(async () => {
+      await mounted?.router.navigate('/merchants/mrc_conf/configuration/versions/7')
+    })
+    expect(await screen.findByText(configurationStrings.versionNotFound)).toBeDefined()
   })
 
   it('sin configuration:read la ruta no muestra la configuración', async () => {

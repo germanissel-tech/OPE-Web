@@ -79,7 +79,7 @@ function ope(options: {
       return { items: [] }
     },
     async getMerchant(merchantId) {
-      return merchant(merchantId)
+      return { ...merchant(merchantId), witness: '"w-1"' }
     },
     async createMerchant() {
       throw new Error('no se prueba acá')
@@ -107,6 +107,9 @@ function ope(options: {
       throw new Error('no se prueba acá')
     },
     async listConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getMerchantConfigurationVersion() {
       throw new Error('no se prueba acá')
     },
     async publishMerchantConfiguration() {

@@ -1,12 +1,27 @@
 import { Alert, Block, Button, Form, Page, Region } from '@granito/ui'
-import { defineScreen, Result, useAction, useForm, useOutcome, useScreenParams } from '@ope/core'
-import { type FormEvent, useState } from 'react'
-import { identityConstraints, identityValuesOf, profileBodyOf } from '../data/identity'
-import { displayNameOf, type Merchant, useMerchant } from '../data/merchants'
+import {
+  ConflictDialog,
+  defineScreen,
+  Result,
+  useAction,
+  useForm,
+  useLoadedOnce,
+  useOutcome,
+  useScreenParams,
+  type Witnessed,
+} from '@ope/core'
+import { type FormEvent, useRef, useState } from 'react'
+import {
+  identityConstraints,
+  identityValuesOf,
+  identityValuesOfMerged,
+  profileBodyOf,
+} from '../data/identity'
+import { displayNameOf, type Merchant, useMerchant, useMerchantReader } from '../data/merchants'
 import { updateMerchantProfile } from '../data/update-merchant-profile'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
-import { IdentityFields } from './identity-fields'
+import { IdentityFields, identityLabel } from './identity-fields'
 
 /**
  * **Editar la identidad de un merchant, entera** (feature 007, `ADR-045`).
@@ -42,27 +57,51 @@ function EditIdentityScreen() {
   )
 }
 
-function IdentityForm({ merchant }: { readonly merchant: Merchant }) {
+function IdentityForm({ merchant: live }: { readonly merchant: Witnessed<Merchant> }) {
   const { emit } = useOutcome()
+  /* Lo que se leyó al abrir, quieto: la consulta se mueve sola, y con ella se
+     correrían el testigo y la referencia del choque (`CU-29`). */
+  const merchant = useLoadedOnce(live)
+  /* Los siete campos ya son texto plano, uno por clave: se comparan tal cual
+     (research §5). Un cambio del interruptor o una rotación mueve el testigo y
+     ningún campo, así que no es choque: la puerta guarda sola. */
+  const opened = useLoadedOnce(identityValuesOf(live))
+  const reread = useMerchantReader(live.merchantId)
+  /* Lo que hay en pantalla cuando llega el rechazo: por una referencia, porque
+     la puerta guarda las opciones del dibujo en que se apretó «Guardar». */
+  const now = useRef(opened)
   const close = () => emit(merchants.outcomes.identityClosed({ merchantId: merchant.merchantId }))
   /* Un rechazo que no señala ningún campo va al pie, con lo que el servidor dijo. */
   const [rejected, setRejected] = useState<string | undefined>(undefined)
   const action = useAction(updateMerchantProfile, {
+    concurrency: {
+      loaded: opened,
+      onScreen: () => now.current,
+      reread: async () => {
+        const current = await reread()
+        return { values: identityValuesOf(current), version: current.witness }
+      },
+      retryWith: (merged, witness) => ({
+        merchantId: merchant.merchantId,
+        body: profileBodyOf(identityValuesOfMerged(merged)),
+        witness,
+      }),
+    },
     onDone: close,
     onRejected: (failed) => setRejected(failed.errors.length === 0 ? failed.message : undefined),
   })
-  const form = useForm(
-    identityValuesOf(merchant),
-    identityConstraints,
-    merchantsStrings.shape,
-    action.fields,
-  )
+  const form = useForm(opened, identityConstraints, merchantsStrings.shape, action.fields)
+  now.current = form.values
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
     setRejected(undefined)
     if (!form.attempt()) return
-    void action.run({ merchantId: merchant.merchantId, body: profileBodyOf(form.values) })
+    void action.run({
+      merchantId: merchant.merchantId,
+      body: profileBodyOf(form.values),
+      witness: merchant.witness,
+    })
   }
 
   return (
@@ -87,6 +126,8 @@ function IdentityForm({ merchant }: { readonly merchant: Merchant }) {
         </>
       }
     >
+      <ConflictDialog clash={action.clash} onClose={action.dismissClash} labelOf={identityLabel} />
+
       <IdentityFields
         form={form}
         constraints={identityConstraints(form.values)}

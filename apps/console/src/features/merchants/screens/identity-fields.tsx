@@ -3,6 +3,19 @@ import type { Form, MessageConstraints } from '@ope/core'
 import type { IdentityValues } from '../data/identity'
 import { merchantsStrings } from '../strings'
 
+/** El rótulo de cada campo: lo dibuja el formulario, y lo repite el choque (feature 009). */
+const LABELS: Readonly<Record<string, string>> = {
+  displayName: merchantsStrings.name,
+  storeUrl: merchantsStrings.storeUrl,
+  'contact.name': merchantsStrings.contactName,
+  'contact.email': merchantsStrings.contactEmail,
+  'contact.phone': merchantsStrings.contactPhone,
+  'contact.role': merchantsStrings.contactRole,
+  notes: merchantsStrings.notes,
+}
+
+export const identityLabel = (field: string): string => LABELS[field] ?? field
+
 /**
  * **Los siete campos de la identidad**, en tres secciones: nombre y URL, el
  * contacto, las notas. Los comparten el alta y la edición (feature 007,
@@ -21,8 +34,13 @@ export function IdentityFields({
   readonly why?: string
 }) {
   const required = (name: string) => constraints.required.includes(name)
-  const text = (name: string, label: string, size: 'medium' | 'short') => (
-    <Field label={label} size={size} required={required(name)} error={form.errorOf(name)}>
+  const text = (name: string, size: 'medium' | 'short') => (
+    <Field
+      label={identityLabel(name)}
+      size={size}
+      required={required(name)}
+      error={form.errorOf(name)}
+    >
       {(props) => (
         <TextInput
           {...props}
@@ -37,20 +55,20 @@ export function IdentityFields({
   return (
     <>
       <Section title={merchantsStrings.identitySection} why={why}>
-        {text('displayName', merchantsStrings.name, 'medium')}
-        {text('storeUrl', merchantsStrings.storeUrl, 'medium')}
+        {text('displayName', 'medium')}
+        {text('storeUrl', 'medium')}
       </Section>
 
       <Section title={merchantsStrings.contact} why={merchantsStrings.contactWhy} columns={2}>
-        {text('contact.name', merchantsStrings.contactName, 'medium')}
-        {text('contact.email', merchantsStrings.contactEmail, 'medium')}
-        {text('contact.phone', merchantsStrings.contactPhone, 'short')}
-        {text('contact.role', merchantsStrings.contactRole, 'medium')}
+        {text('contact.name', 'medium')}
+        {text('contact.email', 'medium')}
+        {text('contact.phone', 'short')}
+        {text('contact.role', 'medium')}
       </Section>
 
       <Section title={merchantsStrings.notes} why={merchantsStrings.notesWhy}>
         <Field
-          label={merchantsStrings.notes}
+          label={identityLabel('notes')}
           size="fill"
           required={required('notes')}
           error={form.errorOf('notes')}

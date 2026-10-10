@@ -1,11 +1,18 @@
 import { Block, Page, Region } from '@granito/ui'
-import { defineScreen, Result, useOutcome } from '@ope/core'
+import { defineScreen, Result, useOutcome, type Witnessed } from '@ope/core'
 import { useState } from 'react'
-import { platformBodyOf, platformConstraints, platformFormOf } from '../data/level-body'
+import {
+  mergedPlatformBodyOf,
+  platformBodyOf,
+  platformComparison,
+  platformConstraints,
+  platformFormOf,
+} from '../data/level-body'
 import {
   type PlatformConfiguration,
   publishPlatformConfiguration,
   usePlatformConfiguration,
+  usePlatformReader,
 } from '../data/levels'
 import { PLATFORM_GROUPS } from '../data/platform-groups'
 import { configuration } from '../feature'
@@ -42,19 +49,23 @@ function PublishPlatformScreen() {
   )
 }
 
-function PublishPlatform({ inForce }: { readonly inForce: PlatformConfiguration }) {
+function PublishPlatform({ inForce }: { readonly inForce: Witnessed<PlatformConfiguration> }) {
   const { emit } = useOutcome()
   /* La precarga se calcula una vez: lo que rige al abrir es contra lo que se
      compara si hay cambios. */
   const [initial] = useState(() => platformFormOf(inForce))
+  const reread = usePlatformReader()
 
   return (
     <PublishLevelForm
       action={publishPlatformConfiguration}
       initial={initial}
-      inForce={inForce.version}
+      served={inForce}
+      comparison={platformComparison}
+      reread={reread}
       constraintsOf={platformConstraints}
       bodyOf={platformBodyOf}
+      mergedBodyOf={(merged, _reread, values) => mergedPlatformBodyOf(merged, values)}
       onPublished={() => emit(configuration.outcomes.platformPublished({ from: 'publish' }))}
       onCancel={() => emit(configuration.outcomes.levelPublishCancelled({ from: 'publish' }))}
     >

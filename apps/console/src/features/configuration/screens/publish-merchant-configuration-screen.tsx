@@ -1,28 +1,38 @@
 import { Alert, Block, Button, Field, Form, Page, Region, Section, Value } from '@granito/ui'
 import {
+  ConflictDialog,
   defineScreen,
   type Presentation,
   Result,
   useAction,
   useForm,
+  useLoadedOnce,
   useOutcome,
   useScreenParams,
   useUnsavedWork,
+  type Witnessed,
 } from '@ope/core'
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { CorrectiveSection } from '../../../components/corrective-section'
+import { comparableOfContract, comparableOfForm } from '../data/comparable'
 import type { OperativeLeaf } from '../data/groups'
+import { leafLabel } from '../data/leaf-label'
 import {
   declareFrom,
+  kindOfLeaf,
   merchantBodyOf,
   merchantConstraints,
   merchantFormOf,
+  mergedMerchantBodyOf,
   nameOf,
+  OPERATIVE_LEAVES,
 } from '../data/merchant-body'
 import {
   type MerchantConfiguration,
+  type MerchantConfigurationDeclared,
   publishMerchantConfiguration,
   useMerchantConfiguration,
+  useMerchantConfigurationReader,
   useMerchantName,
 } from '../data/merchant-configuration'
 import { rowsOf } from '../data/treatment-form'
@@ -38,6 +48,11 @@ import { TreatmentFields } from './treatment-fields'
  * hereda o se declara; lo que no se edita no pasa por el formulario y se copia
  * al armar el cuerpo (research §7). Un `409 configuration-frozen` no se pierde:
  * la pantalla pasa a modo correctivo con todo lo cargado (research §10).
+ *
+ * Si otro publicó mientras tanto, el servidor responde `412` y la puerta
+ * relee (feature 009, `CU-29`): sin cruce guarda sola sobre la versión nueva,
+ * con lo no editado de esa versión; con cruce muestra el choque, y lo tecleado
+ * sigue en el formulario.
  */
 function PublishMerchantConfigurationScreen() {
   const { merchantId } = useScreenParams(publishMerchantConfigurationScreen)
@@ -68,12 +83,15 @@ function PublishMerchantConfigurationScreen() {
 
 function PublishForm({
   merchantId,
-  served,
+  served: live,
 }: {
   readonly merchantId: string
-  readonly served: MerchantConfiguration
+  readonly served: Witnessed<MerchantConfiguration>
 }) {
   const { emit } = useOutcome()
+  /* Lo que rige al abrir, quieto: la consulta se mueve sola, y con ella se
+     correrían el testigo y la referencia del choque (`CU-29`). */
+  const served = useLoadedOnce(live)
   const inForce = served.declared
   /* La precarga se calcula una vez: lo que rige al abrir es contra lo que se
      compara si hay cambios, y de donde sale lo que no se edita. */
@@ -98,8 +116,47 @@ function PublishForm({
    */
   const [published, setPublished] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const reread = useMerchantConfigurationReader(merchantId)
+  /* Lo que la puerta lee cuando llega el rechazo, que no es el dibujo en que se
+     apretó «Publicar»: la puerta guarda las opciones de ese dibujo, así que lo
+     de ahora tiene que llegarle por una referencia. */
+  const now = useRef<{
+    values: Readonly<Record<string, string>>
+    shown: Readonly<Record<string, Presentation | undefined>>
+  }>({ values: initial.values, shown })
+  /* Lo que rige según la relectura: de ahí sale lo no editado del reintento, y
+     su número es contra el que se dice si no cambió nada. */
+  const fresh = useRef<{ declared: MerchantConfigurationDeclared; merchant: number | undefined }>({
+    declared: inForce,
+    merchant: served.versions.merchant,
+  })
+  /* Lo cargado, en hojas del contrato: la referencia contra la que se compara. */
+  const opened = useLoadedOnce(comparableOfContract(inForce, OPERATIVE_LEAVES))
 
   const action = useAction(publishMerchantConfiguration, {
+    concurrency: {
+      loaded: opened,
+      onScreen: () =>
+        comparableOfForm(now.current.values, OPERATIVE_LEAVES, {
+          nameOf,
+          kindOf: kindOfLeaf,
+          shownOf: (leaf) => now.current.shown[leaf],
+        }),
+      reread: async () => {
+        const current = await reread()
+        fresh.current = { declared: current.declared, merchant: current.versions.merchant }
+        return {
+          values: comparableOfContract(current.declared, OPERATIVE_LEAVES),
+          version: current.witness,
+        }
+      },
+      retryWith: (merged, witness) => ({
+        merchantId,
+        body: mergedMerchantBodyOf(merged, fresh.current.declared, now.current.values),
+        inForce: fresh.current.merchant,
+        witness,
+      }),
+    },
     onDone: () => setPublished(true),
     onRejected: (failed) => {
       /* Por el tipo y no con `failedWith`: `failed` ya es un rechazo, y la guarda
@@ -119,6 +176,7 @@ function PublishForm({
     action.fields,
   )
   const constraints = merchantConstraints(form.values, shown, inForce)
+  now.current = { values: form.values, shown }
   useUnsavedWork(!published && JSON.stringify(form.values) !== JSON.stringify(initial.values))
   useEffect(() => {
     if (published) setLeaving(true)
@@ -146,6 +204,7 @@ function PublishForm({
       merchantId,
       body: merchantBodyOf(form.values, shown, inForce),
       inForce: served.versions.merchant,
+      witness: served.witness,
     })
   }
 
@@ -174,6 +233,8 @@ function PublishForm({
         </>
       }
     >
+      <ConflictDialog clash={action.clash} onClose={action.dismissClash} labelOf={leafLabel} />
+
       <CorrectiveSection
         form={form}
         required={constraints.required.includes('reason')}

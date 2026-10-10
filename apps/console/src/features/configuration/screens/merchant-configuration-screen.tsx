@@ -18,6 +18,7 @@ import {
 } from '../data/merchant-configuration'
 import { configuration } from '../feature'
 import { configurationStrings } from '../strings'
+import { windowsRestartedColumn } from './level-history-columns'
 import { TreatmentValues } from './treatment-values'
 
 /**
@@ -143,6 +144,7 @@ function ConfigurationView({
       <VersionHistory
         versions={versions}
         table={table}
+        extra={[windowsRestartedColumn()]}
         onOpen={(row) =>
           emit(
             configuration.outcomes.merchantVersionChosen({

@@ -21,12 +21,7 @@ import { type ReactNode, useEffect } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 /* Lo de `api/` llega por `data/`, que es lo único que puede tocarla (`CU-15`);
    y las pantallas, por la funcionalidad que las declara (`CU-47`). */
-import {
-  type Merchant,
-  type MerchantCredentials,
-  type OpeClient,
-  opeService,
-} from '../data/merchants'
+import { type MerchantCredentials, type OpeClient, opeService } from '../data/merchants'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
 
@@ -72,8 +67,8 @@ function ope(options: { readonly createFails?: RequestFailed } = {}): OpeClient 
     async listMerchantAdminLog() {
       return { items: [] }
     },
-    async getMerchant(merchantId): Promise<Merchant> {
-      return { ...ISSUED.merchant, merchantId }
+    async getMerchant(merchantId) {
+      return { ...ISSUED.merchant, merchantId, witness: '"w-1"' }
     },
     async createMerchant(body) {
       created.push(body)
@@ -102,6 +97,9 @@ function ope(options: { readonly createFails?: RequestFailed } = {}): OpeClient 
       throw new Error('no se prueba acá')
     },
     async listConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getMerchantConfigurationVersion() {
       throw new Error('no se prueba acá')
     },
     async publishMerchantConfiguration() {

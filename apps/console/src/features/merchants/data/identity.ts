@@ -110,3 +110,18 @@ export function identityValuesOf(merchant?: Merchant): IdentityValues {
     notes: merchant?.notes ?? '',
   }
 }
+
+/**
+ * **Lo que la puerta fusionó, de vuelta a valores del formulario** (feature
+ * 009, research §5). Los siete campos ya son texto plano, uno por clave, así
+ * que la identidad se compara tal cual y no necesita las hojas de la
+ * configuración; esto sólo vuelve a dar a cada campo su texto.
+ */
+export function identityValuesOfMerged(merged: Readonly<Record<string, unknown>>): IdentityValues {
+  const values: IdentityValues = {}
+  for (const field of IDENTITY_FIELDS) {
+    const value = merged[field]
+    values[field] = typeof value === 'string' ? value : ''
+  }
+  return values
+}

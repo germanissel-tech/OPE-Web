@@ -1,10 +1,17 @@
 import { Block, Field, Page, Region, Section, Value } from '@granito/ui'
-import { defineScreen, Result, useOutcome } from '@ope/core'
+import { defineScreen, Result, useOutcome, type Witnessed } from '@ope/core'
 import { useState } from 'react'
-import { defaultsBodyOf, defaultsConstraints, defaultsFormOf } from '../data/level-body'
+import {
+  defaultsBodyOf,
+  defaultsComparison,
+  defaultsConstraints,
+  defaultsFormOf,
+  mergedDefaultsBodyOf,
+} from '../data/level-body'
 import {
   publishTreatmentDefaults,
   type TreatmentDefaults,
+  useDefaultsReader,
   useTreatmentDefaults,
 } from '../data/levels'
 import { configuration } from '../feature'
@@ -42,17 +49,21 @@ function PublishDefaultsScreen() {
   )
 }
 
-function PublishDefaults({ inForce }: { readonly inForce: TreatmentDefaults }) {
+function PublishDefaults({ inForce }: { readonly inForce: Witnessed<TreatmentDefaults> }) {
   const { emit } = useOutcome()
   const [initial] = useState(() => defaultsFormOf(inForce))
+  const reread = useDefaultsReader()
 
   return (
     <PublishLevelForm
       action={publishTreatmentDefaults}
       initial={initial}
-      inForce={inForce.version}
+      served={inForce}
+      comparison={defaultsComparison}
+      reread={reread}
       constraintsOf={defaultsConstraints}
-      bodyOf={(values, shown) => defaultsBodyOf(values, shown, inForce)}
+      bodyOf={defaultsBodyOf}
+      mergedBodyOf={mergedDefaultsBodyOf}
       onPublished={() => emit(configuration.outcomes.defaultsPublished({ from: 'publish' }))}
       onCancel={() => emit(configuration.outcomes.levelPublishCancelled({ from: 'publish' }))}
     >
