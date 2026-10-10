@@ -1,3 +1,4 @@
+import type { Strings } from '@ope/core'
 import type { SessionConfig } from '@ope/session'
 import { createFakeSession } from '@ope/session/fake'
 import { ADMIN_CAPABILITIES, READ_CAPABILITIES } from '../api/ope/identity'
@@ -59,6 +60,28 @@ function papelElegido(): Papel {
 
   const recordado = globalThis.localStorage?.getItem(RECUERDO) ?? null
   return esPapel(recordado) ? recordado : 'todo'
+}
+
+/**
+ * **La credencial de desarrollo, a la vista.**
+ *
+ * Es el token del operador de desarrollo de OPE-Backend (`config/dev-operators.json`
+ * guarda su huella; el valor lo dice su `README`). Con `?dev.bearer=1` la vista
+ * de ingreso la muestra en su explicación, para no tener que buscarla cada vez.
+ *
+ * Vive acá, en el módulo que no entra en el artefacto (`CU-36`), y por eso
+ * mismo no hay que verificarla aparte: si esto viaja, viaja la falsa, y la
+ * comprobación del artefacto ya falla por ella.
+ */
+export const DEV_BEARER = 'ope_dev_admin_token'
+
+export function devBearerStrings(): Partial<Strings> {
+  console.info(
+    `[ope] ingreso con bearer contra el backend: la credencial de desarrollo es ${DEV_BEARER}`,
+  )
+  return {
+    signInDetail: `En desarrollo, la credencial del operador de desarrollo del backend es ${DEV_BEARER}.`,
+  }
 }
 
 export default function devSession(session: SessionConfig) {

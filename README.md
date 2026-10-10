@@ -36,7 +36,8 @@ npm run dev                 # la consola en http://localhost:5173
 
 **Contra el backend real**: en `../backend`, `npm run dev` (escucha en `:3000`). Vite reenvía `/api`
 al backend, así que no hay CORS que pedir; en producción el servidor que publica hace el mismo
-reenvío. Entrar con `http://localhost:5173/?dev.bearer=1` y el token de desarrollo del backend.
+reenvío. Entrar con `http://localhost:5173/?dev.bearer=1`: la vista de ingreso muestra la credencial
+del operador de desarrollo del backend, que es la que se pega.
 
 **Sin backend**: `npm run dev` entra con la sesión falsa; `?dev.papel=lectura` muestra lo que hay sin
 `merchants:write`; `?dev.entrada=1` arranca en la vista de ingreso.

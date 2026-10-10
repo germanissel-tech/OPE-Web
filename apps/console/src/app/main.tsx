@@ -9,9 +9,23 @@ import { createManifest } from './manifest'
  * shell, la configuración y la pantalla de falla los pone `@ope/core`
  * (`CU-42`).
  */
+
+/**
+ * **`?dev.bearer=1`: el bearer también en desarrollo**, para probar el ingreso
+ * contra el backend real. Se lee una vez, acá, porque lo usan dos pasos: el
+ * proveedor (abajo) y los textos de la vista de ingreso, que en desarrollo
+ * muestran la credencial para no tener que buscarla. Los dos salen del módulo
+ * de desarrollo, cargado de forma diferida: la rama desaparece al compilar.
+ */
+const wantsBearer = new URLSearchParams(globalThis.location.search).has('dev.bearer')
+const devStrings =
+  import.meta.env.DEV && wantsBearer
+    ? (await import('./dev-session')).devBearerStrings()
+    : undefined
+
 await bootstrapApplication({
   readConfig,
-  manifest: createManifest,
+  manifest: (config) => createManifest(config, devStrings),
 
   /**
    * **Dónde deja rastro lo que pasa** (`CU-35`).
@@ -36,11 +50,9 @@ await bootstrapApplication({
    * En producción, la credencial opaca por operador de OPE (`ADR-031` del
    * backend) con `identify` de esta aplicación. En desarrollo, la falsa, cargada
    * de forma diferida para que no entre en el artefacto (`CU-36`): la rama
-   * desaparece al compilar. **Con `?dev.bearer=1` se usa el bearer también en
-   * desarrollo**, para probar el ingreso contra el backend real.
+   * desaparece al compilar. Con `?dev.bearer=1`, el bearer (ver arriba).
    */
   buildProvider: async (session, config) => {
-    const wantsBearer = new URLSearchParams(globalThis.location.search).has('dev.bearer')
     if (import.meta.env.DEV && !wantsBearer) {
       const { default: devSession } = await import('./dev-session')
       return devSession(session)

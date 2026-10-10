@@ -3,6 +3,7 @@ import {
   type BaseConfig,
   composeFeatures,
   defineApplication,
+  type Strings,
 } from '@ope/core'
 import { currentMerchant, preferences } from './chrome'
 import { features } from './features'
@@ -24,8 +25,12 @@ import { identity } from './identity'
  *
  * Recibe la configuración porque la identidad necesita saber contra qué
  * sistema preguntar quién es el operador, y eso se lee al arrancar (`CU-17`).
+ * Y los textos que el arranque quiera pisar: hoy, sólo los de desarrollo.
  */
-export function createManifest(config: BaseConfig): ApplicationManifest {
+export function createManifest(
+  config: BaseConfig,
+  strings?: Partial<Strings>,
+): ApplicationManifest {
   const { screens, featureRootOf, userMenuEntries, outcomes, outcomesOf } =
     composeFeatures(features)
 
@@ -33,6 +38,7 @@ export function createManifest(config: BaseConfig): ApplicationManifest {
 
   return defineApplication({
     name: 'OPE-Console',
+    strings,
     screens,
     systems: Object.keys(config.systems),
     toCapabilities,

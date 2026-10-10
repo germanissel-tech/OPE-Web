@@ -14,7 +14,7 @@ configuración y las siete vistas de sesión los pone `@ope/core` y llegan por w
 | [`config.ts`](config.ts) | Qué configuración lee al arrancar, y su esquema | al agregar un dato de despliegue |
 | [`strings.ts`](strings.ts) | Los textos del marco que esta aplicación reemplaza | casi nunca |
 | [`main.tsx`](main.tsx) | Qué usa, y **contra qué autentica** | casi nunca |
-| [`dev-session.ts`](dev-session.ts) | La sesión de desarrollo, sus datos de mentira, y con qué capacidades se entra | al probar un rol, o al mirar la aplicación con menos permisos |
+| [`dev-session.ts`](dev-session.ts) | La sesión de desarrollo, sus datos de mentira, con qué capacidades se entra, y la credencial que la vista de ingreso muestra con `?dev.bearer=1` | al probar un rol, al mirar la aplicación con menos permisos, o al entrar contra el backend real |
 
 **Está partido porque cada parte cambia por su cuenta.** Las pantallas se agregan de a una durante
 meses; la traducción de capacidades se toca cuando cambian los roles. Juntas, un archivo que se
