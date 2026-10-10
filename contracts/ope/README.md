@@ -8,7 +8,7 @@ capacidades, las restricciones y el bundle no se hayan despegado.
 |---|---|
 | Versión del contrato | `1.15.0` |
 | `sha256` del bundle copiado | `f37d13fe868d0794f107cd785a0ca587bab22137243d665af912bf02fe0ca7f0` |
-| Commit de OPE-Backend | `47246a2f17747c73839b12d7a9c1ef73bbe1a30d` |
+| Commit de OPE-Backend | `9796e8bf289ab69e73c7fbe87569fe04f4c86090` |
 | Sincronizado | 2026-10-10 |
 
 ## Los archivos
