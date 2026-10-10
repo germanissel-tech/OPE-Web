@@ -1,9 +1,14 @@
 import { SETTINGS, TAG } from '@granito/ui'
 import { closes, defineFlow, finishes, group, omits, opens } from '@ope/core'
 import { configuration } from '../features/configuration/feature'
+import { defaultsScreen } from '../features/configuration/screens/defaults-screen'
+import { levelVersionScreen } from '../features/configuration/screens/level-version-screen'
 import { merchantConfigurationScreen } from '../features/configuration/screens/merchant-configuration-screen'
+import { merchantVersionScreen } from '../features/configuration/screens/merchant-version-screen'
 import { platformScreen } from '../features/configuration/screens/platform-screen'
+import { publishDefaultsScreen } from '../features/configuration/screens/publish-defaults-screen'
 import { publishMerchantConfigurationScreen } from '../features/configuration/screens/publish-merchant-configuration-screen'
+import { publishPlatformScreen } from '../features/configuration/screens/publish-platform-screen'
 import { configurationStrings } from '../features/configuration/strings'
 import { home } from '../features/home/feature'
 import { aboutScreen } from '../features/home/screens/about-screen'
@@ -23,6 +28,29 @@ import { merchantsStrings } from '../features/merchants/strings'
  * lugar**. En un archivo y no en una carpeta con `index.ts`, que `CU-15`
  * prohíbe.
  */
+
+/**
+ * **Lo que la configuración de un merchant hace y un nivel global no**: se
+ * llega desde su ficha, así que los recorridos globales dicen que no lo
+ * ofrecen.
+ */
+const MERCHANT_OUTCOMES = [
+  configuration.outcomes.merchantConfigurationClosed,
+  configuration.outcomes.merchantPublishRequested,
+  configuration.outcomes.merchantConfigurationPublished,
+  configuration.outcomes.merchantPublishCancelled,
+  configuration.outcomes.merchantVersionChosen,
+]
+
+/** Y al revés: lo de los niveles globales, que el recorrido de los merchants no ofrece. */
+const GLOBAL_OUTCOMES = [
+  configuration.outcomes.platformPublishRequested,
+  configuration.outcomes.platformPublished,
+  configuration.outcomes.defaultsPublishRequested,
+  configuration.outcomes.defaultsPublished,
+  configuration.outcomes.levelPublishCancelled,
+  configuration.outcomes.levelVersionChosen,
+]
 
 /**
  * **El recorrido de los merchants** (`CU-47`).
@@ -97,25 +125,60 @@ export const merchantsFlow = defineFlow({
       ({ merchantId }) => ({ merchantId }),
     ),
     closes(configuration.outcomes.merchantPublishCancelled),
+
+    /* Una versión del historial se apila sobre la vista y vuelve a ella. */
+    opens(
+      configuration.outcomes.merchantVersionChosen,
+      merchantVersionScreen,
+      ({ merchantId, version }) => ({ merchantId, version }),
+    ),
+    closes(configuration.outcomes.versionClosed),
+
+    /* Lo global no se alcanza desde un merchant: es del menú. */
+    ...GLOBAL_OUTCOMES.map(omits),
   ],
 })
 
+/** Abrir una versión del historial de un nivel global, y volver. */
+const levelVersionSteps = [
+  opens(configuration.outcomes.levelVersionChosen, levelVersionScreen, ({ level, version }) => ({
+    level,
+    version,
+  })),
+  closes(configuration.outcomes.versionClosed),
+]
+
 /**
- * **El recorrido de la configuración global** (feature 008).
- *
- * Arranca en la plataforma, que es la raíz de la funcionalidad. La vista de la
- * configuración de un merchant también es de esta funcionalidad, pero se llega
- * desde su ficha: está en el recorrido de los merchants, y acá se dice que este
- * no la ofrece.
+ * **La plataforma** (feature 008): la vista, su publicación y su historial.
+ * Es la raíz de la funcionalidad de configuración. Publicar se apila sobre la
+ * vista y termina en ella; cancelar desapila.
  */
 export const configurationFlow = defineFlow({
   id: 'configuration',
   root: platformScreen,
   steps: [
-    omits(configuration.outcomes.merchantConfigurationClosed),
-    omits(configuration.outcomes.merchantPublishRequested),
-    omits(configuration.outcomes.merchantConfigurationPublished),
-    omits(configuration.outcomes.merchantPublishCancelled),
+    opens(configuration.outcomes.platformPublishRequested, publishPlatformScreen),
+    finishes(configuration.outcomes.platformPublished, platformScreen),
+    closes(configuration.outcomes.levelPublishCancelled),
+    ...levelVersionSteps,
+    omits(configuration.outcomes.defaultsPublishRequested),
+    omits(configuration.outcomes.defaultsPublished),
+    ...MERCHANT_OUTCOMES.map(omits),
+  ],
+})
+
+/** **Los defaults de tratamiento** (feature 008): lo mismo que la plataforma, en su propia entrada del menú. */
+export const defaultsFlow = defineFlow({
+  id: 'defaults',
+  root: defaultsScreen,
+  steps: [
+    opens(configuration.outcomes.defaultsPublishRequested, publishDefaultsScreen),
+    finishes(configuration.outcomes.defaultsPublished, defaultsScreen),
+    closes(configuration.outcomes.levelPublishCancelled),
+    ...levelVersionSteps,
+    omits(configuration.outcomes.platformPublishRequested),
+    omits(configuration.outcomes.platformPublished),
+    ...MERCHANT_OUTCOMES.map(omits),
   ],
 })
 
@@ -151,7 +214,7 @@ export const systemFlow = defineFlow({
 })
 
 /** Los que esta aplicación tiene. La lee el manifiesto. */
-export const flows = [homeFlow, merchantsFlow, configurationFlow, systemFlow]
+export const flows = [homeFlow, merchantsFlow, configurationFlow, defaultsFlow, systemFlow]
 
 /**
  * **Lo que ofrece el menú lateral, en orden** (`CU-48`).
@@ -162,5 +225,5 @@ export const flows = [homeFlow, merchantsFlow, configurationFlow, systemFlow]
 export const menu = [
   homeFlow,
   group(merchantsStrings.merchantsSection, [merchantsFlow], TAG),
-  group(configurationStrings.configuration, [configurationFlow], SETTINGS),
+  group(configurationStrings.configuration, [configurationFlow, defaultsFlow], SETTINGS),
 ]

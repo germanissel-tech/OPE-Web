@@ -65,6 +65,35 @@ export function useConfigurationVersions(
 }
 
 /**
+ * **Una versión del merchant, por su número** (research §11).
+ *
+ * El contrato no tiene una operación para leer una sola: cada versión viene
+ * entera en la página del historial, así que se recorren las páginas hasta
+ * dar con ella. Un merchant publica pocas versiones; si fueran muchas, esto es
+ * lo que pediría una operación nueva al backend. Sin versión con ese número,
+ * nada.
+ */
+export function useMerchantVersion(merchantId: string, version: number) {
+  const ope = useService(opeService)
+  return useQuery({
+    queryKey: [...merchantConfigurationVersions(merchantId), version],
+    queryFn: async (): Promise<MerchantConfigurationVersion | null> => {
+      let cursor: string | undefined
+      do {
+        const page = await ope.listConfigurationVersions(
+          merchantId,
+          cursor === undefined ? {} : { cursor },
+        )
+        const found = page.items.find((each) => each.version === version)
+        if (found !== undefined) return found
+        cursor = page.nextCursor
+      } while (cursor !== undefined)
+      return null
+    },
+  })
+}
+
+/**
  * **De dónde sale cada valor**: declarado por el merchant o heredado de los
  * defaults que rigen.
  *

@@ -1,5 +1,6 @@
 import { Alert, Checkbox, Field, Section, TextArea } from '@granito/ui'
 import type { Form } from '@ope/core'
+import { useEffect, useRef } from 'react'
 import { sharedStrings } from './strings'
 
 /**
@@ -25,6 +26,14 @@ export function CorrectiveSection({
   readonly frozen: boolean
 }) {
   const corrective = form.values['corrective'] === 'true'
+  /* **El motivo, a la vista cuando el 409 lo pide.** La sección va arriba del
+     formulario y el operador publicó desde el pie: sin esto la pantalla cambia
+     de modo fuera de la vista y el único rastro es el aviso. Enfocarlo trae el
+     campo a la pantalla, y es justo lo que hay que escribir. */
+  const reason = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (frozen) reason.current?.focus()
+  }, [frozen])
   return (
     <Section title={sharedStrings.correctiveSection} why={sharedStrings.correctiveWhy}>
       {frozen ? (
@@ -53,6 +62,7 @@ export function CorrectiveSection({
           {(props) => (
             <TextArea
               {...props}
+              ref={reason}
               value={form.values['reason'] ?? ''}
               onChange={(event) => form.set('reason', event.target.value)}
               onBlur={() => form.blur('reason')}

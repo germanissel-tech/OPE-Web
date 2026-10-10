@@ -140,7 +140,18 @@ function ConfigurationView({
         </Field>
       </Section>
 
-      <VersionHistory versions={versions} table={table} />
+      <VersionHistory
+        versions={versions}
+        table={table}
+        onOpen={(row) =>
+          emit(
+            configuration.outcomes.merchantVersionChosen({
+              merchantId,
+              version: String(row.version),
+            }),
+          )
+        }
+      />
     </Form>
   )
 }

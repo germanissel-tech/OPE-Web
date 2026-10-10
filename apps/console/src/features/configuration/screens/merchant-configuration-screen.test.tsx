@@ -15,7 +15,7 @@ import {
   StringsProvider,
   TelemetryProvider,
 } from '@ope/core'
-import { act, cleanup, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { sharedStrings } from '../../../components/strings'
@@ -44,6 +44,12 @@ afterEach(cleanup)
 
 /* La primera es la plataforma, que es la raíz; después la vista y la publicación del merchant. */
 const [, merchantConfigurationScreen, publishMerchantConfigurationScreen] = configuration.screens
+/** La versión del merchant, por su id: sólo `feature.ts` y `app/flows.ts` nombran pantallas (`CU-47`). */
+const merchantVersionScreen = (() => {
+  const found = configuration.screens.find((each) => each.id === 'merchantVersion')
+  if (found === undefined) throw new Error('sin la versión del merchant')
+  return found
+})()
 
 const effective: MerchantConfiguration['effective'] = {
   freshness: { catalogMs: 129600000, stockAndPriceMs: 600000 },
@@ -180,6 +186,8 @@ const hostScreen = defineScreen({
 })
 const opened = outcome<{ merchantId: string }>('test.configurationOpened')
 
+let mounted: ReturnType<typeof createApplication> | undefined
+
 async function mount(client: OpeClient, capabilities: readonly string[]) {
   const flow = defineFlow({
     id: 'configuration',
@@ -198,25 +206,39 @@ async function mount(client: OpeClient, capabilities: readonly string[]) {
         ({ merchantId }) => ({ merchantId }),
       ),
       closes(configuration.outcomes.merchantPublishCancelled),
+      opens(
+        configuration.outcomes.merchantVersionChosen,
+        merchantVersionScreen,
+        ({ merchantId, version }) => ({ merchantId, version }),
+      ),
+      closes(configuration.outcomes.versionClosed),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [hostScreen, merchantConfigurationScreen, publishMerchantConfigurationScreen],
+      screens: [
+        hostScreen,
+        merchantConfigurationScreen,
+        publishMerchantConfigurationScreen,
+        merchantVersionScreen,
+      ],
       flows: [flow],
       menu: [],
       featureRootOf: {
         host: 'host',
         merchantConfiguration: 'host',
         publishMerchantConfiguration: 'host',
+        merchantVersion: 'host',
       },
       outcomesOf: {
         host: [opened.id],
         merchantConfiguration: [
           configuration.outcomes.merchantConfigurationClosed.id,
           configuration.outcomes.merchantPublishRequested.id,
+          configuration.outcomes.merchantVersionChosen.id,
         ],
+        merchantVersion: [configuration.outcomes.versionClosed.id],
         publishMerchantConfiguration: [
           configuration.outcomes.merchantConfigurationPublished.id,
           configuration.outcomes.merchantPublishCancelled.id,
@@ -232,6 +254,7 @@ async function mount(client: OpeClient, capabilities: readonly string[]) {
   await act(async () => {
     await application.router.navigate('/merchants/mrc_conf/configuration')
   })
+  mounted = application
 
   render(
     <QueryProvider client={createQueryClient()}>
@@ -305,6 +328,36 @@ describe('la configuración de un merchant', () => {
     await mount(ope(declaredHoldout, [v3]), ['configuration:read'])
     await screen.findByText('Experiment restarted on purpose.')
     expect(screen.getByText(sharedStrings.corrective)).toBeDefined()
+  })
+
+  it('una versión del historial se abre: lo que declaraba, y lo demás heredado', async () => {
+    await mount(ope(declaredHoldout, [v3]), ['configuration:read'])
+    await screen.findByText('Experiment restarted on purpose.')
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: sharedStrings.openVersion }))
+    })
+
+    await screen.findByText(configurationStrings.versionSection)
+    expect(mounted?.router.state.location.pathname).toBe(
+      '/merchants/mrc_conf/configuration/versions/3',
+    )
+    expect(
+      within(fieldOf(sharedStrings.reason)).getByText('Experiment restarted on purpose.'),
+    ).toBeDefined()
+    const holdout = fieldOf(configurationStrings.holdoutShare)
+    expect(within(holdout).getByText('7 %')).toBeDefined()
+    expect(within(holdout).queryByText(configurationStrings.inheritedThen)).toBeNull()
+    /* Lo que no declaraba no se inventa: se dice heredado, sin valor. */
+    const catalog = fieldOf(configurationStrings['freshness.catalogMs'])
+    expect(within(catalog).getByText(configurationStrings.inheritedThen)).toBeDefined()
+    expect(within(catalog).queryByText('36 h')).toBeNull()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: configurationStrings.back }))
+    })
+    await waitFor(() =>
+      expect(mounted?.router.state.location.pathname).toBe('/merchants/mrc_conf/configuration'),
+    )
   })
 
   it('sin configuration:read la ruta no muestra la configuración', async () => {

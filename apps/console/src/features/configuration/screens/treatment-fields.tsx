@@ -115,6 +115,91 @@ function LeafField({
     )
   }
 
+  return (
+    <EditableField
+      form={form}
+      label={label}
+      name={name}
+      shown={shown}
+      constraints={constraints}
+      help={inheritance === undefined ? undefined : configurationStrings.declared}
+      action={
+        inheritance === undefined ? undefined : (
+          <Button type="button" size="compact" onClick={() => inheritance.inherit(leaf)}>
+            {configurationStrings.inherit}
+          </Button>
+        )
+      }
+    />
+  )
+}
+
+/** Lo que el catálogo dice con un texto fijo: el rótulo de una hoja, del tratamiento o de la plataforma. */
+type LabeledLeaf = {
+  [K in keyof typeof configurationStrings]: (typeof configurationStrings)[K] extends string
+    ? K
+    : never
+}[keyof typeof configurationStrings]
+
+/**
+ * **Valores editables en sus grupos, todos propios**: la plataforma, donde no
+ * hay nada que heredar. Mismo control por valor que el tratamiento.
+ */
+export function ValueFields({
+  form,
+  prefix,
+  groups,
+  shown,
+  constraints,
+}: {
+  readonly form: Form<Values>
+  readonly prefix: string
+  readonly groups: readonly {
+    readonly title: string
+    readonly why: string
+    readonly leaves: readonly LabeledLeaf[]
+  }[]
+  readonly shown: Shown
+  readonly constraints: MessageConstraints
+}) {
+  return (
+    <>
+      {groups.map((group) => (
+        <Section key={group.title} title={group.title} why={group.why} columns={2}>
+          {group.leaves.map((leaf) => (
+            <EditableField
+              key={leaf}
+              form={form}
+              label={configurationStrings[leaf]}
+              name={`${prefix}.${leaf}`}
+              shown={shown[leaf]}
+              constraints={constraints}
+            />
+          ))}
+        </Section>
+      ))}
+    </>
+  )
+}
+
+/** Un valor con su control, y quizás un botón a su lado. */
+function EditableField({
+  form,
+  label,
+  name,
+  shown,
+  constraints,
+  help,
+  action,
+}: {
+  readonly form: Form<Values>
+  readonly label: string
+  readonly name: string
+  readonly shown: Presentation | undefined
+  readonly constraints: MessageConstraints
+  readonly help?: string | undefined
+  readonly action?: ReactNode
+}) {
   const field = constraints.fields[name]
   const kind = kindOf(field)
   const integer = field?.type === 'integer' || field?.items?.type === 'integer'
@@ -129,7 +214,7 @@ function LeafField({
       label={label}
       size="medium"
       required={constraints.required.includes(name)}
-      help={inheritance === undefined ? undefined : configurationStrings.declared}
+      help={help}
       error={form.errorOf(name) ?? rowError}
     >
       {(props) => (
@@ -143,13 +228,7 @@ function LeafField({
             integer={integer}
             props={props}
           />
-          {inheritance === undefined ? null : (
-            <FieldAction>
-              <Button type="button" size="compact" onClick={() => inheritance.inherit(leaf)}>
-                {configurationStrings.inherit}
-              </Button>
-            </FieldAction>
-          )}
+          {action === undefined ? null : <FieldAction>{action}</FieldAction>}
         </>
       )}
     </Field>

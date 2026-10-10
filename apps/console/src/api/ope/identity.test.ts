@@ -1,6 +1,6 @@
 import { RequestFailed } from '@ope/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { claimsOf, fetchOperator } from './identity'
+import { ALL_MERCHANTS, capabilitiesOf, claimsOf, fetchOperator } from './identity'
 
 /**
  * **`identify` es `getOperator`** (`OW-7`, enmendada en la 007): los claims
@@ -72,5 +72,27 @@ describe('fetchOperator', () => {
   it('claimsOf never invents a name', () => {
     expect(claimsOf({ operatorId: 'ops-x', scope: '*' }).name).toBe('ops-x')
     expect(claimsOf({ operatorId: 'ops-x', displayName: 'X', scope: '*' }).name).toBe('X')
+  })
+})
+
+describe('capabilitiesOf', () => {
+  it('a bearer operator over every merchant can do everything, and publish the global levels', () => {
+    const granted = capabilitiesOf({ operatorId: 'ops-1', scope: '*' })
+    expect(granted.has('configuration:write')).toBe(true)
+    expect(granted.has(ALL_MERCHANTS)).toBe(true)
+  })
+
+  it('a listed scope keeps every capability but not the global one', () => {
+    const granted = capabilitiesOf({ operatorId: 'ops-a', scope: ['m_a'] })
+    expect(granted.has('configuration:write')).toBe(true)
+    expect(granted.has(ALL_MERCHANTS)).toBe(false)
+  })
+
+  it('listed capabilities are taken as they come, plus the global one with scope *', () => {
+    expect([...capabilitiesOf({ scope: '*', capabilities: ['configuration:read', 7] })]).toEqual([
+      'configuration:read',
+      ALL_MERCHANTS,
+    ])
+    expect(capabilitiesOf({})).toEqual(new Set())
   })
 })

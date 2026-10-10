@@ -180,24 +180,50 @@ cliente.
 
 **Meta**: los dos niveles globales, vistos, recorridos y publicados.
 
-- [ ] T023 [E4] `apps/console/src/features/configuration/data/levels.ts` (NUEVO): vistas, historiales,
+- [x] T023 [E4] `apps/console/src/features/configuration/data/levels.ts` (NUEVO): vistas, historiales,
       versión por número y las dos acciones; las acciones invalidan además toda configuración de
       merchant y anuncian las mediciones reiniciadas
-- [ ] T024 [E4] `data/level-body.ts` (+ prueba): valores ↔ contenido de plataforma y de defaults, con
+- [x] T024 [E4] `data/level-body.ts` (+ prueba): valores ↔ contenido de plataforma y de defaults, con
       `decisionPolicy` y `returnRisk` copiados en los defaults
-- [ ] T025 [E4] `screens/platform-screen.tsx`, `screens/defaults-screen.tsx`: la versión que rige por
+- [x] T025 [E4] `screens/platform-screen.tsx`, `screens/defaults-screen.tsx`: la versión que rige por
       su nombre, los valores, el historial con nombre y mediciones reiniciadas
-- [ ] T026 [E4] `screens/publish-platform-screen.tsx`, `screens/publish-defaults-screen.tsx`: todo
+- [x] T026 [E4] `screens/publish-platform-screen.tsx`, `screens/publish-defaults-screen.tsx`: todo
       precargado, modo correctivo, `useUnsavedWork`; «publicar» exige `configuration:write` y alcance
       `*`
-- [ ] T027 [E4] `screens/level-version-screen.tsx`: una versión por número, de sólo lectura
-- [ ] T028 [E4] `feature.ts`, el flujo y el grupo «Configuración» del menú en `app/flows.ts`
-- [ ] T029 [E4] Pruebas de las cinco pantallas: valores en su unidad; con alcance acotado no hay
+- [x] T027 [E4] `screens/level-version-screen.tsx`: una versión por número, de sólo lectura
+- [x] T028 [E4] `feature.ts`, el flujo y el grupo «Configuración» del menú en `app/flows.ts`
+- [x] T029 [E4] Pruebas de las cinco pantallas: valores en su unidad; con alcance acotado no hay
       «publicar»; el aviso nombra las mediciones reiniciadas; `409` y correctiva
-- [ ] T030 [E4] Contra el backend real (quickstart, escenarios 4 y 5). Anotar lo visto
+- [x] T030 [E4] Contra el backend real (quickstart, escenarios 4 y 5). Anotar lo visto
 
 **Punto de control**: escenarios 4 y 5 a mano; `npm test`. Commit:
 `feat(008): plataforma y defaults de tratamiento, vistos y publicados desde el menú`.
+
+> **Hecho el 2026-10-10.** Desvíos: (1) **El alcance total llega como una capacidad más.** Una pantalla
+> lee capacidades, no claims; `capabilitiesOf` (`api/ope/identity.ts`) suma `scope:all-merchants`
+> cuando el alcance es `*`, y «publicar» en un nivel global la exige junto a `configuration:write`.
+> La sesión falsa gana el papel `acotado` (todo, sobre un merchant). (2) **Dos recorridos y no
+> uno**: el menú toma flujos, así que «Defaults de tratamiento» es `defaultsFlow`, con su raíz; los
+> dos comparten la versión por número. (3) **La versión del merchant también se abre**
+> (`merchant-version-screen.tsx`), pendiente del tramo 2: el contrato no tiene una operación para
+> leer una, así que se recorren las páginas del historial; lo que no declaraba se dice «heredado» y no
+> se inventa. (4) **Lo común a las dos publicaciones globales** vive en `publish-level-form.tsx`; el
+> campo editable se separó en `treatment-fields.tsx` para que la plataforma use el mismo control.
+> (5) **Una lista obligatoria no se exige por su nombre**: su nombre lleva texto vacío y daba
+> «obligatorio» siempre. (6) **Las pruebas no importan pantallas** (`CU-47`): las toman de
+> `configuration.screens` por su id. (7) **Lo que se vio a mano**: después del `409` la sección
+> correctiva quedaba arriba, fuera de la vista; ahora el motivo se enfoca solo. Contra el backend:
+> la plataforma con sus valores en su unidad (los que dejaron las pruebas del backend en el almacén,
+> como `524907 ms`, en la del contrato porque no entran exactos en horas); la versión 160 abierta,
+> de sólo lectura; con un experimento activo sobre «Tienda Sur», la duración de la sesión en 45 min
+> volvió `409`, la correctiva con motivo publicó la 161 y el aviso dijo «reinició la medición de
+> exp_nliucusmyzzd»; los defaults publicados sin tocar nada dijeron «No cambió nada · Sigue la
+> versión 1», o sea que el cuerpo con la política de decisión copiada es el que rige. El experimento
+> se cerró. El escenario 5 no se ve en el navegador: la sesión falsa no manda credencial; lo cubren
+> las pruebas. **ABIERTO para el backend**: el historial y la lectura por número de un nivel global
+> devuelven `windowsRestarted` vacío —sólo la respuesta de publicar lo trae—, así que la columna
+> «Mediciones reiniciadas» queda vacía contra el backend real. Rota a propósito: «publicar» de los
+> defaults sin el alcance total (la prueba cae); el motivo sin enfocar (la prueba cae).
 
 ---
 

@@ -1,7 +1,8 @@
 import { Block, Field, Form, Page, Region, Section, Value } from '@granito/ui'
-import { defineScreen, Result, useTableQuery } from '@ope/core'
+import { ActionButton, defineScreen, Result, useFlow, useOutcome, useTableQuery } from '@ope/core'
 import { VersionHistory } from '../../../components/version-history'
 import {
+  ALL_MERCHANTS,
   type PlatformConfiguration,
   usePlatformConfiguration,
   usePlatformVersions,
@@ -9,7 +10,9 @@ import {
 import { PLATFORM_GROUPS } from '../data/platform-groups'
 import { present, valueAt } from '../data/present'
 import { PLATFORM_PRESENTATION } from '../data/units'
+import { configuration } from '../feature'
 import { configurationStrings } from '../strings'
+import { levelHistoryColumns } from './level-history-columns'
 
 /**
  * **La configuración de plataforma** (feature 008, escenarios 8 y 11): la
@@ -17,7 +20,8 @@ import { configurationStrings } from '../strings'
  *
  * Es la raíz de la funcionalidad: la primera entrada de su menú y a donde cae
  * un cerrar sin pila. Lo mismo para todos los merchants, así que no tiene
- * parámetros.
+ * parámetros. Publicar exige alcance sobre todos ellos (research §8): con un
+ * alcance acotado se ve y no se publica.
  */
 function PlatformScreen() {
   const platform = usePlatformConfiguration()
@@ -42,11 +46,30 @@ function PlatformScreen() {
 }
 
 function PlatformView({ platform }: { readonly platform: PlatformConfiguration }) {
+  const { emit } = useOutcome()
+  const flow = useFlow()
   const table = useTableQuery('versions')
   const versions = usePlatformVersions({ from: table.cursor, onCursor: table.setCursor })
+  const reach = flow.toReach(configuration.outcomes.platformPublishRequested)
 
   return (
-    <Form onSubmit={(event) => event.preventDefault()}>
+    <Form
+      onSubmit={(event) => event.preventDefault()}
+      actions={
+        /* Escribir no alcanza: lo que se publica acá alcanza a todo merchant. */
+        <ActionButton
+          type="button"
+          tone="primary"
+          {...reach}
+          requires={[...reach.requires, ALL_MERCHANTS]}
+          onClick={() =>
+            emit(configuration.outcomes.platformPublishRequested({ from: 'platform' }))
+          }
+        >
+          {configurationStrings.publishVersion}
+        </ActionButton>
+      }
+    >
       <Section title={configurationStrings.inForce} why={configurationStrings.platformWhy}>
         <Field label={configurationStrings.versionName} size="short">
           {() => <Value>{platform.version}</Value>}
@@ -66,20 +89,15 @@ function PlatformView({ platform }: { readonly platform: PlatformConfiguration }
       <VersionHistory
         versions={versions}
         table={table}
-        extra={[
-          {
-            id: 'stampedAs',
-            header: configurationStrings.versionName,
-            width: '130px',
-            cell: (row) => row.stampedAs,
-          },
-          {
-            id: 'windowsRestarted',
-            header: configurationStrings.windowsRestarted,
-            width: '200px',
-            cell: (row) => (row.windowsRestarted ?? []).join(', '),
-          },
-        ]}
+        extra={levelHistoryColumns}
+        onOpen={(row) =>
+          emit(
+            configuration.outcomes.levelVersionChosen({
+              level: 'platform',
+              version: String(row.version),
+            }),
+          )
+        }
       />
     </Form>
   )

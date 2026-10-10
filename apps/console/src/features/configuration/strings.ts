@@ -141,9 +141,31 @@ export const configurationStrings = {
   unmappedValuesKept: 'Valores sin mapear guardados',
   retryAfterSeconds: 'Reintento sugerido',
 
+  /* Los defaults de tratamiento (feature 008): el nivel 2. */
+  defaultsWhy:
+    'Lo que hereda todo merchant que no declara su propio valor: publicar una versión cambia lo que ' +
+    'rige para todos ellos.',
+
+  /* Una versión del historial, de sólo lectura (feature 008). */
+  versionTitle: (level: string, version: string) => `${level} · versión ${version}`,
+  merchantVersionTitle: (name: string, version: string) =>
+    `Configuración de ${name} · versión ${version}`,
+  versionSection: 'La versión',
+  versionWhy: 'Quién la publicó, cuándo, y si fue correctiva.',
+  versionNotFound: 'Esa versión no existe',
+  /* Lo que una versión vieja del merchant no declaraba: lo heredaba de los
+     defaults de entonces, que la versión no nombra. */
+  inheritedThen: 'Heredado',
+  back: 'Volver',
+
   /* Publicar una versión (feature 008). */
   publishVersion: 'Publicar una versión',
   publishTitle: (name: string) => `Publicar la configuración de ${name}`,
+  publishPlatformTitle: 'Publicar la configuración de plataforma',
+  publishDefaultsTitle: 'Publicar los defaults de tratamiento',
+  carriedDefaultsWhy:
+    'La política de decisión y la condición de riesgo de devolución no se editan acá: se copian tal ' +
+    'cual de la versión que rige al abrir esta pantalla.',
   publish: 'Publicar',
   cancel: 'Cancelar',
   declare: 'Declarar',
@@ -164,6 +186,8 @@ export const configurationStrings = {
     'y reinicia la ventana de medición del experimento. Lo cargado sigue acá.',
   published: 'Se publicó la versión',
   publishedDetail: (version: number) => `Versión ${version}`,
+  publishedRestarting: (version: number, experiments: readonly string[]) =>
+    `Versión ${version} · reinició la medición de ${experiments.join(', ')}`,
   unchanged: 'No cambió nada',
   unchangedDetail: (version: number) => `Sigue la versión ${version}`,
 

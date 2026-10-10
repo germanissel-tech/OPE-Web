@@ -31,6 +31,9 @@ import { ADMIN_CAPABILITIES, READ_CAPABILITIES } from '../api/ope/identity'
 const PAPELES = {
   todo: [...ADMIN_CAPABILITIES],
   lectura: [...READ_CAPABILITIES],
+  /* Todo, sobre un merchant: sin `ALL_MERCHANTS`, así que sin publicar
+     plataforma ni defaults (feature 008, escenario 5). */
+  acotado: [...ADMIN_CAPABILITIES],
   ninguno: [],
 } as const satisfies Record<string, readonly string[]>
 
@@ -104,7 +107,7 @@ export default function devSession(session: SessionConfig) {
       sub: 'fake-operator',
       operatorId: 'fake-operator',
       name: 'Operador de desarrollo',
-      scope: '*',
+      scope: papel === 'acotado' ? ['dev-merchant'] : '*',
       capabilities: [...PAPELES[papel]],
     },
   })
