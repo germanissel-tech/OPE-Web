@@ -849,15 +849,18 @@ for (const d of degradaciones) {
  *   la fila de la grilla— (`GR-38`, `GR-22`).
  *
  * Se mira cada `<Field>…</Field>` del código con lo que dibuja adentro. Un botón
- * **al lado** de un control o de un valor —quitar un renglón, copiar un secreto—
- * no se marca: es otra discusión, y está en las propuestas a granito.
+ * **al lado** de un control o de un valor —quitar un renglón, copiar un secreto,
+ * heredar un valor— no se marca: es otra discusión, y está en las propuestas a
+ * granito. Lo que se marca es que **todo** lo que el campo dibuja sean botones;
+ * un componente propio cuenta como contenido, porque el control puede estar
+ * adentro (la feature 008 lo encontró con los campos del tratamiento, que eligen
+ * su control según el contrato).
  *
  * **Lo que no ve, declarado**: un campo que un componente propio envuelve, o
  * uno que se cierra en otro archivo. Y, como todo lo de acá, **si el dibujo es
  * bueno**: eso lo ve una persona, igual que en granito.
  */
-const GRANITO_CONTENT =
-  /<(TextInput|TextArea|Select|Checkbox|Radio|MarkGroup|DateInput|MoneyInput|NumberInput|ComboBox|Value|Badge|FormattedValue)\b/
+const BUTTONS = new Set(['Button', 'ActionButton'])
 
 for (const file of checked) {
   const shortPath = relative(ROOT, file).split(sep).join('/')
@@ -874,7 +877,10 @@ for (const file of checked) {
       )
     }
 
-    if (/<(Button|ActionButton)\b/.test(block) && !GRANITO_CONTENT.test(block)) {
+    const inside = [...block.matchAll(/<([A-Z][A-Za-z0-9]*)\b/g)]
+      .map((tag) => tag[1])
+      .filter((tag) => tag !== 'Field')
+    if (inside.length > 0 && inside.every((tag) => BUTTONS.has(tag))) {
       fail(
         'Un campo que sólo tiene un botón (GR-38)',
         shortPath,

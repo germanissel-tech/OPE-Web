@@ -30,4 +30,8 @@ export const sharedStrings = {
   correctiveMark: 'Publicar como correctiva',
   reasonLabel: 'Motivo',
   reasonHelp: 'Queda en el historial y en el registro de administración.',
+  frozenTitle: 'Hay una medición en curso',
+  frozenDetail:
+    'Un experimento activo alcanza este cambio: sólo entra como correctiva, con su motivo, y reinicia ' +
+    'su ventana de medición. Lo cargado sigue acá.',
 } as const

@@ -141,6 +141,50 @@ export const configurationStrings = {
   unmappedValuesKept: 'Valores sin mapear guardados',
   retryAfterSeconds: 'Reintento sugerido',
 
+  /* Publicar una versión (feature 008). */
+  publishVersion: 'Publicar una versión',
+  publishTitle: (name: string) => `Publicar la configuración de ${name}`,
+  publish: 'Publicar',
+  cancel: 'Cancelar',
+  declare: 'Declarar',
+  inherit: 'Heredar',
+  add: 'Agregar',
+  remove: 'Quitar',
+  publishWhy:
+    'Cada valor se hereda de los defaults o se declara. Lo que se declara viaja; lo heredado no. Lo que ' +
+    'no se edita acá viaja como está en la versión que rige.',
+  carriedSection: 'Lo que viaja como está',
+  carriedWhy:
+    'La política de decisión, el riesgo de devolución, los anclajes y las etiquetas no se editan acá: ' +
+    'se copian tal cual de la versión que rige al abrir esta pantalla.',
+  rejectedTitle: 'El servidor no lo aceptó',
+  frozenTitle: 'Hay una medición en curso',
+  frozenDetail:
+    'Un experimento activo alcanza este cambio. Sólo se acepta como versión correctiva, con su motivo, ' +
+    'y reinicia la ventana de medición del experimento. Lo cargado sigue acá.',
+  published: 'Se publicó la versión',
+  publishedDetail: (version: number) => `Versión ${version}`,
+  unchanged: 'No cambió nada',
+  unchangedDetail: (version: number) => `Sigue la versión ${version}`,
+
+  /**
+   * Lo que se le dice a un campo con la forma mal (`CU-38`, capa 1). El rango
+   * llega en la unidad en que se carga, así que puede traer decimales que no se
+   * leen: se redondea al mostrarlo, nunca al juzgarlo.
+   */
+  shape: {
+    required: 'Es obligatorio.',
+    tooLong: (max: number) => `No puede pasar de ${max} caracteres.`,
+    badFormat: 'No tiene la forma que el contrato pide.',
+    outOfRange: (min: number | undefined, max: number | undefined) => {
+      const shown = (value: number) => String(Math.round(value * 100) / 100).replace('.', ',')
+      if (max === undefined) return `Va desde ${shown(min ?? 0)}.`
+      return min !== undefined && min > 0 && min < 0.01
+        ? `Va hasta ${shown(max)}, y más que cero.`
+        : `Va entre ${shown(min ?? 0)} y ${shown(max)}.`
+    },
+  },
+
   /* De dónde sale un valor. */
   declared: 'Declarado por el merchant',
   inherited: (defaults: string) => `Heredado de ${defaults}`,

@@ -1,12 +1,14 @@
-import { useCollection, useService } from '@ope/core'
+import { defineAction, useCollection, useService } from '@ope/core'
 import { useQuery } from '@tanstack/react-query'
 import {
   type MerchantConfiguration,
   type MerchantConfigurationDeclared,
+  type MerchantConfigurationInput,
   type MerchantConfigurationVersion,
   type OpeClient,
   opeService,
 } from '../../../api/ope/client'
+import { opeOperation } from '../../../api/ope/operations'
 import { configurationStrings } from '../strings'
 import { merchantConfiguration, merchantConfigurationVersions } from './keys'
 import { valueAt } from './present'
@@ -20,6 +22,7 @@ import { valueAt } from './present'
 export type {
   MerchantConfiguration,
   MerchantConfigurationDeclared,
+  MerchantConfigurationInput,
   MerchantConfigurationVersion,
   OpeClient,
 }
@@ -79,3 +82,48 @@ export function originOf(
       ? configurationStrings.inherited(defaultsVersion)
       : configurationStrings.declared
 }
+
+/** Lo que la publicación necesita: a quién, qué, y qué versión regía al abrir. */
+export type PublishMerchantInput = {
+  readonly merchantId: string
+  readonly body: MerchantConfigurationInput
+  /** La versión que regía al abrir la pantalla; sin versión propia, ninguna. */
+  readonly inForce: number | undefined
+}
+
+/**
+ * **Publicar una versión de la configuración de un merchant** (feature 008).
+ *
+ * Idempotente por contrato (`CU-34`): un reintento con el mismo cuerpo no crea
+ * otra. Un cuerpo igual a la versión que rige vuelve `200` con esa misma, y el
+ * cliente no expone el estado HTTP: el aviso lo sabe comparando el número que
+ * volvió con el que regía al abrir (research §9).
+ */
+export const publishMerchantConfiguration = defineAction({
+  id: 'configuration.publishMerchant',
+
+  operations: {
+    publish: opeOperation(
+      'publishMerchantConfiguration',
+      (ope, input: PublishMerchantInput): Promise<MerchantConfigurationVersion> =>
+        ope.publishMerchantConfiguration(input.merchantId, input.body),
+    ),
+  },
+
+  run: (input: PublishMerchantInput, ops) => ops.publish.run(input),
+
+  /* El número y nada más: el registro de la consola lleva acciones, no cuerpos (`CU-35`). */
+  announces: (published, input) =>
+    published.version === input.inForce
+      ? {
+          title: configurationStrings.unchanged,
+          description: configurationStrings.unchangedDetail(published.version),
+        }
+      : {
+          title: configurationStrings.published,
+          description: configurationStrings.publishedDetail(published.version),
+        },
+
+  /* Lo efectivo, lo declarado y el historial del merchant cuelgan de la misma clave. */
+  invalidates: (input) => [merchantConfiguration(input.merchantId)],
+})

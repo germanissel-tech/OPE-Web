@@ -1,6 +1,7 @@
 import { defineFeature, outcome } from '@ope/core'
 import { merchantConfigurationScreen } from './screens/merchant-configuration-screen'
 import { platformScreen } from './screens/platform-screen'
+import { publishMerchantConfigurationScreen } from './screens/publish-merchant-configuration-screen'
 
 /**
  * **La configuración versionada** (feature 008): los tres niveles —la de cada
@@ -12,7 +13,7 @@ import { platformScreen } from './screens/platform-screen'
  * allá, no importándose (`CU-15`).
  */
 export const configuration = defineFeature({
-  screens: [platformScreen, merchantConfigurationScreen],
+  screens: [platformScreen, merchantConfigurationScreen, publishMerchantConfigurationScreen],
 
   /* La plataforma es la raíz: es la primera entrada del menú y no tiene
      parámetros, que es lo que una raíz necesita para que un cerrar sin pila
@@ -23,6 +24,18 @@ export const configuration = defineFeature({
     /* La vista de un merchant terminó: vuelve a donde se la pidió. */
     merchantConfigurationClosed: outcome<{ merchantId: string }>(
       'configuration.merchantConfigurationClosed',
+    ),
+
+    /* Publicar una versión del merchant: la vista la pide, y la publicación
+       termina publicada o se cancela. */
+    merchantPublishRequested: outcome<{ merchantId: string }>(
+      'configuration.merchantPublishRequested',
+    ),
+    merchantConfigurationPublished: outcome<{ merchantId: string }>(
+      'configuration.merchantConfigurationPublished',
+    ),
+    merchantPublishCancelled: outcome<{ merchantId: string }>(
+      'configuration.merchantPublishCancelled',
     ),
   },
 })

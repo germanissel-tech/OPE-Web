@@ -3,6 +3,7 @@ import { closes, defineFlow, finishes, group, omits, opens } from '@ope/core'
 import { configuration } from '../features/configuration/feature'
 import { merchantConfigurationScreen } from '../features/configuration/screens/merchant-configuration-screen'
 import { platformScreen } from '../features/configuration/screens/platform-screen'
+import { publishMerchantConfigurationScreen } from '../features/configuration/screens/publish-merchant-configuration-screen'
 import { configurationStrings } from '../features/configuration/strings'
 import { home } from '../features/home/feature'
 import { aboutScreen } from '../features/home/screens/about-screen'
@@ -82,6 +83,20 @@ export const merchantsFlow = defineFlow({
         merchantId,
       }),
     ),
+
+    /* Publicar se apila sobre la vista de configuración: termina en ella,
+       publicada, o se cancela y desapila. */
+    opens(
+      configuration.outcomes.merchantPublishRequested,
+      publishMerchantConfigurationScreen,
+      ({ merchantId }) => ({ merchantId }),
+    ),
+    finishes(
+      configuration.outcomes.merchantConfigurationPublished,
+      merchantConfigurationScreen,
+      ({ merchantId }) => ({ merchantId }),
+    ),
+    closes(configuration.outcomes.merchantPublishCancelled),
   ],
 })
 
@@ -96,7 +111,12 @@ export const merchantsFlow = defineFlow({
 export const configurationFlow = defineFlow({
   id: 'configuration',
   root: platformScreen,
-  steps: [omits(configuration.outcomes.merchantConfigurationClosed)],
+  steps: [
+    omits(configuration.outcomes.merchantConfigurationClosed),
+    omits(configuration.outcomes.merchantPublishRequested),
+    omits(configuration.outcomes.merchantConfigurationPublished),
+    omits(configuration.outcomes.merchantPublishCancelled),
+  ],
 })
 
 /**

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import {
   ApplicationView,
+  closes,
   createApplication,
   createQueryClient,
   defineFlow,
@@ -41,8 +42,8 @@ import { configurationStrings } from '../strings'
 
 afterEach(cleanup)
 
-/* La primera es la plataforma, que es la raíz; la del merchant va segunda. */
-const [, merchantConfigurationScreen] = configuration.screens
+/* La primera es la plataforma, que es la raíz; después la vista y la publicación del merchant. */
+const [, merchantConfigurationScreen, publishMerchantConfigurationScreen] = configuration.screens
 
 const effective: MerchantConfiguration['effective'] = {
   freshness: { catalogMs: 129600000, stockAndPriceMs: 600000 },
@@ -186,18 +187,40 @@ async function mount(client: OpeClient, capabilities: readonly string[]) {
     steps: [
       opens(opened, merchantConfigurationScreen, ({ merchantId }) => ({ merchantId })),
       finishes(configuration.outcomes.merchantConfigurationClosed, hostScreen),
+      opens(
+        configuration.outcomes.merchantPublishRequested,
+        publishMerchantConfigurationScreen,
+        ({ merchantId }) => ({ merchantId }),
+      ),
+      finishes(
+        configuration.outcomes.merchantConfigurationPublished,
+        merchantConfigurationScreen,
+        ({ merchantId }) => ({ merchantId }),
+      ),
+      closes(configuration.outcomes.merchantPublishCancelled),
     ],
   })
   const application = createApplication(
     {
       name: 'console',
-      screens: [hostScreen, merchantConfigurationScreen],
+      screens: [hostScreen, merchantConfigurationScreen, publishMerchantConfigurationScreen],
       flows: [flow],
       menu: [],
-      featureRootOf: { host: 'host', merchantConfiguration: 'host' },
+      featureRootOf: {
+        host: 'host',
+        merchantConfiguration: 'host',
+        publishMerchantConfiguration: 'host',
+      },
       outcomesOf: {
         host: [opened.id],
-        merchantConfiguration: [configuration.outcomes.merchantConfigurationClosed.id],
+        merchantConfiguration: [
+          configuration.outcomes.merchantConfigurationClosed.id,
+          configuration.outcomes.merchantPublishRequested.id,
+        ],
+        publishMerchantConfiguration: [
+          configuration.outcomes.merchantConfigurationPublished.id,
+          configuration.outcomes.merchantPublishCancelled.id,
+        ],
       },
       outcomes: [opened, ...Object.values(configuration.outcomes)],
       toCapabilities: () => new Set(capabilities),

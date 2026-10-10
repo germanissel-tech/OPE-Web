@@ -120,38 +120,59 @@ cliente.
 
 **Meta**: publicar una versión editando lo operativo, heredando o declarando, sin perder lo complejo.
 
-- [ ] T014 [E3] `apps/console/src/features/merchants/data/configuration-body.ts` (NUEVO):
+- [x] T014 [E3] `apps/console/src/features/merchants/data/configuration-body.ts` (NUEVO):
       `valuesOf(declared)` → valores del formulario en la unidad que se muestra; `bodyOf(values,
       declaredInForce, corrective, reason)` → `MerchantConfigurationInput` con lo complejo copiado
       (research §6, §7); `constraintsFor(values)` con la versión comercial obligatoria si la política
       viaja y el motivo obligatorio si es correctiva
-- [ ] T015 [E3] `configuration-body.test.ts`: sin tocar nada, el cuerpo es lo declarado; `anchors`,
+- [x] T015 [E3] `configuration-body.test.ts`: sin tocar nada, el cuerpo es lo declarado; `anchors`,
       `attributeLabels`, `decisionPolicy` y `returnRisk` idénticos; heredar saca el valor; la política
       comercial con sólo `returnRisk` viaja con su versión; rota una vez perdiendo `anchors`
-- [ ] T016 [E3] `apps/console/src/features/merchants/data/merchant-configuration.ts`: la acción
+- [x] T016 [E3] `apps/console/src/features/merchants/data/merchant-configuration.ts`: la acción
       `configuration.publishMerchant`; invalida vista e historial; anuncia la versión o «no cambió
       nada» comparando números (research §9)
-- [ ] T017 [P] [E3] `apps/console/src/components/corrective-section.tsx` (NUEVO): «correctiva», el
+- [x] T017 [P] [E3] `apps/console/src/components/corrective-section.tsx` (NUEVO): «correctiva», el
       motivo y qué implica; se muestra sola cuando la pantalla está en modo correctivo
-- [ ] T018 [E3] `apps/console/src/features/configuration/screens/treatment-fields.tsx` (NUEVO): los
+- [x] T018 [E3] `apps/console/src/features/configuration/screens/treatment-fields.tsx` (NUEVO): los
       campos de tratamiento editables; con `inherit` cada uno alterna entre heredado (valor efectivo
       de sólo lectura y «declarar») y declarado (control y «heredar»); renglones para idiomas,
       atributos y escalera; marcas para superficies, barreras y evidencia; el error de la escalera en
       su sección
-- [ ] T019 [E3] `apps/console/src/features/merchants/screens/publish-configuration-screen.tsx` (NUEVO):
+- [x] T019 [E3] `apps/console/src/features/merchants/screens/publish-configuration-screen.tsx` (NUEVO):
       `/merchants/:merchantId/configuration/publish`, `configuration:write`; precarga; lo complejo
       resumido y dicho «viaja como está»; `useUnsavedWork`; el `409` pasa a modo correctivo por
       `onRejected` (research §10); termina en la vista
-- [ ] T020 [E3] Flujo y desenlaces `configurationPublishRequested`/`configurationPublished`; los
+- [x] T020 [E3] Flujo y desenlaces `configurationPublishRequested`/`configurationPublished`; los
       arneses
-- [ ] T021 [E3] `publish-configuration-screen.test.tsx`: precarga; declarar y heredar; el cuerpo
+- [x] T021 [E3] `publish-configuration-screen.test.tsx`: precarga; declarar y heredar; el cuerpo
       enviado; «no cambió nada»; `409` conserva lo cargado y pide motivo; correctiva sin motivo no
       viaja; `422` en la escalera cae en ella; `duplicate-attribute-label` al pie; sin
       `configuration:write` no hay «publicar»
-- [ ] T022 [E3] Contra el backend real (quickstart, escenarios 2 y 3). Anotar lo visto
+- [x] T022 [E3] Contra el backend real (quickstart, escenarios 2 y 3). Anotar lo visto
 
 **Punto de control**: escenarios 2 y 3 a mano; `npm test`. Commit:
 `feat(008): la configuración del merchant se publica, heredando o declarando cada valor`.
+
+> **Hecho el 2026-10-10.** Desvíos: (1) todo vive en `features/configuration` (tramo 2): el cuerpo en
+> `data/merchant-body.ts`, el traductor entre contrato y formulario en `data/treatment-form.ts`, la
+> pantalla en `publish-merchant-configuration-screen.tsx`. (2) **El núcleo declara `enum`** en
+> `FieldConstraints`, que el contrato ya emitía con textos, números y marcas: es lo que dice qué
+> control dibujar (`kindOf`). (3) **Una lista se marca por su nombre**, con texto vacío, además de
+> sus renglones: sin eso una lista declarada vacía y una heredada eran lo mismo. (4) **La regla 14
+> mira que todo lo del campo sean botones**, no que falte un control de granito: los campos del
+> tratamiento eligen su control en un componente propio, y la versión anterior daba un falso
+> positivo. Sigue agarrando la ficha vieja. (5) **Dos defectos que sólo se vieron en el navegador.**
+> «Declarar» se estiraba a todo el ancho del campo, el mismo problema de la ficha: un envoltorio
+> propio deja que se estire él y no el botón, y queda como propuesta a granito. Y publicar
+> preguntaba por cambios sin guardar sobre una versión ya publicada: el aviso al marco es un cambio
+> de estado del proveedor y recién vale en su dibujo siguiente, así que la salida espera un dibujo
+> más. (6) **El `409` no salió con «Tienda de desarrollo»**: corridas de pruebas del backend
+> cerraron el experimento de la semilla en el almacén de desarrollo. Se abrió y activó uno sobre
+> «Tienda Sur» por la API, se probó, y se cerró. Contra el backend: declarar el holdout en `7`,
+> publicar (`201`, «Se publicó la versión · Versión 1»), la vista con `7 %` y «Declarado por el
+> merchant»; con el experimento activo, el `409` marca la correctiva y exige el motivo; con motivo,
+> versión 2 correctiva en el historial. Rota a propósito: el cuerpo sin `anchors` (cuatro pruebas
+> caen).
 
 ---
 

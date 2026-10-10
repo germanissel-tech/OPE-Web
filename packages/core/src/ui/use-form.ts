@@ -43,6 +43,11 @@ export type FieldConstraints = {
    */
   readonly format?: string
   /**
+   * Los valores de una lista cerrada del contrato. No se valida con esto —el
+   * control que lo dibuja no deja elegir otro—: dice qué opciones ofrecer.
+   */
+  readonly enum?: readonly (string | number | boolean)[]
+  /**
    * Qué es el dato, en el vocabulario de granito.
    *
    * No se valida con esto: **se dibuja**. Vive acá porque sale del mismo lugar

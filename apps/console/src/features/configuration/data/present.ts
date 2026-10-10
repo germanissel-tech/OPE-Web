@@ -31,6 +31,9 @@ const CLOSED: ReadonlyMap<string, string> = new Map(
   ).map((value) => [value, configurationStrings[value]]),
 )
 
+/** Un valor cerrado del contrato por el nombre con que el catálogo lo dice; otro, tal cual. */
+export const labelOf = (value: string) => CLOSED.get(value) ?? value
+
 /** El separador decimal que se lee: el mismo que granito muestra. */
 const decimalComma = (text: string) => text.replace('.', ',')
 
@@ -56,7 +59,7 @@ function scalar(value: unknown, how: Presentation | undefined): string {
       ? `${raw} ${configurationStrings.units[base]}`
       : `${decimalComma(inUnit)} ${configurationStrings.units[unit]}`
   }
-  if (typeof value === 'string') return CLOSED.get(value) ?? value
+  if (typeof value === 'string') return labelOf(value)
   return ''
 }
 

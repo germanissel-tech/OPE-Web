@@ -1,5 +1,13 @@
 import { Block, Button, Field, Form, Page, Region, Section, Value } from '@granito/ui'
-import { defineScreen, Result, useOutcome, useScreenParams, useTableQuery } from '@ope/core'
+import {
+  ActionButton,
+  defineScreen,
+  Result,
+  useFlow,
+  useOutcome,
+  useScreenParams,
+  useTableQuery,
+} from '@ope/core'
 import { VersionHistory } from '../../../components/version-history'
 import {
   type MerchantConfiguration,
@@ -55,6 +63,7 @@ function ConfigurationView({
   readonly served: MerchantConfiguration
 }) {
   const { emit } = useOutcome()
+  const flow = useFlow()
   const table = useTableQuery('versions')
   const versions = useConfigurationVersions(merchantId, {
     from: table.cursor,
@@ -67,12 +76,23 @@ function ConfigurationView({
     <Form
       onSubmit={(event) => event.preventDefault()}
       actions={
-        <Button
-          type="button"
-          onClick={() => emit(configuration.outcomes.merchantConfigurationClosed({ merchantId }))}
-        >
-          {configurationStrings.backToMerchant}
-        </Button>
+        <>
+          <Button
+            type="button"
+            onClick={() => emit(configuration.outcomes.merchantConfigurationClosed({ merchantId }))}
+          >
+            {configurationStrings.backToMerchant}
+          </Button>
+          {/* Publicar exige `configuration:write`; qué pantalla es lo dice el flujo. */}
+          <ActionButton
+            type="button"
+            tone="primary"
+            {...flow.toReach(configuration.outcomes.merchantPublishRequested)}
+            onClick={() => emit(configuration.outcomes.merchantPublishRequested({ merchantId }))}
+          >
+            {configurationStrings.publishVersion}
+          </ActionButton>
+        </>
       }
     >
       {/* Las tres versiones que cada decisión estampa (`ADR-031`): es lo que
