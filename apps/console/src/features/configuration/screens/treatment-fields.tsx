@@ -240,7 +240,7 @@ function Control({
 /** Reemplazar los renglones de una lista por otros, en orden. */
 function replaceRows(form: Form<Values>, name: string, items: readonly string[]) {
   for (const row of rowsOf(form.values, name)) form.unset(row)
-  items.forEach((item, at) => form.set(`${name}.${at}`, item))
+  for (const [at, item] of items.entries()) form.set(`${name}.${at}`, item)
 }
 
 /** Una lista cerrada: una marca por opción del contrato, y la lista son las marcadas. */
