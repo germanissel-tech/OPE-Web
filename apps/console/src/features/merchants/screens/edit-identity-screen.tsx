@@ -1,5 +1,13 @@
 import { Alert, Block, Button, Form, Page, Region } from '@granito/ui'
-import { defineScreen, Result, useAction, useForm, useOutcome, useScreenParams } from '@ope/core'
+import {
+  defineScreen,
+  Result,
+  useAction,
+  useForm,
+  useOutcome,
+  useScreenParams,
+  type Witnessed,
+} from '@ope/core'
 import { type FormEvent, useState } from 'react'
 import { identityConstraints, identityValuesOf, profileBodyOf } from '../data/identity'
 import { displayNameOf, type Merchant, useMerchant } from '../data/merchants'
@@ -42,7 +50,7 @@ function EditIdentityScreen() {
   )
 }
 
-function IdentityForm({ merchant }: { readonly merchant: Merchant }) {
+function IdentityForm({ merchant }: { readonly merchant: Witnessed<Merchant> }) {
   const { emit } = useOutcome()
   const close = () => emit(merchants.outcomes.identityClosed({ merchantId: merchant.merchantId }))
   /* Un rechazo que no señala ningún campo va al pie, con lo que el servidor dijo. */
@@ -62,7 +70,11 @@ function IdentityForm({ merchant }: { readonly merchant: Merchant }) {
     event.preventDefault()
     setRejected(undefined)
     if (!form.attempt()) return
-    void action.run({ merchantId: merchant.merchantId, body: profileBodyOf(form.values) })
+    void action.run({
+      merchantId: merchant.merchantId,
+      body: profileBodyOf(form.values),
+      witness: merchant.witness,
+    })
   }
 
   return (

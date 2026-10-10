@@ -1,4 +1,11 @@
-import { createOpeClient, defineService, type SessionHooks, unwrap } from '@ope/core'
+import {
+  createOpeClient,
+  defineService,
+  type SessionHooks,
+  unwrap,
+  unwrapWitnessed,
+  type Witnessed,
+} from '@ope/core'
 import type { components, operations, paths } from '../../../../../contracts/ope/api'
 
 /**
@@ -104,7 +111,8 @@ export type VersionsQuery = NonNullable<
 export type OpeClient = {
   /** Los merchants del alcance del operador, por cursor. */
   readonly listMerchants: (query: MerchantQuery) => Promise<MerchantPage>
-  readonly getMerchant: (merchantId: string) => Promise<Merchant>
+  /** Con su testigo: la identidad se reemplaza entera y lo pide (`CU-29`, ADR-046 del backend). */
+  readonly getMerchant: (merchantId: string) => Promise<Witnessed<Merchant>>
   readonly createMerchant: (body: MerchantCreate) => Promise<MerchantCredentials>
   /** Terminal: no hay vuelta ni borrado (`ADR-031` del backend). */
   readonly deactivateMerchant: (merchantId: string) => Promise<Merchant>
@@ -127,6 +135,7 @@ export type OpeClient = {
   readonly updateMerchantProfile: (
     merchantId: string,
     body: MerchantProfileInput,
+    witness: string,
   ) => Promise<Merchant>
   /** El registro de administración del merchant, lo más nuevo primero, por cursor. */
   readonly listMerchantAdminLog: (
@@ -137,17 +146,28 @@ export type OpeClient = {
   /* La configuración: tres niveles con la misma forma —lo que rige, el
      historial, publicar— (feature 008). Publicar devuelve `201` con la versión
      nueva o `200` con la que rige si el cuerpo es igual; el cliente devuelve el
-     cuerpo y quien llama compara números. */
-  readonly getMerchantConfiguration: (merchantId: string) => Promise<MerchantConfiguration>
+     cuerpo y quien llama compara números.
+
+     Las tres lecturas de lo que rige traen el testigo, y las tres
+     publicaciones lo devuelven en `If-Match` (feature 009): sin él, `428`;
+     con uno que ya no es el de ahora, `412` y nada se escribe. */
+  readonly getMerchantConfiguration: (
+    merchantId: string,
+  ) => Promise<Witnessed<MerchantConfiguration>>
   readonly listConfigurationVersions: (
     merchantId: string,
     query: VersionsQuery,
   ) => Promise<MerchantConfigurationVersionPage>
+  readonly getMerchantConfigurationVersion: (
+    merchantId: string,
+    version: number,
+  ) => Promise<MerchantConfigurationVersion>
   readonly publishMerchantConfiguration: (
     merchantId: string,
     body: MerchantConfigurationInput,
+    witness: string,
   ) => Promise<MerchantConfigurationVersion>
-  readonly getPlatformConfiguration: () => Promise<PlatformConfiguration>
+  readonly getPlatformConfiguration: () => Promise<Witnessed<PlatformConfiguration>>
   readonly listPlatformConfigurationVersions: (
     query: VersionsQuery,
   ) => Promise<PlatformConfigurationVersionPage>
@@ -156,14 +176,16 @@ export type OpeClient = {
   ) => Promise<PlatformConfigurationVersion>
   readonly publishPlatformConfiguration: (
     body: PlatformConfigurationInput,
+    witness: string,
   ) => Promise<PlatformConfigurationVersion>
-  readonly getTreatmentDefaults: () => Promise<TreatmentDefaults>
+  readonly getTreatmentDefaults: () => Promise<Witnessed<TreatmentDefaults>>
   readonly listTreatmentDefaultsVersions: (
     query: VersionsQuery,
   ) => Promise<TreatmentDefaultsVersionPage>
   readonly getTreatmentDefaultsVersion: (version: number) => Promise<TreatmentDefaultsVersion>
   readonly publishTreatmentDefaults: (
     body: TreatmentDefaultsInput,
+    witness: string,
   ) => Promise<TreatmentDefaultsVersion>
 }
 
@@ -184,7 +206,7 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
     },
 
     async getMerchant(merchantId) {
-      return unwrap<Merchant>(
+      return unwrapWitnessed<Merchant>(
         await client.GET('/v1/admin/merchants/{merchantId}', { params: { path: { merchantId } } }),
       )
     },
@@ -237,10 +259,10 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
       )
     },
 
-    async updateMerchantProfile(merchantId, body) {
+    async updateMerchantProfile(merchantId, body, witness) {
       return unwrap<Merchant>(
         await client.PUT('/v1/admin/merchants/{merchantId}/profile', {
-          params: { path: { merchantId } },
+          params: { path: { merchantId }, header: { 'If-Match': witness } },
           body,
         }),
       )
@@ -255,7 +277,7 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
     },
 
     async getMerchantConfiguration(merchantId) {
-      return unwrap<MerchantConfiguration>(
+      return unwrapWitnessed<MerchantConfiguration>(
         await client.GET('/v1/admin/merchants/{merchantId}/configuration', {
           params: { path: { merchantId } },
         }),
@@ -270,17 +292,27 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
       )
     },
 
-    async publishMerchantConfiguration(merchantId, body) {
+    async getMerchantConfigurationVersion(merchantId, version) {
+      return unwrap<MerchantConfigurationVersion>(
+        await client.GET('/v1/admin/merchants/{merchantId}/configuration/versions/{version}', {
+          params: { path: { merchantId, version } },
+        }),
+      )
+    },
+
+    async publishMerchantConfiguration(merchantId, body, witness) {
       return unwrap<MerchantConfigurationVersion>(
         await client.POST('/v1/admin/merchants/{merchantId}/configuration', {
-          params: { path: { merchantId } },
+          params: { path: { merchantId }, header: { 'If-Match': witness } },
           body,
         }),
       )
     },
 
     async getPlatformConfiguration() {
-      return unwrap<PlatformConfiguration>(await client.GET('/v1/admin/platform-configuration'))
+      return unwrapWitnessed<PlatformConfiguration>(
+        await client.GET('/v1/admin/platform-configuration'),
+      )
     },
 
     async listPlatformConfigurationVersions(query) {
@@ -297,14 +329,17 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
       )
     },
 
-    async publishPlatformConfiguration(body) {
+    async publishPlatformConfiguration(body, witness) {
       return unwrap<PlatformConfigurationVersion>(
-        await client.POST('/v1/admin/platform-configuration', { body }),
+        await client.POST('/v1/admin/platform-configuration', {
+          params: { header: { 'If-Match': witness } },
+          body,
+        }),
       )
     },
 
     async getTreatmentDefaults() {
-      return unwrap<TreatmentDefaults>(await client.GET('/v1/admin/treatment-defaults'))
+      return unwrapWitnessed<TreatmentDefaults>(await client.GET('/v1/admin/treatment-defaults'))
     },
 
     async listTreatmentDefaultsVersions(query) {
@@ -321,9 +356,12 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
       )
     },
 
-    async publishTreatmentDefaults(body) {
+    async publishTreatmentDefaults(body, witness) {
       return unwrap<TreatmentDefaultsVersion>(
-        await client.POST('/v1/admin/treatment-defaults', { body }),
+        await client.POST('/v1/admin/treatment-defaults', {
+          params: { header: { 'If-Match': witness } },
+          body,
+        }),
       )
     },
   }

@@ -138,6 +138,7 @@ function ope(served: MerchantConfiguration, versions: readonly MerchantConfigura
     listMerchants: no,
     async getMerchant() {
       return {
+        witness: '"w-1"',
         merchantId: 'mrc_conf',
         status: 'active',
         origins: ['https://conf.example'],
@@ -155,11 +156,12 @@ function ope(served: MerchantConfiguration, versions: readonly MerchantConfigura
     updateMerchantProfile: no,
     listMerchantAdminLog: no,
     async getMerchantConfiguration() {
-      return served
+      return { ...served, witness: '"w-1"' }
     },
     async listConfigurationVersions() {
       return { items: [...versions] }
     },
+    getMerchantConfigurationVersion: no,
     publishMerchantConfiguration: no,
     getPlatformConfiguration: no,
     listPlatformConfigurationVersions: no,

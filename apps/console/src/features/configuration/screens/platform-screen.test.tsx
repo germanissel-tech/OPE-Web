@@ -178,9 +178,10 @@ function ope(answers: {
     listMerchantAdminLog: no,
     getMerchantConfiguration: no,
     listConfigurationVersions: no,
+    getMerchantConfigurationVersion: no,
     publishMerchantConfiguration: no,
     async getPlatformConfiguration() {
-      return { version: 'platform-2', ...platform }
+      return { version: 'platform-2', ...platform, witness: '"w-1"' }
     },
     async listPlatformConfigurationVersions() {
       return { items: history }
@@ -195,7 +196,7 @@ function ope(answers: {
       return answerAt(answers.platform, sentPlatform.length - 1)
     },
     async getTreatmentDefaults() {
-      return { version: 'defaults-1', ...defaults }
+      return { version: 'defaults-1', ...defaults, witness: '"w-1"' }
     },
     async listTreatmentDefaultsVersions() {
       return { items: [defaultsVersion(1)] }

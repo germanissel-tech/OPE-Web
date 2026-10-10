@@ -30,6 +30,7 @@ export function PublishLevelForm<Body, Output, Ops extends Operations>({
   action: definition,
   initial,
   inForce,
+  witness,
   constraintsOf,
   bodyOf,
   onPublished,
@@ -41,6 +42,8 @@ export function PublishLevelForm<Body, Output, Ops extends Operations>({
   readonly initial: { readonly values: Values; readonly shown: Shown }
   /** El nombre de la versión que rige al abrir: con él se sabe si no cambió nada. */
   readonly inForce: string
+  /** El testigo de lo que rige al abrir: la publicación lo devuelve en `If-Match` (`CU-29`). */
+  readonly witness: string
   readonly constraintsOf: (values: Values, shown: Shown) => MessageConstraints
   readonly bodyOf: (values: Values, shown: Shown) => Body
   readonly onPublished: () => void
@@ -91,7 +94,7 @@ export function PublishLevelForm<Body, Output, Ops extends Operations>({
     event.preventDefault()
     setRejected(undefined)
     if (!form.attempt()) return
-    void action.run({ body: bodyOf(form.values, shown), inForce })
+    void action.run({ body: bodyOf(form.values, shown), inForce, witness })
   }
 
   return (

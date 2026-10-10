@@ -118,6 +118,8 @@ export type PublishMerchantInput = {
   readonly body: MerchantConfigurationInput
   /** La versión que regía al abrir la pantalla; sin versión propia, ninguna. */
   readonly inForce: number | undefined
+  /** El testigo de lo que se leyó al abrir, o de la relectura tras un choque (`CU-29`). */
+  readonly witness: string
 }
 
 /**
@@ -135,7 +137,7 @@ export const publishMerchantConfiguration = defineAction({
     publish: opeOperation(
       'publishMerchantConfiguration',
       (ope, input: PublishMerchantInput): Promise<MerchantConfigurationVersion> =>
-        ope.publishMerchantConfiguration(input.merchantId, input.body),
+        ope.publishMerchantConfiguration(input.merchantId, input.body, input.witness),
     ),
   },
 

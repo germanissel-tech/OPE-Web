@@ -1,5 +1,5 @@
 import { Block, Field, Page, Region, Section, Value } from '@granito/ui'
-import { defineScreen, Result, useOutcome } from '@ope/core'
+import { defineScreen, Result, useOutcome, type Witnessed } from '@ope/core'
 import { useState } from 'react'
 import { defaultsBodyOf, defaultsConstraints, defaultsFormOf } from '../data/level-body'
 import {
@@ -42,7 +42,7 @@ function PublishDefaultsScreen() {
   )
 }
 
-function PublishDefaults({ inForce }: { readonly inForce: TreatmentDefaults }) {
+function PublishDefaults({ inForce }: { readonly inForce: Witnessed<TreatmentDefaults> }) {
   const { emit } = useOutcome()
   const [initial] = useState(() => defaultsFormOf(inForce))
 
@@ -51,6 +51,7 @@ function PublishDefaults({ inForce }: { readonly inForce: TreatmentDefaults }) {
       action={publishTreatmentDefaults}
       initial={initial}
       inForce={inForce.version}
+      witness={inForce.witness}
       constraintsOf={defaultsConstraints}
       bodyOf={(values, shown) => defaultsBodyOf(values, shown, inForce)}
       onPublished={() => emit(configuration.outcomes.defaultsPublished({ from: 'publish' }))}

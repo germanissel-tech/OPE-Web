@@ -98,6 +98,8 @@ export function useLevelVersion(level: Level, version: number) {
 export type PublishLevelInput<Body> = {
   readonly body: Body
   readonly inForce: string
+  /** El testigo de lo que se leyó al abrir, o de la relectura tras un choque (`CU-29`). */
+  readonly witness: string
 }
 
 /**
@@ -145,7 +147,8 @@ export const publishPlatformConfiguration = defineAction({
       (
         ope,
         input: PublishLevelInput<PlatformConfigurationInput>,
-      ): Promise<PlatformConfigurationVersion> => ope.publishPlatformConfiguration(input.body),
+      ): Promise<PlatformConfigurationVersion> =>
+        ope.publishPlatformConfiguration(input.body, input.witness),
     ),
   },
 
@@ -168,7 +171,7 @@ export const publishTreatmentDefaults = defineAction({
     publish: opeOperation(
       'publishTreatmentDefaults',
       (ope, input: PublishLevelInput<TreatmentDefaultsInput>): Promise<TreatmentDefaultsVersion> =>
-        ope.publishTreatmentDefaults(input.body),
+        ope.publishTreatmentDefaults(input.body, input.witness),
     ),
   },
 

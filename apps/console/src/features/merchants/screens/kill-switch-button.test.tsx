@@ -55,7 +55,7 @@ function ope(initial: Merchant['status'], options: { readonly switchFails?: Requ
     },
     async getMerchant() {
       state.reads += 1
-      return { ...base, status: state.status }
+      return { ...base, status: state.status, witness: '"w-1"' }
     },
     async createMerchant() {
       throw new Error('no se prueba acá')
@@ -79,6 +79,9 @@ function ope(initial: Merchant['status'], options: { readonly switchFails?: Requ
       throw new Error('no se prueba acá')
     },
     async listConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getMerchantConfigurationVersion() {
       throw new Error('no se prueba acá')
     },
     async publishMerchantConfiguration() {

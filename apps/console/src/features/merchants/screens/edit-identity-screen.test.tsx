@@ -64,7 +64,7 @@ function ope(options: { readonly updateFails?: RequestFailed } = {}) {
       return { items: [] }
     },
     async getMerchant() {
-      return full
+      return { ...full, witness: '"w-1"' }
     },
     async createMerchant() {
       throw new Error('no se prueba acá')
@@ -93,6 +93,9 @@ function ope(options: { readonly updateFails?: RequestFailed } = {}) {
       throw new Error('no se prueba acá')
     },
     async listConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getMerchantConfigurationVersion() {
       throw new Error('no se prueba acá')
     },
     async publishMerchantConfiguration() {

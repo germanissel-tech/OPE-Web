@@ -8,6 +8,8 @@ import { allMerchants, oneMerchant } from './merchants'
 export type UpdateProfileInput = {
   readonly merchantId: string
   readonly body: MerchantProfileInput
+  /** El testigo de lo que se leyó al abrir, o de la relectura tras un choque (`CU-29`). */
+  readonly witness: string
 }
 
 /**
@@ -26,7 +28,7 @@ export const updateMerchantProfile = defineAction({
     update: opeOperation(
       'updateMerchantProfile',
       (ope, input: UpdateProfileInput): Promise<Merchant> =>
-        ope.updateMerchantProfile(input.merchantId, input.body),
+        ope.updateMerchantProfile(input.merchantId, input.body, input.witness),
     ),
   },
 

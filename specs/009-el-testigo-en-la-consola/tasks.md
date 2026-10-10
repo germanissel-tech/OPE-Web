@@ -26,7 +26,7 @@ termina con algo que se puede correr, y es un commit.
 
 **Meta**: el testigo sale de las lecturas y entra en las escrituras; la versión del merchant se pide por número.
 
-- [ ] T001 [E1] `npm run contract:sync` desde el `main` del backend: `contracts/ope/` con `1.15.0`, `versioned`
+- [x] T001 [E1] `npm run contract:sync` desde el `main` del backend: `contracts/ope/` con `1.15.0`, `versioned`
       en `OPERATIONS`, `If-Match` en los tipos; la comprobación de conformidad sin cambios
 - [x] T002 [P] [E1] `packages/core/src/data/envelope.ts`: `unwrapWitnessed(result)` devuelve el cuerpo con el
       `ETag` de la respuesta; sin `ETag`, falla con clase (la operación no lo entrega y el cliente pidió que
@@ -35,12 +35,12 @@ termina con algo que se puede correr, y es un commit.
       que `operation()` lo reciba de `OPERATIONS[id]` sin conversión
 - [x] T004 [P] [E1] `packages/core/src/data/use-action.ts`: `witness-required` entre los tipos propios (`OURS`),
       con su prueba: un `428` deja rastro como el `403 capability-missing` (research §7)
-- [ ] T005 [E1] `apps/console/src/api/ope/client.ts`: `Witnessed<T>`; `getMerchantConfiguration`,
+- [x] T005 [E1] `apps/console/src/api/ope/client.ts`: `Witnessed<T>`; `getMerchantConfiguration`,
       `getPlatformConfiguration`, `getTreatmentDefaults` y `getMerchant` devuelven el dato con `witness`;
       las cuatro escrituras reciben `witness` y lo mandan en `If-Match`;
       `getMerchantConfigurationVersion(merchantId, version)`. Los dobles de todas las pruebas de pantalla
       ganan `witness` y la operación nueva
-- [ ] T006 [E1] `npm test`, `npm run revisar`, `npm run build`. Commit:
+- [x] T006 [E1] `npm test`, `npm run revisar`, `npm run build`. Commit:
       `feat(009): el contrato 1.15.0, y el testigo en el núcleo y en el cliente`
 
 **Punto de control**: compila con el testigo obligatorio en los tipos; las pantallas todavía no lo usan para

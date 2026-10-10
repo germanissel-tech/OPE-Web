@@ -3,7 +3,7 @@
 openapi: 3.1.0
 info:
   title: OPE Backend API
-  version: 1.13.0
+  version: 1.15.0
   x-stability: building
   description: |
     HTTP API of the OPE backend. This document is the single source of truth for every HTTP
@@ -727,6 +727,9 @@ paths:
       responses:
         '201':
           description: Merchant created; the credentials travel here and never again.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -779,6 +782,9 @@ paths:
       responses:
         '200':
           description: The merchant.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -827,6 +833,9 @@ paths:
       responses:
         '200':
           description: The merchant, deactivated.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -884,6 +893,9 @@ paths:
       responses:
         '201':
           description: The credential minted; its value travels here and never again.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -937,6 +949,9 @@ paths:
       responses:
         '201':
           description: The credential minted; its value travels here and never again.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -990,6 +1005,9 @@ paths:
       responses:
         '201':
           description: The credential minted; its value travels here and never again.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -1045,6 +1063,9 @@ paths:
       responses:
         '200':
           description: The switch as it is now.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -1074,6 +1095,11 @@ paths:
         - adminToken: []
       x-required-capabilities:
         - merchants:write
+      x-invariants:
+        - type: stale-version
+          status: 412
+          rule: the witness in If-Match is the current witness of the merchant, unless the body is identical to what is in force
+          description: The write replaces the merchant whole with what the caller read and changed (ADR-046), so a write in between would be undone without anybody knowing. It is judged after the scope of the operator and after the repetition of an identical body —which answers as before, with any witness, so the retry of a write that went through does not fail— and before anything else, the freeze included. A witness that is not this resource's never matches.
       summary: Replace the identity of a merchant
       description: |
         The display name, the store URL, the contact and the operator's notes, whole (ADR-045): a field
@@ -1084,6 +1110,7 @@ paths:
         values written.
       parameters:
         - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/If-Match'
       requestBody:
         required: true
         content:
@@ -1101,6 +1128,9 @@ paths:
       responses:
         '200':
           description: The merchant as it is now.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -1131,8 +1161,12 @@ paths:
           $ref: '#/components/responses/MerchantForbidden'
         '404':
           $ref: '#/components/responses/MerchantNotFound'
+        '412':
+          $ref: '#/components/responses/StaleVersion'
         '422':
           $ref: '#/components/responses/MerchantProfileUnprocessable'
+        '428':
+          $ref: '#/components/responses/WitnessRequired'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
@@ -1195,6 +1229,7 @@ paths:
       description: 'Creates the next version of the merchant''s configuration (01 §14.2): numbered, immutable, effective on the next request without a restart (FR-017). What is declared overrides the treatment defaults value by value; the rest keeps resolving from the levels of the release. A body identical to the version in force repeats it (`200`) instead of creating one. While an experiment is active only a corrective version — with its reason — is accepted (`409 configuration-frozen`); a corrective version restarts the experiment''s measurement window. An invalid value is refused naming the field and no version is created.'
       parameters:
         - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/If-Match'
       requestBody:
         required: true
         content:
@@ -1213,6 +1248,9 @@ paths:
       responses:
         '200':
           description: The version in force, identical to what was published.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -1232,6 +1270,9 @@ paths:
                 operatorId: ops-1
         '201':
           description: The version created.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -1259,13 +1300,21 @@ paths:
           $ref: '#/components/responses/MerchantNotFound'
         '409':
           $ref: '#/components/responses/ConfigurationFrozenConflict'
+        '412':
+          $ref: '#/components/responses/StaleVersion'
         '422':
           $ref: '#/components/responses/ConfigurationUnprocessable'
+        '428':
+          $ref: '#/components/responses/WitnessRequired'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       x-invariants:
+        - type: stale-version
+          status: 412
+          rule: the witness in If-Match is the current witness of the merchant's configuration, unless the body is identical to what is in force
+          description: The write replaces the merchant's configuration whole with what the caller read and changed (ADR-046), so a write in between would be undone without anybody knowing. It is judged after the scope of the operator and after the repetition of an identical body —which answers as before, with any witness, so the retry of a write that went through does not fail— and before anything else, the freeze included. A witness that is not this resource's never matches.
         - type: locale-incomplete
           status: 422
           rule: a language enters the supported list or becomes the reserve only when the base layer holds a text for every unconditional family in it
@@ -1285,6 +1334,9 @@ paths:
       responses:
         '200':
           description: The configuration of the merchant.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -1446,6 +1498,49 @@ paths:
           $ref: '#/components/responses/MerchantForbidden'
         '404':
           $ref: '#/components/responses/MerchantNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/admin/merchants/{merchantId}/configuration/versions/{version}:
+    get:
+      operationId: getMerchantConfigurationVersion
+      tags:
+        - admin
+      security:
+        - adminToken: []
+      x-required-capabilities:
+        - configuration:read
+      summary: One published version of a merchant's configuration
+      description: 'A version of the merchant''s configuration as it was published, by its number: the same one its page of the history carries, with what it declared, who published it, why, and which measurement window it restarted. Immutable, so what it answers today is what it answered the day it was created (feature 042). Within the operator''s scope; the merchant goes in the path because the consumer is admin (constitution V, ADR-020).'
+      parameters:
+        - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/levelVersion'
+      responses:
+        '200':
+          description: The version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantConfigurationVersion'
+              example:
+                version: 2
+                declared:
+                  holdoutShare: 0.07
+                corrective: true
+                reason: The holdout was declared wrong while the experiment ran.
+                publishedAt: '2026-10-10T15:00:00Z'
+                operatorId: ops-1
+                windowsRestarted:
+                  - exp_nliucusmyzzd
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/OperatorUnauthorized'
+        '403':
+          $ref: '#/components/responses/MerchantForbidden'
+        '404':
+          $ref: '#/components/responses/MerchantConfigurationVersionNotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
@@ -1754,11 +1849,18 @@ paths:
         key: content
         first: '201'
         repeat: '200'
+      x-invariants:
+        - type: stale-version
+          status: 412
+          rule: the witness in If-Match is the current witness of the platform configuration, unless the body is identical to what is in force
+          description: The write replaces the platform configuration whole with what the caller read and changed (ADR-046), so a write in between would be undone without anybody knowing. It is judged after the scope of the operator and after the repetition of an identical body —which answers as before, with any witness, so the retry of a write that went through does not fail— and before anything else, the freeze included. A witness that is not this resource's never matches.
       summary: Publish a version of the platform configuration
       description: |-
         Creates the next version of level 1 (constitution XI; ADR-031 as amended by feature 036): numbered, immutable, read by every consumer when it uses the value, so it takes effect on the next request without a restart. Until then these values changed only with a deploy, which reaches every merchant the same way without leaving a version, an entry in the log or a restarted window.
 
         A body identical to the version in force repeats it (`200`) instead of creating one. Level 1 is the same for every merchant, so the change reaches them all: while an experiment it reaches is active only a corrective version — with its reason — is accepted (`409 configuration-frozen`), and it restarts the measurement window of each one. An invalid value is refused naming the field and no version is created. It takes an operator over every merchant.
+      parameters:
+        - $ref: '#/components/parameters/If-Match'
       requestBody:
         required: true
         content:
@@ -1784,6 +1886,9 @@ paths:
       responses:
         '200':
           description: The version in force, identical to what was published.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -1812,6 +1917,9 @@ paths:
                   - exp_a_000001
         '201':
           description: The version created.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -1846,8 +1954,12 @@ paths:
           $ref: '#/components/responses/PlatformWideForbidden'
         '409':
           $ref: '#/components/responses/ConfigurationFrozenConflict'
+        '412':
+          $ref: '#/components/responses/StaleVersion'
         '422':
           $ref: '#/components/responses/LevelUnprocessable'
+        '428':
+          $ref: '#/components/responses/WitnessRequired'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
@@ -1865,6 +1977,9 @@ paths:
       responses:
         '200':
           description: The platform configuration.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -2014,6 +2129,8 @@ paths:
         Creates the next version of level 2 (constitution XI; ADR-031 as amended by feature 036): numbered, immutable, effective on the next request without a restart. Until then these values changed only with a deploy, which contaminates any measurement in course the same way without leaving a version, an entry in the log or a restarted window.
 
         A body identical to the version in force repeats it (`200`) instead of creating one. The change **reaches** every merchant that does not override one of the leaves it changes: while an experiment it reaches is active only a corrective version — with its reason — is accepted (`409 configuration-frozen`), and it restarts the measurement window of each one. An invalid value is refused naming the field and no version is created. It takes an operator over every merchant, because the change reaches them all.
+      parameters:
+        - $ref: '#/components/parameters/If-Match'
       requestBody:
         required: true
         content:
@@ -2097,6 +2214,9 @@ paths:
       responses:
         '200':
           description: The version in force, identical to what was published.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -2183,6 +2303,9 @@ paths:
                   - exp_a_000001
         '201':
           description: The version created.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -2275,13 +2398,21 @@ paths:
           $ref: '#/components/responses/PlatformWideForbidden'
         '409':
           $ref: '#/components/responses/ConfigurationFrozenConflict'
+        '412':
+          $ref: '#/components/responses/StaleVersion'
         '422':
           $ref: '#/components/responses/TreatmentDefaultsUnprocessable'
+        '428':
+          $ref: '#/components/responses/WitnessRequired'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       x-invariants:
+        - type: stale-version
+          status: 412
+          rule: the witness in If-Match is the current witness of the treatment defaults, unless the body is identical to what is in force
+          description: The write replaces the treatment defaults whole with what the caller read and changed (ADR-046), so a write in between would be undone without anybody knowing. It is judged after the scope of the operator and after the repetition of an identical body —which answers as before, with any witness, so the retry of a write that went through does not fail— and before anything else, the freeze included. A witness that is not this resource's never matches.
         - type: locale-incomplete
           status: 422
           rule: a language enters the supported list or becomes the reserve only when the base layer holds a text for every unconditional family in it
@@ -2299,6 +2430,9 @@ paths:
       responses:
         '200':
           description: The treatment defaults.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
           content:
             application/json:
               schema:
@@ -5756,6 +5890,10 @@ components:
           status: 422
           rule: every declared value satisfies the invariants of its type (rates 0..1, increasing ladder, ceiling at or above the steps, language tags by shape, closed vocabularies) once resolved over the treatment defaults
           description: 'Nothing invalid becomes a version: the pointer names the field (constitution XI, FR-014).'
+    ExperimentId:
+      type: string
+      description: Identifier of an experiment, minted by OPE when the operator opens it.
+      pattern: ^[A-Za-z0-9_-]{8,64}$
     MerchantConfigurationVersion:
       type: object
       description: 'A published version of a merchant''s configuration (01 §14.2): numbered, immutable, with who published it and why.'
@@ -5786,6 +5924,12 @@ components:
           description: Instant of publication.
         operatorId:
           $ref: '#/components/schemas/OperatorId'
+        windowsRestarted:
+          type: array
+          description: 'The experiment whose measurement window this version restarted, when it was corrective: the active one of this merchant, if the change reached it. Every reading of the version returns it: its publication, a repetition of the same body, the history and the version by number. A version published before its restarts were recorded (feature 036; 038 for texts) carries none.'
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/ExperimentId'
     MerchantConfigurationVersionPage:
       type: object
       description: A page of a merchant's configuration versions, newest first.
@@ -5802,10 +5946,6 @@ components:
           type: string
           description: Cursor of the next page; absent on the last page.
           maxLength: 512
-    ExperimentId:
-      type: string
-      description: Identifier of an experiment, minted by OPE when the operator opens it.
-      pattern: ^[A-Za-z0-9_-]{8,64}$
     ExperimentStatus:
       type: string
       description: 'The state of an experiment (03 §4.10, D-G): `calibrating` — visitors are assigned and OPE decides, every decision is marked as calibration and counts for nothing, the configuration still moves; `active` — the accumulation window runs and the configuration is frozen (only a corrective version enters, restarting the window); `closed` — terminal: nobody new is assigned, what was recorded stays.'
@@ -6208,7 +6348,7 @@ components:
           $ref: '#/components/schemas/OperatorId'
         windowsRestarted:
           type: array
-          description: 'The experiments whose measurement window this version restarted, when it was corrective: the ones that resolve from this level for something it changed.'
+          description: 'The experiments whose measurement window this version restarted, when it was corrective: the ones that resolve from this level for something it changed. Every reading of the version returns it: its publication, a repetition of the same body, the history and the version by number. A version published before its restarts were recorded (feature 036; 038 for texts) carries none.'
           uniqueItems: true
           items:
             $ref: '#/components/schemas/ExperimentId'
@@ -6407,7 +6547,7 @@ components:
           $ref: '#/components/schemas/OperatorId'
         windowsRestarted:
           type: array
-          description: 'The experiments whose measurement window this version restarted, when it was corrective: the ones that resolve from this level for something it changed.'
+          description: 'The experiments whose measurement window this version restarted, when it was corrective: the ones that resolve from this level for something it changed. Every reading of the version returns it: its publication, a repetition of the same body, the history and the version by number. A version published before its restarts were recorded (feature 036; 038 for texts) carries none.'
           uniqueItems: true
           items:
             $ref: '#/components/schemas/ExperimentId'
@@ -6544,7 +6684,7 @@ components:
           $ref: '#/components/schemas/OperatorId'
         windowsRestarted:
           type: array
-          description: 'The experiments whose measurement window this version restarted, when it was corrective: the active ones of every merchant the text reaches.'
+          description: 'The experiments whose measurement window this version restarted, when it was corrective: the active ones of every merchant the text reaches. Every reading of the version returns it: its publication, a repetition of the same body, the history and the version by number. A version published before its restarts were recorded (feature 036; 038 for texts) carries none.'
           uniqueItems: true
           items:
             $ref: '#/components/schemas/ExperimentId'
@@ -7137,6 +7277,17 @@ components:
             errors:
               - pointer: /body/graceSeconds
                 message: The rotation grace exceeds the platform maximum.
+    StaleVersion:
+      description: 'The resource changed since the witness was read (ADR-046): somebody wrote it in between, or the witness is not this resource''s. Nothing was written. Read it again to get its current witness, and decide over what is there now.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: urn:ope:problem:stale-version
+            title: The resource changed since it was read
+            status: 412
+            instance: /v1/admin/platform-configuration
     MerchantProfileUnprocessable:
       description: |
         Valid request rejected on semantics: the `x-invariants` of the merchant identity (ADR-007, ADR-045).
@@ -7157,6 +7308,17 @@ components:
                 errors:
                   - pointer: /body/storeUrl
                     message: The store URL must parse as an absolute http(s) URL.
+    WitnessRequired:
+      description: 'The write replaces what it read and did not say what it read (ADR-046): `If-Match` is missing. Nothing was written, and the answer does not carry the current witness.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: urn:ope:problem:witness-required
+            title: The write needs the witness of the resource it replaces
+            status: 428
+            instance: /v1/admin/platform-configuration
     ConfigurationFrozenConflict:
       description: 'The configuration is frozen: an experiment is active and the version is not corrective (03 §4.10).'
       content:
@@ -7208,6 +7370,28 @@ components:
                 errors:
                   - pointer: /body/declared/locales/supported/1
                     message: 'pt-BR: fit.policies.reassurance, returns.policies.information'
+    MerchantConfigurationVersionNotFound:
+      description: No merchant with that identifier within the operator's scope, or the merchant published no version with that number.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            merchantNotFound:
+              summary: No such merchant within the operator's scope (merchant-not-found)
+              value:
+                type: urn:ope:problem:merchant-not-found
+                title: The merchant does not exist
+                status: 404
+                instance: /v1/admin/merchants/mrc_7f3k5d2q4m6x/configuration/versions/2
+            versionNotFound:
+              summary: A number the merchant never published (configuration-version-not-found)
+              value:
+                type: urn:ope:problem:configuration-version-not-found
+                title: The configuration version does not exist
+                status: 404
+                detail: The merchant level has no version 7.
+                instance: /v1/admin/merchants/mrc_7f3k5d2q4m6x/configuration/versions/7
     ExperimentAlreadyOpenConflict:
       description: 'The merchant already has an open experiment (calibrating or active): at most one per merchant (constitution I, ADR-022).'
       content:
@@ -7479,13 +7663,15 @@ components:
       description: The merchant the operation acts on (constitution V, ADR-020; the only place a merchant identifier travels in a request).
       schema:
         $ref: '#/components/schemas/MerchantId'
-    experimentId:
-      name: experimentId
-      in: path
+    If-Match:
+      name: If-Match
+      in: header
       required: true
-      description: The experiment the operation acts on.
+      x-when-missing: witness-required
+      description: 'The witness of the resource as it was read: the `ETag` of its last read, sent back unchanged. A write that replaces what it read is accepted only if nobody wrote the resource since (ADR-046). Without it the write is `428 witness-required`, and the answer does not carry the current witness: handing it out would invite sending it back without looking. Any value other than the current witness —one that is old, another resource''s, `*`, several, a weak one— is `412 stale-version`, and nothing is written.'
       schema:
-        $ref: '#/components/schemas/ExperimentId'
+        type: string
+        maxLength: 256
     levelVersion:
       name: version
       in: path
@@ -7494,6 +7680,13 @@ components:
       schema:
         type: integer
         minimum: 1
+    experimentId:
+      name: experimentId
+      in: path
+      required: true
+      description: The experiment the operation acts on.
+      schema:
+        $ref: '#/components/schemas/ExperimentId'
     textFamily:
       name: family
       in: path
@@ -7525,3 +7718,8 @@ components:
       schema:
         type: integer
         minimum: 1
+  headers:
+    ETag:
+      description: 'The witness of the resource as this response leaves it (ADR-046): opaque, strong, and the value to send back in `If-Match` when replacing what was read. It changes with every write of the resource, including the ones that do not ask for it.'
+      schema:
+        type: string

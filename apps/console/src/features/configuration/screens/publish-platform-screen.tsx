@@ -1,5 +1,5 @@
 import { Block, Page, Region } from '@granito/ui'
-import { defineScreen, Result, useOutcome } from '@ope/core'
+import { defineScreen, Result, useOutcome, type Witnessed } from '@ope/core'
 import { useState } from 'react'
 import { platformBodyOf, platformConstraints, platformFormOf } from '../data/level-body'
 import {
@@ -42,7 +42,7 @@ function PublishPlatformScreen() {
   )
 }
 
-function PublishPlatform({ inForce }: { readonly inForce: PlatformConfiguration }) {
+function PublishPlatform({ inForce }: { readonly inForce: Witnessed<PlatformConfiguration> }) {
   const { emit } = useOutcome()
   /* La precarga se calcula una vez: lo que rige al abrir es contra lo que se
      compara si hay cambios. */
@@ -53,6 +53,7 @@ function PublishPlatform({ inForce }: { readonly inForce: PlatformConfiguration 
       action={publishPlatformConfiguration}
       initial={initial}
       inForce={inForce.version}
+      witness={inForce.witness}
       constraintsOf={platformConstraints}
       bodyOf={platformBodyOf}
       onPublished={() => emit(configuration.outcomes.platformPublished({ from: 'publish' }))}

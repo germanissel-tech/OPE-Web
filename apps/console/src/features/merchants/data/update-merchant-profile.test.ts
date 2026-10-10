@@ -10,11 +10,12 @@ describe('la acción de editar la identidad', () => {
 
   it('invalida la ficha, las listas y el registro del merchant', () => {
     const body = { displayName: 'Tienda' }
-    expect(updateMerchantProfile.invalidates?.({ merchantId: 'm_a', body }, {} as never)).toEqual([
-      allMerchants,
-      oneMerchant('m_a'),
-      merchantLog('m_a'),
-    ])
+    expect(
+      updateMerchantProfile.invalidates?.(
+        { merchantId: 'm_a', body, witness: '"w-1"' },
+        {} as never,
+      ),
+    ).toEqual([allMerchants, oneMerchant('m_a'), merchantLog('m_a')])
   })
 
   it('anuncia el nombre y nunca el contacto', () => {
@@ -30,6 +31,7 @@ describe('la acción de editar la identidad', () => {
     const announced = updateMerchantProfile.announces?.(merchant, {
       merchantId: 'm_a',
       body: { displayName: 'Tienda Norte' },
+      witness: '"w-1"',
     })
     expect(JSON.stringify(announced)).toContain('Tienda Norte')
     expect(JSON.stringify(announced)).not.toContain('Secreta')

@@ -3,8 +3,8 @@
 
 /** The contract this module was derived from. */
 export declare const CONTRACT: {
-  readonly version: '1.13.0'
-  readonly sha256: '06ea91708eac4c2b4f3e2447c8026b030a49e2963ae0d43c7ac4cba13eb06289'
+  readonly version: '1.15.0'
+  readonly sha256: 'f37d13fe868d0794f107cd785a0ca587bab22137243d665af912bf02fe0ca7f0'
 }
 
 /** What the contract demands of one field; the same shape `@ope/core` validates with. */

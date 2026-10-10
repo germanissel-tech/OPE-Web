@@ -8,6 +8,7 @@ import {
   useOutcome,
   useScreenParams,
   useUnsavedWork,
+  type Witnessed,
 } from '@ope/core'
 import { type FormEvent, useEffect, useState } from 'react'
 import { CorrectiveSection } from '../../../components/corrective-section'
@@ -71,7 +72,7 @@ function PublishForm({
   served,
 }: {
   readonly merchantId: string
-  readonly served: MerchantConfiguration
+  readonly served: Witnessed<MerchantConfiguration>
 }) {
   const { emit } = useOutcome()
   const inForce = served.declared
@@ -146,6 +147,7 @@ function PublishForm({
       merchantId,
       body: merchantBodyOf(form.values, shown, inForce),
       inForce: served.versions.merchant,
+      witness: served.witness,
     })
   }
 

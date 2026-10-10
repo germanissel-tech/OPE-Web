@@ -124,6 +124,7 @@ function ope(answers: readonly (MerchantConfigurationVersion | RequestFailed)[])
     listMerchants: no,
     async getMerchant() {
       return {
+        witness: '"w-1"',
         merchantId: 'mrc_pub',
         status: 'active',
         origins: ['https://pub.example'],
@@ -141,10 +142,13 @@ function ope(answers: readonly (MerchantConfigurationVersion | RequestFailed)[])
     updateMerchantProfile: no,
     listMerchantAdminLog: no,
     async getMerchantConfiguration() {
-      return served
+      return { ...served, witness: '"w-1"' }
     },
     async listConfigurationVersions() {
       return { items: [] }
+    },
+    async getMerchantConfigurationVersion() {
+      throw new Error('no se prueba acá')
     },
     async publishMerchantConfiguration(_merchantId, body) {
       sent.push(body)

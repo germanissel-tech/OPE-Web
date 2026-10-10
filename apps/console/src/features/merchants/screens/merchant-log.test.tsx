@@ -70,7 +70,7 @@ function ope(options: {
       return page ? { items: [...page.items], nextCursor: page.nextCursor } : { items: [] }
     },
     async getMerchant() {
-      return merchant
+      return { ...merchant, witness: '"w-1"' }
     },
     async createMerchant() {
       throw new Error('no se prueba acá')
@@ -97,6 +97,9 @@ function ope(options: {
       throw new Error('no se prueba acá')
     },
     async listConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getMerchantConfigurationVersion() {
       throw new Error('no se prueba acá')
     },
     async publishMerchantConfiguration() {

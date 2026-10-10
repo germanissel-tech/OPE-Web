@@ -1,29 +1,28 @@
 # `contracts/ope/` — el contrato de OPE, como artefacto
 
-**No se edita a mano.** Lo deja `npm run contract:sync` (`scripts/contract-sync.mjs`), y
-`ope-check conformity` verifica que el módulo de capacidades y el bundle no se hayan despegado.
+**No se edita a mano.** Lo deja `npm run contract:sync` (`scripts/contract-sync.mjs`), que copia
+`generated/contract/` de OPE-Backend tal cual, y `ope-check conformity` verifica que el módulo de
+capacidades, las restricciones y el bundle no se hayan despegado.
 
 | | |
 |---|---|
-| Versión del contrato | `1.13.0` |
-| `sha256` del bundle | `06ea91708eac4c2b4f3e2447c8026b030a49e2963ae0d43c7ac4cba13eb06289` |
-| Commit de OPE-Backend | `ec881d9aaec46282877b9fc2c9745304a340d242` |
-| Sincronizado | 2026-10-09 |
-| Módulo de capacidades | copiado de `generated/contract/` del backend (feature 040) |
-| Restricciones | copiado de `generated/contract/` del backend (feature 040) |
+| Versión del contrato | `1.15.0` |
+| `sha256` del bundle copiado | `f37d13fe868d0794f107cd785a0ca587bab22137243d665af912bf02fe0ca7f0` |
+| Commit de OPE-Backend | `47246a2f17747c73839b12d7a9c1ef73bbe1a30d` |
+| Sincronizado | 2026-10-10 |
 
 ## Los archivos
 
-| archivo | de dónde sale | quién lo lee |
-|---|---|---|
-| `openapi.yaml` | `contracts/dist/openapi.yaml` del backend, sin tocar | `conformity`; una persona |
-| `api.d.ts` | `generated/api.d.ts` del backend (openapi-typescript) | `openapi-fetch` en `apps/*/src/api/ope/`; `conformity` |
-| `problem-types.d.ts` | `generated/problem-types.d.ts` del backend | `@ope/core` (`ProblemSlug`) |
-| `capabilities.js` + `capabilities.d.ts` | el módulo de `TAN-7`: operación → capacidades e idempotencia, y el vocabulario del consumidor `admin` | `operation()`, `conformity`, la sesión falsa |
-| `identity.json` | versión y `sha256` del bundle, y el commit del backend | `conformity`; este README |
-| `constraints.js` + `constraints.d.ts` | la capa 1 de `CU-38`: qué puede verificar un formulario de cada cuerpo de pedido del consumidor `admin` | `useForm` desde `apps/*/src/api/ope/`; `conformity` |
+Los ocho salen de `generated/contract/` del backend, que los emite con `npm run contract:types`
+(`ADR-044`); la forma es la que este repositorio publica en
+`specs/005-la-base-de-ope/contracts/contract-artifact.md` y
+`specs/006-el-merchant-completo/contracts/constraints-artifact.md`.
 
-La forma del módulo es la que el frontend publica en
-`specs/005-la-base-de-ope/contracts/contract-artifact.md`, y la de las restricciones en
-`specs/006-el-merchant-completo/contracts/constraints-artifact.md`; es lo que OPE-Backend 040 tiene
-que emitir en `generated/contract/`. Cuando lo emita, el sincronizador copia en vez de emitir.
+| archivo | qué es | quién lo lee |
+|---|---|---|
+| `openapi.yaml` | el bundle del contrato, con su cabecera de generado | `conformity`; una persona |
+| `api.d.ts` | los tipos de openapi-typescript | `openapi-fetch` en `apps/*/src/api/ope/`; `conformity` |
+| `problem-types.d.ts` | el catálogo de problemas | `@ope/core` (`ProblemSlug`) |
+| `capabilities.js` + `capabilities.d.ts` | el módulo de `TAN-7`: operación → capacidades e idempotencia, y el vocabulario del consumidor `admin` | `operation()`, `conformity`, la sesión falsa |
+| `identity.json` | versión y `sha256` del bundle copiado | `conformity`; este README |
+| `constraints.js` + `constraints.d.ts` | la capa 1 de `CU-38`: qué puede verificar un formulario de cada cuerpo de pedido del consumidor `admin` | `useForm` desde `apps/*/src/api/ope/`; `conformity` |
