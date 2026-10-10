@@ -115,8 +115,19 @@ const served: MerchantConfiguration = {
   versions: { platform: 'platform-2', defaults: 'defaults-1', merchant: 3 },
 }
 
-function ope(answers: readonly (MerchantConfigurationVersion | RequestFailed)[]) {
+/**
+ * El servicio de mentira. Con `other`, **otro publica en el instante del primer
+ * intento**: desde ahí la lectura devuelve lo suyo con el testigo nuevo, y ese
+ * primer intento —que llevaba el testigo viejo— es `412` (feature 009), y
+ * `answers` son las respuestas de los intentos que siguen.
+ */
+function ope(
+  answers: readonly (MerchantConfigurationVersion | RequestFailed)[],
+  other?: MerchantConfiguration,
+) {
   const sent: MerchantConfigurationInput[] = []
+  const witnesses: string[] = []
+  let current = { ...served, witness: '"w-1"' }
   const no = () => {
     throw new Error('no se prueba acá')
   }
@@ -142,7 +153,7 @@ function ope(answers: readonly (MerchantConfigurationVersion | RequestFailed)[])
     updateMerchantProfile: no,
     listMerchantAdminLog: no,
     async getMerchantConfiguration() {
-      return { ...served, witness: '"w-1"' }
+      return current
     },
     async listConfigurationVersions() {
       return { items: [] }
@@ -150,9 +161,18 @@ function ope(answers: readonly (MerchantConfigurationVersion | RequestFailed)[])
     async getMerchantConfigurationVersion() {
       throw new Error('no se prueba acá')
     },
-    async publishMerchantConfiguration(_merchantId, body) {
+    async publishMerchantConfiguration(_merchantId, body, witness) {
       sent.push(body)
-      const answer = answers[sent.length - 1]
+      witnesses.push(witness)
+      if (other !== undefined && sent.length === 1) {
+        current = { ...other, witness: '"w-2"' }
+        throw new RequestFailed({
+          status: 412,
+          type: 'stale-version',
+          title: 'The resource changed since it was read',
+        })
+      }
+      const answer = answers[sent.length - (other === undefined ? 1 : 2)]
       if (answer === undefined) throw new Error('sin respuesta preparada')
       if (answer instanceof RequestFailed) throw answer
       return answer
@@ -166,7 +186,7 @@ function ope(answers: readonly (MerchantConfigurationVersion | RequestFailed)[])
     getTreatmentDefaultsVersion: no,
     publishTreatmentDefaults: no,
   }
-  return { client, sent }
+  return { client, sent, witnesses }
 }
 
 const version = (number: number, declared = served.declared): MerchantConfigurationVersion => ({
@@ -407,6 +427,64 @@ describe('publicar una versión del merchant', () => {
     await waitFor(() =>
       expect(JSON.stringify(noticed)).toContain('declared.attributeLabels.0.label'),
     )
+  })
+
+  describe('si otro publicó mientras tanto (feature 009, CU-29)', () => {
+    /* Otro declaró la frescura del catálogo y cambió los anclajes, y su versión es la 4. */
+    const theirs: MerchantConfiguration = {
+      ...served,
+      declared: {
+        ...served.declared,
+        freshness: { catalogMs: 7200000 },
+        anchors: { price: { selectors: ['.price-now'] } },
+      },
+      versions: { ...served.versions, merchant: 4 },
+    }
+    const holdout = () =>
+      screen.getByLabelText(configurationStrings.holdoutShare) as HTMLInputElement
+
+    it('sin cruce guarda sola, con el testigo nuevo y los cambios de los dos', async () => {
+      const { client, sent, witnesses } = ope([version(5)], theirs)
+      await mount(client, WRITE)
+      await screen.findByText(configurationStrings.carriedSection)
+      await act(async () => {
+        fireEvent.change(holdout(), { target: { value: '9' } })
+        fireEvent.blur(holdout())
+      })
+      await act(async () => publish())
+
+      await waitFor(() => expect(sent).toHaveLength(2))
+      expect(witnesses).toEqual(['"w-1"', '"w-2"'])
+      /* Lo mío encima de lo suyo: el holdout es mío, la frescura es suya. */
+      expect(sent[1]?.declared.holdoutShare).toBe(0.09)
+      expect(sent[1]?.declared.freshness).toEqual({ catalogMs: 7200000 })
+      /* Lo no editado sale de la relectura, no de lo que regía al abrir (research §4). */
+      expect(sent[1]?.declared.anchors).toEqual({ price: { selectors: ['.price-now'] } })
+      await waitFor(() =>
+        expect(noticed.some((each) => each.title === configurationStrings.published)).toBe(true),
+      )
+    })
+
+    it('con cruce muestra el choque, no guarda, y lo tecleado sigue', async () => {
+      const crossing: MerchantConfiguration = {
+        ...theirs,
+        declared: { ...theirs.declared, holdoutShare: 0.08 },
+      }
+      const { client, sent } = ope([], crossing)
+      await mount(client, WRITE)
+      await screen.findByText(configurationStrings.carriedSection)
+      await act(async () => {
+        fireEvent.change(holdout(), { target: { value: '9' } })
+        fireEvent.blur(holdout())
+      })
+      const typed = holdout().value
+      await act(async () => publish())
+
+      const dialog = await screen.findByRole('dialog')
+      expect(within(dialog).getByText(configurationStrings.holdoutShare)).toBeDefined()
+      expect(sent).toHaveLength(1)
+      expect(holdout().value).toBe(typed)
+    })
   })
 
   it('sin configuration:write la ruta no muestra la publicación', async () => {

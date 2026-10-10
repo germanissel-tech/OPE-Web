@@ -71,7 +71,7 @@ recuperarse, pero lo mandan.
       leaves)` → una clave por hoja, el valor del contrato en `JSON` o `undefined` si se hereda; y la vuelta a un
       contenido por `setAt`. La prueba: un valor declarado después de abrir es una diferencia; agregar un
       renglón es una diferencia; `36` horas y `129600000` ms son la misma hoja (research §3)
-- [ ] T012 [E3] La publicación del merchant: la `concurrency` de `useAction` —lo cargado, lo que hay, la
+- [x] T012 [E3] La publicación del merchant: la `concurrency` de `useAction` —lo cargado, lo que hay, la
       relectura que recuerda lo que rige y el pedido armado con lo no editado de la relectura y la correctiva de
       la pantalla— y el `ConflictDialog` (research §4)
 - [ ] T013 [E3] Las publicaciones de plataforma y de defaults, en `publish-level-form.tsx`: lo mismo, con lo no

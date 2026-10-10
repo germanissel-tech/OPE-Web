@@ -37,6 +37,17 @@ export function useMerchantConfiguration(merchantId: string) {
   })
 }
 
+/**
+ * **Volver a pedir lo que rige, sin tocar la consulta** (feature 009, `CU-29`):
+ * lo que la puerta relee cuando el servidor responde `412`. No pasa por la
+ * caché a propósito: la pantalla abierta sigue mostrando lo que cargó, que es
+ * contra lo que se compara.
+ */
+export function useMerchantConfigurationReader(merchantId: string) {
+  const ope = useService(opeService)
+  return () => ope.getMerchantConfiguration(merchantId)
+}
+
 /** El nombre del merchant, para el título: la ficha es de otra funcionalidad y no se importa. */
 export function useMerchantName(merchantId: string) {
   const ope = useService(opeService)
