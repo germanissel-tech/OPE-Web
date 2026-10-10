@@ -76,9 +76,9 @@ recuperarse, pero lo mandan.
       la pantalla— y el `ConflictDialog` (research §4)
 - [x] T013 [E3] Las publicaciones de plataforma y de defaults, en `publish-level-form.tsx`: lo mismo, con lo no
       editado de los defaults tomado de la relectura
-- [ ] T014 [E3] La edición de la identidad (`features/merchants`): sus siete hojas, la relectura del merchant, el
+- [x] T014 [E3] La edición de la identidad (`features/merchants`): sus siete hojas, la relectura del merchant, el
       `ConflictDialog` (research §5)
-- [ ] T015 [E3] Pruebas, una pantalla por vez, con un doble que responde `412` la primera vez:
+- [x] T015 [E3] Pruebas, una pantalla por vez, con un doble que responde `412` la primera vez:
   - sin cruce, guarda sola en el segundo intento con el testigo nuevo, y el pedido lleva los cambios de los
     dos;
   - con cruce, se ve el choque y lo tecleado sigue;

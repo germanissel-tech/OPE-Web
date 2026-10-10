@@ -15,7 +15,7 @@ import {
   TelemetryProvider,
   useNoticeHost,
 } from '@ope/core'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { type ReactNode, useEffect } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 /* Lo de `api/` llega por `data/`, que es lo único que puede tocarla (`CU-15`);
@@ -54,8 +54,15 @@ const full: Merchant = {
   notes: 'Pilot.',
 }
 
-function ope(options: { readonly updateFails?: RequestFailed } = {}) {
+/**
+ * El servicio de mentira. Con `other`, **otro escribe el merchant en el instante
+ * del primer guardado**: desde ahí la lectura devuelve eso con el testigo nuevo,
+ * y ese primer guardado es `412` (feature 009).
+ */
+function ope(options: { readonly updateFails?: RequestFailed; readonly other?: Merchant } = {}) {
   const updated: MerchantProfileInput[] = []
+  const witnesses: string[] = []
+  let current = { ...full, witness: '"w-1"' }
   const client: OpeClient = {
     async listMerchants() {
       return { items: [full] }
@@ -64,7 +71,7 @@ function ope(options: { readonly updateFails?: RequestFailed } = {}) {
       return { items: [] }
     },
     async getMerchant() {
-      return { ...full, witness: '"w-1"' }
+      return current
     },
     async createMerchant() {
       throw new Error('no se prueba acá')
@@ -84,8 +91,17 @@ function ope(options: { readonly updateFails?: RequestFailed } = {}) {
     async setKillSwitch() {
       throw new Error('no se prueba acá')
     },
-    async updateMerchantProfile(_id, body) {
+    async updateMerchantProfile(_id, body, witness) {
       updated.push(body)
+      witnesses.push(witness)
+      if (options.other !== undefined && updated.length === 1) {
+        current = { ...options.other, witness: '"w-2"' }
+        throw new RequestFailed({
+          status: 412,
+          type: 'stale-version',
+          title: 'The resource changed since it was read',
+        })
+      }
       if (options.updateFails) throw options.updateFails
       return { ...full, ...body }
     },
@@ -126,7 +142,7 @@ function ope(options: { readonly updateFails?: RequestFailed } = {}) {
       throw new Error('no se prueba acá')
     },
   }
-  return { client, updated }
+  return { client, updated, witnesses }
 }
 
 const recorded: unknown[] = []
@@ -384,5 +400,49 @@ describe('editar la identidad de un merchant', () => {
     await mount(client, ['merchants:read'])
     await waitFor(() => expect(screen.queryByText(merchantsStrings.editIdentityWhy)).toBeNull())
     expect(screen.queryByRole('button', { name: merchantsStrings.saveIdentity })).toBeNull()
+  })
+
+  describe('si otro escribió el merchant mientras tanto (feature 009, CU-29)', () => {
+    it('apagar el interruptor en el medio no es choque: guarda sola, con el testigo nuevo', async () => {
+      const { client, updated, witnesses } = ope({ other: { ...full, status: 'off' } })
+      const application = await mount(client, ALL)
+      await screen.findByText(merchantsStrings.editIdentityWhy)
+      await act(async () => set(merchantsStrings.name, 'Tienda Norte SA'))
+      await act(async () => save())
+
+      await waitFor(() => expect(updated).toHaveLength(2))
+      expect(witnesses).toEqual(['"w-1"', '"w-2"'])
+      expect(updated[1]?.displayName).toBe('Tienda Norte SA')
+      await waitFor(() =>
+        expect(application.router.state.location.pathname).toBe('/merchants/mrc_edit'),
+      )
+    })
+
+    it('otro cambió las notas: van las suyas con mi nombre encima', async () => {
+      const { client, updated } = ope({ other: { ...full, notes: 'Pilot, second wave.' } })
+      await mount(client, ALL)
+      await screen.findByText(merchantsStrings.editIdentityWhy)
+      await act(async () => set(merchantsStrings.name, 'Tienda Norte SA'))
+      await act(async () => save())
+
+      await waitFor(() => expect(updated).toHaveLength(2))
+      expect(updated[1]).toMatchObject({
+        displayName: 'Tienda Norte SA',
+        notes: 'Pilot, second wave.',
+      })
+    })
+
+    it('otro cambió el mismo nombre: muestra el choque, no guarda, y lo tecleado sigue', async () => {
+      const { client, updated } = ope({ other: { ...full, displayName: 'Tienda del Norte' } })
+      await mount(client, ALL)
+      await screen.findByText(merchantsStrings.editIdentityWhy)
+      await act(async () => set(merchantsStrings.name, 'Tienda Norte SA'))
+      await act(async () => save())
+
+      const dialog = await screen.findByRole('dialog')
+      expect(within(dialog).getByText(merchantsStrings.name)).toBeDefined()
+      expect(updated).toHaveLength(1)
+      expect(field(merchantsStrings.name).value).toBe('Tienda Norte SA')
+    })
   })
 })

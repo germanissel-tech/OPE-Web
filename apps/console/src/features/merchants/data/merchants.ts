@@ -97,6 +97,16 @@ export function useMerchants(options: {
 /** La clave de **un** merchant. Cuelga del mismo prefijo que la lista. */
 export const oneMerchant = (merchantId: string) => [...allMerchants, 'one', merchantId] as const
 
+/**
+ * **Volver a pedir el merchant, sin tocar la consulta** (feature 009,
+ * `CU-29`): lo que la puerta relee ante un `412` de la identidad. La ficha
+ * abierta sigue con lo que cargó.
+ */
+export function useMerchantReader(merchantId: string) {
+  const ope = useService(opeService)
+  return () => ope.getMerchant(merchantId)
+}
+
 export function useMerchant(merchantId: string) {
   const ope = useService(opeService)
 
