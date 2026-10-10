@@ -75,6 +75,39 @@ function ope(initial: Merchant['status'], options: { readonly switchFails?: Requ
     async updateMerchantProfile() {
       throw new Error('no se prueba acá')
     },
+    async getMerchantConfiguration() {
+      throw new Error('no se prueba acá')
+    },
+    async listConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async publishMerchantConfiguration() {
+      throw new Error('no se prueba acá')
+    },
+    async getPlatformConfiguration() {
+      throw new Error('no se prueba acá')
+    },
+    async listPlatformConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getPlatformConfigurationVersion() {
+      throw new Error('no se prueba acá')
+    },
+    async publishPlatformConfiguration() {
+      throw new Error('no se prueba acá')
+    },
+    async getTreatmentDefaults() {
+      throw new Error('no se prueba acá')
+    },
+    async listTreatmentDefaultsVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getTreatmentDefaultsVersion() {
+      throw new Error('no se prueba acá')
+    },
+    async publishTreatmentDefaults() {
+      throw new Error('no se prueba acá')
+    },
     async setKillSwitch(_id, body) {
       state.switched.push(body.enabled)
       if (options.switchFails) {

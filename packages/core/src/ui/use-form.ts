@@ -172,6 +172,21 @@ export function useForm<Values extends Readonly<Record<string, string>>>(
   const frame = useStrings()
 
   /**
+   * **Dónde puede caer un error del servidor**: en un campo que tiene valor, o
+   * en **una lista que tiene renglones** (feature 008 de la consola). Un error
+   * sobre la lista entera —«la escalera no crece»— es de la lista y no de un
+   * escalón, y su lugar es donde se dibuja la lista.
+   *
+   * Lo que decide es que lo que sigue al nombre empiece por un índice:
+   * `steps` es la lista de `steps.0`, y `step` no lo es aunque empiece igual.
+   */
+  const isTarget = (field: string) =>
+    field in values ||
+    Object.keys(values).some(
+      (name) => name.startsWith(`${field}.`) && /^\d+(\.|$)/.test(name.slice(field.length + 1)),
+    )
+
+  /**
    * **El respaldo de `CU-49`.**
    *
    * La regla —qué puede viajar en `fields`— es `TAN-9`, y no se repite acá. Esto
@@ -186,7 +201,7 @@ export function useForm<Values extends Readonly<Record<string, string>>>(
    * así el aviso sale **una vez por rechazo** y no una por dibujo.
    */
   const stray = fromServer
-    .filter((each) => !(each.field in values) || !each.message)
+    .filter((each) => !isTarget(each.field) || !each.message)
     .map((each) => each.field)
     .join(', ')
   const strayTitle = frame.rejectedOffForm

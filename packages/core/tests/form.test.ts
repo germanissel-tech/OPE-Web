@@ -291,3 +291,57 @@ describe('lo que rechazó el servidor y esta pantalla no muestra', () => {
     expect(result.current.avisos).toEqual([])
   })
 })
+
+describe('lo que rechazó el servidor sobre una lista entera (feature 008 de la consola)', () => {
+  /**
+   * **Una lista es destino de su error.** `invalid-configuration-value` sobre
+   * una escalera nombra la lista —«no crece»—, no un escalón. Es un error de la
+   * lista, y su lugar es donde está la lista: no el pie.
+   */
+  const ladder = { required: [], fields: { steps: { type: 'array', items: { type: 'number' } } } }
+
+  it('cae en la lista cuando tiene renglones, y no genera aviso', () => {
+    const { result } = renderHook(
+      () => ({
+        /* Los nombres de un formulario con renglones son dinámicos, y así se tipan. */
+        form: useForm<Record<string, string>>({ 'steps.0': '5', 'steps.1': '3' }, ladder, strings, [
+          { field: 'steps', message: 'La escalera no crece.' },
+        ]),
+        avisos: useNoticeHost().notifications,
+      }),
+      { wrapper },
+    )
+
+    expect(result.current.form.errorOf('steps')).toBe('La escalera no crece.')
+    expect(result.current.avisos).toEqual([])
+  })
+
+  it('un nombre que sólo empieza igual no es la lista', () => {
+    /* `step` no es la lista de `steps.0`, ni `steps.0` la de `steps.0x`. */
+    const { result } = renderHook(
+      () => ({
+        form: useForm({ 'steps.0': '5' }, ladder, strings, [
+          { field: 'step', message: 'Nada que ver.' },
+        ]),
+        avisos: useNoticeHost().notifications,
+      }),
+      { wrapper },
+    )
+
+    expect(result.current.avisos).toHaveLength(1)
+  })
+
+  it('sin renglones, la lista no tiene dónde mostrarse y sale por el pie', () => {
+    const { result } = renderHook(
+      () => ({
+        form: useForm({ other: '' }, ladder, strings, [
+          { field: 'steps', message: 'La escalera no crece.' },
+        ]),
+        avisos: useNoticeHost().notifications,
+      }),
+      { wrapper },
+    )
+
+    expect(result.current.avisos).toHaveLength(1)
+  })
+})

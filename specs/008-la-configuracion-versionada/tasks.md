@@ -28,28 +28,43 @@ commit.
 **Meta**: las tres piezas de forma que todas las pantallas componen, y las once operaciones en el
 cliente.
 
-- [ ] T001 [P] [E1] `packages/core/src/ui/use-form.ts`: un error del servidor cuyo campo es **el nombre
+- [x] T001 [P] [E1] `packages/core/src/ui/use-form.ts`: un error del servidor cuyo campo es **el nombre
       de una lista con renglones** (`x` cuando existe `x.0`) no es suelto; `errorOf('x')` lo devuelve
       (research §2). Prueba en `packages/core/tests/form.test.ts`, rota una vez a propósito
-- [ ] T002 [P] [E1] `packages/core/src/data/constraints-of.ts` (NUEVO): `constraintsOf(all, root,
+- [x] T002 [P] [E1] `packages/core/src/data/constraints-of.ts` (NUEVO): `constraintsOf(all, root,
       prefix)` aplana `fields` y `required` siguiendo `ref`, con nombres de camino; un `ref` que no
       está en `all` es una falla con clase (research §3). Prueba en `constraints-of.test.ts` con un
       esquema de dos niveles y uno de tres
-- [ ] T003 [P] [E1] `packages/core/src/base/units.ts` (NUEVO): `rateToPercent` y `percentToRate`
+- [x] T003 [P] [E1] `packages/core/src/base/units.ts` (NUEVO): `rateToPercent` y `percentToRate`
       corren la coma sobre el texto; `durationToUnit` y `unitToDuration` con una unidad de `ms`, `s`,
       `min`, `h`, `d`, y error cuando el resultado no es entero en la unidad del contrato; y
       `scaleConstraints` lleva `minimum` y `maximum` a la unidad que se muestra (research §3 a §5).
       Prueba en `units.test.ts` con `0.07`, `0.1`, `0.375`, `1`, `0`, `129600000` ms en horas,
       `1.5` h, `0.0001` s; rota una vez multiplicando por 100
-- [ ] T004 [E1] Exportar las tres piezas desde `packages/core/src/index.ts`
-- [ ] T005 [E1] `apps/console/src/api/ope/client.ts`: las once operaciones de data-model §1 y los
+- [x] T004 [E1] Exportar las tres piezas desde `packages/core/src/index.ts`
+- [x] T005 [E1] `apps/console/src/api/ope/client.ts`: las once operaciones de data-model §1 y los
       tipos de los tres niveles; los dobles de prueba de las pantallas existentes ganan los stubs
-- [ ] T006 [E1] `apps/console/src/features/configuration/` (NUEVA): `feature.ts` vacía, `strings.ts`,
+- [x] T006 [E1] `apps/console/src/features/configuration/` (NUEVA): `feature.ts` vacía, `strings.ts`,
       `data/units.ts` con la unidad de cada valor de data-model §2 tipada contra los caminos del
       contrato; `app/features.ts` la registra
 
 **Punto de control**: `npm test`, `npm run revisar` y `npm run build` en verde. Commit:
 `feat(008): el núcleo lee tasas, duraciones y restricciones anidadas, y el cliente los tres niveles`.
+
+> **Hecho el 2026-10-09.** Desvíos: (1) **una duración es exacta por construcción, no por un error.**
+> `NumberInput` de granito recorta en silencio los decimales que pasan de los que se le declaran;
+> con ese tope en la cantidad que la unidad garantiza (`exactDecimals`: cinco en horas, cuatro en
+> minutos), ningún valor tecleado puede dar milisegundos fraccionarios. Un valor del servidor que no
+> entra exacto en su unidad (`durationIn` devuelve nada) se muestra en la del contrato. No hay error
+> de capa 1 para lo que no puede pasar; research §5 se ajusta. (2) `constraintsOf` vive en `ui/`, al
+> lado de `useForm`: la regla de capas del núcleo no deja que `data/` mire a `ui/`, y las
+> restricciones son del formulario. (3) `features/configuration` no se registra todavía: una
+> funcionalidad exige su raíz, que nace en el tramo 4; en este tramo queda su tabla de unidades,
+> tipada contra las hojas de los dos contenidos —nombrar un valor que el contrato no tiene no
+> compila—. Sus textos nacen con sus pantallas. (4) `errorOf` de una lista exige tipar los valores
+> como `Record<string, string>`, que es lo que un formulario con renglones ya es. Rotas a propósito:
+> la tasa multiplicando por 100 (tres pruebas caen), la lista mandada al pie (una), lo requerido
+> arrastrado sin cadena (una).
 
 ---
 

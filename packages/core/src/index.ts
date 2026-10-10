@@ -128,6 +128,16 @@ export {
   TelemetryProvider,
   useTelemetry,
 } from './base/telemetry'
+export {
+  durationFrom,
+  durationIn,
+  exactDecimals,
+  type Presentation,
+  percentToRate,
+  rateToPercent,
+  scaledRange,
+  type TimeUnit,
+} from './base/units'
 export { TYPING_DELAY_MS, useDebounced } from './base/use-debounced'
 export { type OutcomePort, OutcomeProvider, useOutcome } from './base/use-outcome'
 export {
@@ -188,6 +198,7 @@ export {
 export { CannotStart } from './ui/cannot-start'
 export { ConfirmDialog, type ConfirmDialogProps } from './ui/confirm-dialog'
 export { ConflictDialog, type ConflictDialogProps } from './ui/conflict-dialog'
+export { constraintsOf } from './ui/constraints-of'
 export { Frame, type FrameProps } from './ui/frame'
 export { LoadMoreCursor, type LoadMoreCursorProps } from './ui/load-more'
 export { buildMenu } from './ui/menu'

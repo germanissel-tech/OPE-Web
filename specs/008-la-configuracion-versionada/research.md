@@ -88,8 +88,11 @@ cambia a `1.5 d`, la vista siguiente diría «1,5 d» o «36 h» según cómo ca
 unidad entre la vista y la edición contradice `CU-6` («el formato de un dato se define una sola vez»).
 Con la unidad por valor, el mismo dato se lee siempre igual. **El escenario 16 de la spec se ajusta.**
 
-**La regla de exactitud.** `1.5` horas son `5400000` ms: entra. `0.0001` segundos no son un número
-entero de milisegundos: error de capa 1 en el campo, sin redondear.
+**La regla de exactitud, y por qué no hace falta un error** (ajustada en el tramo 1). Una unidad
+garantiza tantos decimales como la mayor potencia de diez que divide a su factor: hasta cinco de hora
+son siempre un entero de milisegundos. `NumberInput` de granito recorta lo que pasa de los decimales
+que se le declaran, así que con ese tope **ningún valor tecleado es inexacto**. Un valor del servidor
+que no entra exacto en su unidad se muestra en la del contrato, sin redondear.
 
 **Dónde vive.** La conversión en `packages/core`, junto a la de tasas; qué unidad tiene cada valor,
 en la funcionalidad, porque es negocio.

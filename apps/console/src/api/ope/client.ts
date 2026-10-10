@@ -69,6 +69,38 @@ export type MerchantContact = components['schemas']['MerchantContact']
 /** La identidad de un merchant como se escribe, entera: lo que se omite se borra (ADR-045). */
 export type MerchantProfileInput = components['schemas']['MerchantProfileInput']
 
+/* ── Los tres niveles de configuración (ADR-031, enmendada por la 036; feature 008) ── */
+
+/** Con qué se sirve a un merchant: lo efectivo, lo que declara y las tres versiones que estampa. */
+export type MerchantConfiguration = components['schemas']['MerchantConfiguration']
+/** Lo que un merchant sobreescribe de los defaults; la ausencia es heredar. */
+export type MerchantConfigurationDeclared = components['schemas']['MerchantConfigurationDeclared']
+export type MerchantConfigurationInput = components['schemas']['MerchantConfigurationInput']
+export type MerchantConfigurationVersion = components['schemas']['MerchantConfigurationVersion']
+export type MerchantConfigurationVersionPage =
+  components['schemas']['MerchantConfigurationVersionPage']
+export type EffectiveConfiguration = components['schemas']['EffectiveConfiguration']
+
+/** El nivel 1: lo mismo para todos los merchants. */
+export type PlatformConfiguration = components['schemas']['PlatformConfiguration']
+export type PlatformConfigurationContent = components['schemas']['PlatformConfigurationContent']
+export type PlatformConfigurationInput = components['schemas']['PlatformConfigurationInput']
+export type PlatformConfigurationVersion = components['schemas']['PlatformConfigurationVersion']
+export type PlatformConfigurationVersionPage =
+  components['schemas']['PlatformConfigurationVersionPage']
+
+/** El nivel 2: lo que rige donde un merchant no declara. */
+export type TreatmentDefaults = components['schemas']['TreatmentDefaults']
+export type TreatmentDefaultsContent = components['schemas']['TreatmentDefaultsContent']
+export type TreatmentDefaultsInput = components['schemas']['TreatmentDefaultsInput']
+export type TreatmentDefaultsVersion = components['schemas']['TreatmentDefaultsVersion']
+export type TreatmentDefaultsVersionPage = components['schemas']['TreatmentDefaultsVersionPage']
+
+/** El cursor y el tamaño del tramo de un historial; el mismo en los tres niveles. */
+export type VersionsQuery = NonNullable<
+  operations['listConfigurationVersions']['parameters']['query']
+>
+
 export type OpeClient = {
   /** Los merchants del alcance del operador, por cursor. */
   readonly listMerchants: (query: MerchantQuery) => Promise<MerchantPage>
@@ -101,6 +133,38 @@ export type OpeClient = {
     merchantId: string,
     query: AdminLogQuery,
   ) => Promise<AdminEntryPage>
+
+  /* La configuración: tres niveles con la misma forma —lo que rige, el
+     historial, publicar— (feature 008). Publicar devuelve `201` con la versión
+     nueva o `200` con la que rige si el cuerpo es igual; el cliente devuelve el
+     cuerpo y quien llama compara números. */
+  readonly getMerchantConfiguration: (merchantId: string) => Promise<MerchantConfiguration>
+  readonly listConfigurationVersions: (
+    merchantId: string,
+    query: VersionsQuery,
+  ) => Promise<MerchantConfigurationVersionPage>
+  readonly publishMerchantConfiguration: (
+    merchantId: string,
+    body: MerchantConfigurationInput,
+  ) => Promise<MerchantConfigurationVersion>
+  readonly getPlatformConfiguration: () => Promise<PlatformConfiguration>
+  readonly listPlatformConfigurationVersions: (
+    query: VersionsQuery,
+  ) => Promise<PlatformConfigurationVersionPage>
+  readonly getPlatformConfigurationVersion: (
+    version: number,
+  ) => Promise<PlatformConfigurationVersion>
+  readonly publishPlatformConfiguration: (
+    body: PlatformConfigurationInput,
+  ) => Promise<PlatformConfigurationVersion>
+  readonly getTreatmentDefaults: () => Promise<TreatmentDefaults>
+  readonly listTreatmentDefaultsVersions: (
+    query: VersionsQuery,
+  ) => Promise<TreatmentDefaultsVersionPage>
+  readonly getTreatmentDefaultsVersion: (version: number) => Promise<TreatmentDefaultsVersion>
+  readonly publishTreatmentDefaults: (
+    body: TreatmentDefaultsInput,
+  ) => Promise<TreatmentDefaultsVersion>
 }
 
 /**
@@ -187,6 +251,79 @@ export function createClient(baseUrl: string, session: SessionHooks): OpeClient 
         await client.GET('/v1/admin/merchants/{merchantId}/log', {
           params: { path: { merchantId }, query },
         }),
+      )
+    },
+
+    async getMerchantConfiguration(merchantId) {
+      return unwrap<MerchantConfiguration>(
+        await client.GET('/v1/admin/merchants/{merchantId}/configuration', {
+          params: { path: { merchantId } },
+        }),
+      )
+    },
+
+    async listConfigurationVersions(merchantId, query) {
+      return unwrap<MerchantConfigurationVersionPage>(
+        await client.GET('/v1/admin/merchants/{merchantId}/configuration/versions', {
+          params: { path: { merchantId }, query },
+        }),
+      )
+    },
+
+    async publishMerchantConfiguration(merchantId, body) {
+      return unwrap<MerchantConfigurationVersion>(
+        await client.POST('/v1/admin/merchants/{merchantId}/configuration', {
+          params: { path: { merchantId } },
+          body,
+        }),
+      )
+    },
+
+    async getPlatformConfiguration() {
+      return unwrap<PlatformConfiguration>(await client.GET('/v1/admin/platform-configuration'))
+    },
+
+    async listPlatformConfigurationVersions(query) {
+      return unwrap<PlatformConfigurationVersionPage>(
+        await client.GET('/v1/admin/platform-configuration/versions', { params: { query } }),
+      )
+    },
+
+    async getPlatformConfigurationVersion(version) {
+      return unwrap<PlatformConfigurationVersion>(
+        await client.GET('/v1/admin/platform-configuration/versions/{version}', {
+          params: { path: { version } },
+        }),
+      )
+    },
+
+    async publishPlatformConfiguration(body) {
+      return unwrap<PlatformConfigurationVersion>(
+        await client.POST('/v1/admin/platform-configuration', { body }),
+      )
+    },
+
+    async getTreatmentDefaults() {
+      return unwrap<TreatmentDefaults>(await client.GET('/v1/admin/treatment-defaults'))
+    },
+
+    async listTreatmentDefaultsVersions(query) {
+      return unwrap<TreatmentDefaultsVersionPage>(
+        await client.GET('/v1/admin/treatment-defaults/versions', { params: { query } }),
+      )
+    },
+
+    async getTreatmentDefaultsVersion(version) {
+      return unwrap<TreatmentDefaultsVersion>(
+        await client.GET('/v1/admin/treatment-defaults/versions/{version}', {
+          params: { path: { version } },
+        }),
+      )
+    },
+
+    async publishTreatmentDefaults(body) {
+      return unwrap<TreatmentDefaultsVersion>(
+        await client.POST('/v1/admin/treatment-defaults', { body }),
       )
     },
   }
