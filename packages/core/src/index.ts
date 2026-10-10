@@ -165,7 +165,7 @@ export {
   type CollectionQuery,
   useCollection,
 } from './data/collection'
-export { type Clash, clashBetween } from './data/conflict'
+export { type Clash, clashBetween, mergedOnto } from './data/conflict'
 export type { ContractModule, OperationRequirement } from './data/contract'
 export {
   type FieldError,
@@ -176,6 +176,8 @@ export {
   RequestFailed,
   UNKNOWN_PROBLEM,
   unwrap,
+  unwrapWitnessed,
+  type Witnessed,
 } from './data/envelope'
 export { failureNotice, isBusinessRejection, successNotice } from './data/notice'
 export { createQueryClient, QueryProvider } from './data/query'

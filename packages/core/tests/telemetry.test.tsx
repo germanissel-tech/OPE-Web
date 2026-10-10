@@ -87,6 +87,19 @@ describe('un error que es defecto nuestro', () => {
     expect(failures()[0]).toMatchObject({ code: 'capability-missing', requestId: 'req-1' })
   })
 
+  it('una escritura que salió sin su testigo también (`CU-29`)', async () => {
+    /* El testigo lo pone la pantalla que leyó el registro: si el servidor dice
+       que faltó, la que falló es la pantalla. */
+    const { result } = renderHook(() => useAction(failingWith('witness-required')), { wrapper })
+
+    await act(async () => {
+      result.current.run()
+    })
+
+    expect(failures()).toHaveLength(1)
+    expect(failures()[0]).toMatchObject({ code: 'witness-required', requestId: 'req-1' })
+  })
+
   it('un merchant fuera del alcance también', async () => {
     /* La pantalla ofreció operar sobre un merchant que la sesión no alcanza:
        `CU-3` dice que eso no se dibuja. */

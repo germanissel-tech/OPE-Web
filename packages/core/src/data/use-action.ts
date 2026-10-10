@@ -200,8 +200,17 @@ export function forgetAttempt(attempts: Attempts, input: unknown): Attempts {
  * El `409 idempotency-conflict` **no está**: en OPE es «mismo cuerpo, otro
  * contenido», un rechazo del negocio y no una clave que la puerta ató mal —
  * la puerta ya no ata ninguna.
+ *
+ * El `428 witness-required` **sí**: una escritura que el contrato declara con
+ * testigo salió sin él, y quien lo pone es la pantalla que leyó el registro
+ * (`CU-29`). No es nada que el operador haya hecho.
  */
-const OURS = new Set(['capability-missing', 'merchant-out-of-scope', 'operator-scope-too-narrow'])
+const OURS = new Set([
+  'capability-missing',
+  'merchant-out-of-scope',
+  'operator-scope-too-narrow',
+  'witness-required',
+])
 
 /**
  * **El rechazo por versión vieja, reconocido por su tipo** (`CU-14`, `CU-29`).

@@ -28,12 +28,12 @@ termina con algo que se puede correr, y es un commit.
 
 - [ ] T001 [E1] `npm run contract:sync` desde el `main` del backend: `contracts/ope/` con `1.15.0`, `versioned`
       en `OPERATIONS`, `If-Match` en los tipos; la comprobación de conformidad sin cambios
-- [ ] T002 [P] [E1] `packages/core/src/data/envelope.ts`: `unwrapWitnessed(result)` devuelve el cuerpo con el
+- [x] T002 [P] [E1] `packages/core/src/data/envelope.ts`: `unwrapWitnessed(result)` devuelve el cuerpo con el
       `ETag` de la respuesta; sin `ETag`, falla con clase (la operación no lo entrega y el cliente pidió que
       sí). Prueba en `packages/core/tests/` con una respuesta con y sin el encabezado
-- [ ] T003 [P] [E1] `packages/core/src/data/contract.ts`: `versioned?: boolean` en `OperationRequirement`, para
+- [x] T003 [P] [E1] `packages/core/src/data/contract.ts`: `versioned?: boolean` en `OperationRequirement`, para
       que `operation()` lo reciba de `OPERATIONS[id]` sin conversión
-- [ ] T004 [P] [E1] `packages/core/src/data/use-action.ts`: `witness-required` entre los tipos propios (`OURS`),
+- [x] T004 [P] [E1] `packages/core/src/data/use-action.ts`: `witness-required` entre los tipos propios (`OURS`),
       con su prueba: un `428` deja rastro como el `403 capability-missing` (research §7)
 - [ ] T005 [E1] `apps/console/src/api/ope/client.ts`: `Witnessed<T>`; `getMerchantConfiguration`,
       `getPlatformConfiguration`, `getTreatmentDefaults` y `getMerchant` devuelven el dato con `witness`;
@@ -67,7 +67,7 @@ recuperarse, pero lo mandan.
 
 **Meta**: escenarios 2 a 7 de la spec, en las cuatro pantallas.
 
-- [ ] T011 [E3] `features/configuration/data/comparable.ts` (NUEVO) con su prueba: `comparableOf(values, shown,
+- [x] T011 [E3] `features/configuration/data/comparable.ts` (NUEVO) con su prueba: `comparableOf(values, shown,
       leaves)` → una clave por hoja, el valor del contrato en `JSON` o `undefined` si se hereda; y la vuelta a un
       contenido por `setAt`. La prueba: un valor declarado después de abrir es una diferencia; agregar un
       renglón es una diferencia; `36` horas y `129600000` ms son la misma hoja (research §3)

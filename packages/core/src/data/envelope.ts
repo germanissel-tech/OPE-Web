@@ -1,3 +1,5 @@
+import { Failure } from '../base/failure'
+
 /**
  * **La respuesta se lee en un solo lugar** (`CU-14`).
  *
@@ -114,6 +116,37 @@ export function fieldNameOf(pointer: string): string | undefined {
     .split('/')
     .map((segment) => segment.replaceAll('~1', '/').replaceAll('~0', '~'))
     .join('.')
+}
+
+/** Un recurso con el testigo de la respuesta que lo trajo (`CU-29`). */
+export type Witnessed<T> = T & { readonly witness: string }
+
+/**
+ * **Lee la respuesta y su testigo**, o tira lo que el servidor dijo (`CU-29`).
+ *
+ * Lo mismo que `unwrap`, más el `ETag` de **esa** respuesta, pegado al recurso
+ * como `witness`. Pegado y no al lado: quien no lo usa no cambia nada, y quien
+ * lo usa lo encuentra donde ya tiene el dato. Es el testigo de lo que la
+ * pantalla cargó, que es justo lo que `CU-29` pide devolver al escribir.
+ *
+ * **Sin `ETag` falla con clase**: quien llama pidió el testigo porque el
+ * contrato dice que esa lectura lo entrega, y seguir sin él haría que la
+ * escritura salga sin testigo y el servidor la rechace lejos de la causa.
+ */
+export function unwrapWitnessed<T extends object>(result: {
+  data?: unknown
+  error?: unknown
+  response: Response
+}): Witnessed<T> {
+  const value = unwrap<T>(result)
+  const witness = result.response.headers.get('etag')
+  if (witness === null) {
+    throw new Failure(
+      'response.missingWitness',
+      `La respuesta de ${result.response.url || 'la lectura'} no trae ETag, y el contrato dice que sí.`,
+    )
+  }
+  return { ...value, witness }
 }
 
 /**

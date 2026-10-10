@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { failedWith, fieldNameOf, RequestFailed, unwrap } from '../src/data/envelope'
+import { Failure } from '../src/base/failure'
+import {
+  failedWith,
+  fieldNameOf,
+  RequestFailed,
+  unwrap,
+  unwrapWitnessed,
+} from '../src/data/envelope'
 import {
   cutByProxy,
   failing,
@@ -158,5 +165,34 @@ describe('de qué campo habla un puntero', () => {
 
   it('deshace el escape de JSON Pointer', () => {
     expect(fieldNameOf('/body/a~1b/c~0d')).toBe('a/b.c~d')
+  })
+})
+
+describe('un recurso con su testigo (`CU-29`)', () => {
+  const read = (headers: Record<string, string>) => ({
+    data: { merchantId: 'm_a', revision: 3 },
+    response: new Response('{}', { status: 200, headers }),
+  })
+
+  it('llega con el ETag de su respuesta, tal cual', () => {
+    expect(unwrapWitnessed(read({ etag: '"m_a:3"' }))).toEqual({
+      merchantId: 'm_a',
+      revision: 3,
+      witness: '"m_a:3"',
+    })
+  })
+
+  it('sin ETag falla con clase: la escritura saldría sin testigo', () => {
+    expect(() => unwrapWitnessed(read({}))).toThrow(Failure)
+  })
+
+  it('un error es el mismo que sin testigo', () => {
+    const failed = caught(() =>
+      unwrapWitnessed({
+        error: { type: 'urn:ope:problem:merchant-not-found', title: 'Not found', status: 404 },
+        response: new Response('{}', { status: 404 }),
+      }),
+    )
+    expect(failed.type).toBe('merchant-not-found')
   })
 })
