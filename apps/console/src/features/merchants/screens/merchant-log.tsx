@@ -1,8 +1,9 @@
 import { Badge, Button, Section, Table } from '@granito/ui'
 import { type GridStates, LoadMoreCursor, resultOf, useStrings, useTableQuery } from '@ope/core'
 import { useMerchantLog } from '../data/merchant-log'
-import { type AdminEntry, whenOf } from '../data/merchants'
+import type { AdminEntry } from '../data/merchants'
 import { merchantsStrings } from '../strings'
+import { When } from './when'
 
 /**
  * **La sección del registro en la ficha**: quién hizo qué sobre este merchant.
@@ -47,7 +48,7 @@ export function MerchantLog({ merchantId }: { readonly merchantId: string }) {
             id: 'at',
             header: merchantsStrings.atUtc,
             width: '170px',
-            cell: (entry) => whenOf(entry.at),
+            cell: (entry) => <When instant={entry.at} />,
           },
           {
             id: 'operatorId',

@@ -228,6 +228,26 @@ describe('la ficha de un merchant con identidad', () => {
     expect(screen.queryByRole('button', { name: merchantsStrings.editIdentity })).toBeNull()
   })
 
+  it('la fecha de alta lleva línea de base, como todo dato de sólo lectura (GR-30)', async () => {
+    await mount(ope(full), ALL)
+    await screen.findByText('Ana Smith')
+    const dates = screen.getAllByText('09/10/2026')
+    expect(dates.some((each) => each.closest('.granito-value') !== null)).toBe(true)
+  })
+
+  it('el secreto de firma que falta es una fila sin acuñar con «crear»; sobre un desactivado no está', async () => {
+    await mount(ope(full), ALL)
+    await screen.findByText('Ana Smith')
+    expect(screen.getByText(merchantsStrings.notIssued)).toBeDefined()
+    expect(screen.getByRole('button', { name: merchantsStrings.create })).toBeDefined()
+    expect(screen.getByRole('button', { name: merchantsStrings.rotate })).toBeDefined()
+    cleanup()
+    await mount(ope({ ...full, status: 'deactivated' }), ALL)
+    await screen.findByText('Ana Smith')
+    expect(screen.queryByText(merchantsStrings.notIssued)).toBeNull()
+    expect(screen.queryByRole('button', { name: merchantsStrings.create })).toBeNull()
+  })
+
   it('sin identidad lo dice, encabeza por identificador y no inventa un nombre', async () => {
     await mount(ope(base), ALL)
     await screen.findByText(merchantsStrings.noIdentity)

@@ -19,15 +19,11 @@ import {
   useScreenParams,
 } from '@ope/core'
 import { type FormEvent, useState } from 'react'
-import {
-  type CredentialIssued,
-  type CredentialKind,
-  isCredentialKind,
-  whenOf,
-} from '../data/merchants'
+import { type CredentialIssued, type CredentialKind, isCredentialKind } from '../data/merchants'
 import { rotateCredential, rotationConstraints } from '../data/rotate-credential'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
+import { When } from './when'
 
 /**
  * **Rotar una credencial, en dos pasos y en una pantalla** (`GR-37`, `OW-8`).
@@ -179,14 +175,20 @@ function Issued({
           secrets={[{ label: merchantsStrings.credentialLabel(issued.kind), value: issued.value }]}
         />
         <Field label={merchantsStrings.issuedAtOf} size="medium">
-          {() => <Value>{whenOf(issued.issuedAt)}</Value>}
+          {() => (
+            <Value>
+              <When instant={issued.issuedAt} />
+            </Value>
+          )}
         </Field>
         <Field label={merchantsStrings.previousExpiresAt} size="medium">
           {() => (
             <Value>
-              {issued.previousExpiresAt === undefined
-                ? merchantsStrings.noPrevious
-                : whenOf(issued.previousExpiresAt)}
+              {issued.previousExpiresAt === undefined ? (
+                merchantsStrings.noPrevious
+              ) : (
+                <When instant={issued.previousExpiresAt} />
+              )}
             </Value>
           )}
         </Field>

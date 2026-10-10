@@ -98,8 +98,12 @@ export const merchantsStrings = {
   /* Rotar una credencial: es una pantalla (`GR-37`) con la gracia, y termina
      mostrando el valor nuevo una sola vez (`OW-8`). */
   rotate: 'Rotar',
-  createSigning: 'Crear el secreto de firma',
-  noSigning: 'Este merchant no firma sus notificaciones.',
+  create: 'Crear',
+  notIssued: 'Sin acuñar',
+  credentialsWhy:
+    'Por clase y fecha de emisión, nunca el valor. Sin secreto de firma, el merchant no firma sus notificaciones; crearlo lo acuña.',
+  /* La hora de un instante, en UTC y dicho así: granito formatea fechas, no instantes. */
+  timeUtc: (time: string) => ` ${time} UTC`,
   rotateTitle: (kind: 'ingest' | 'platform' | 'signing') =>
     ({
       ingest: 'Rotar la llave del tag',
