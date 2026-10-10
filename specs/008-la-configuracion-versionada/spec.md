@@ -1,6 +1,6 @@
 # Especificación · La configuración versionada
 
-**Carpeta**: `008-la-configuracion-versionada` · **Estado**: borrador · **Fecha**: 2026-10-09
+**Carpeta**: `008-la-configuracion-versionada` · **Estado**: construida · **Fecha**: 2026-10-09
 
 **Pedido**: "La configuración versionada en el panel de administración. Decisión del dueño,
 2026-10-09: entran los tres niveles —la configuración de cada merchant, la de plataforma y los
@@ -259,6 +259,13 @@ sí, es biblioteca.
 
 ## Lo que queda abierto
 
+- **Las mediciones reiniciadas, en el historial de un nivel global.** ABIERTO para el backend: sólo la
+  respuesta de publicar trae `windowsRestarted`; el historial y la lectura por número lo devuelven
+  vacío, aunque el contrato lo describe como parte de la versión. La consola lo muestra cuando viene,
+  y el aviso de publicar lo nombra.
+- **Leer una versión del merchant por su número.** El contrato no tiene la operación, y la consola
+  recorre las páginas del historial hasta dar con ella. Alcanza con pocas versiones; con muchas, es
+  un pedido al backend.
 - **El testigo de concurrencia de la configuración.** Sin él, publicar arrastra lo no editado de una
   versión que pudo cambiar. Es un pedido al backend, con esta feature como evidencia; no bloquea.
 - **La edición de la política de decisión, de la condición de riesgo de devolución, del mapa de
@@ -267,5 +274,6 @@ sí, es biblioteca.
   vez de la que rige. Es la forma honesta de volver atrás sin una operación de rollback; se decide
   después de ver el historial en uso.
 - **El registro de toda la plataforma** (`listAdminLog`), en su propia pantalla.
-- **Propuestas a granito**, si al componer hace falta: un valor con su origen al lado, y un campo que
-  alterna entre heredado y declarado. Se compone mientras tanto; no bloquea.
+- **Una acción al lado del dato de un campo**, propuesta a granito (`docs/propuestas-a-granito.md`,
+  §4): «declarar» y «heredar» se componen con un envoltorio que deja el botón a su ancho. El valor con
+  su origen no hizo falta proponerlo: es la ayuda del campo.

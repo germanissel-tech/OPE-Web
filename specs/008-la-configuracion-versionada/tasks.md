@@ -229,13 +229,16 @@ cliente.
 
 ## Fase 5 · Tramo 5 — El cierre
 
-- [ ] T031 [E5] `quickstart.md` con «Lo corrido» fechado, tramo por tramo; `spec.md`: **Estado**:
+- [x] T031 [E5] `quickstart.md` con «Lo corrido» fechado, tramo por tramo; `spec.md`: **Estado**:
       construida
-- [ ] T032 [P] [E5] `.specify/memory/estado.md`: la 008 construida; «Lo que sigue»;
+- [x] T032 [P] [E5] `.specify/memory/estado.md`: la 008 construida; «Lo que sigue»;
       `docs/propuestas-a-granito.md` sólo si «valor con origen» o «heredado/declarado» no compusieron
-- [ ] T033 [E5] `npm test` entero, `npm run revisar`, `npm run build`
+- [x] T033 [E5] `npm test` entero, `npm run revisar`, `npm run build`
 
 **Punto de control**: todo en verde. Commit: `docs(008): cierre — estado y quickstart`.
+
+> **Hecho el 2026-10-10.** `docs/propuestas-a-granito.md` gana la §4, una acción al lado del dato de
+> un campo: el valor con su origen compuso con la ayuda del campo y no hizo falta proponerlo.
 
 ---
 

@@ -86,4 +86,32 @@ Abrir `http://localhost:5173/?dev.bearer=1` y entrar con la credencial que la vi
 
 ## Lo corrido
 
-_(se completa al implementar, con fecha, tramo por tramo)_
+**Tramo 1 (2026-10-10)** · El núcleo: las unidades (`rateToPercent`, `durationIn`, `exactDecimals`),
+`constraintsOf` que sigue los `ref` y una lista como destino de su error. Rotas a propósito: la tasa
+multiplicando por 100 (cae con `0.07`), la duración que redondea (cae con `0.0001 s`).
+
+**Tramo 2 (2026-10-10)** · Escenario 1: «Tienda Norte» con las tres versiones que rigen, cada valor en
+su unidad y con su origen («Heredado de defaults-1», «Declarado por el merchant»), lo propio y el
+historial. La plataforma se ve desde el menú.
+
+**Tramo 3 (2026-10-10)** · Escenario 2: en «Tienda Sur», declarar el holdout en `7` publicó la
+versión 1 y la vista dijo `7 %` «Declarado por el merchant». Escenario 3: con un experimento abierto
+y activado por la API sobre «Tienda Sur» —el de la semilla lo habían cerrado las pruebas del
+backend—, el `409` marcó la correctiva y pidió el motivo; con motivo, la versión 2 quedó correctiva
+en el historial. «Declarar» se estiraba a todo el ancho del campo, y publicar preguntaba por cambios
+sin guardar: los dos se arreglaron ahí.
+
+**Tramo 4 (2026-10-10)** · Escenario 4: el menú tiene «Plataforma» y «Defaults de tratamiento». La
+plataforma (`platform-160`, que dejaron las pruebas del backend en el almacén) se ve en su unidad, y
+lo que no entra exacto en la suya, en la del contrato (`524907 ms`). La versión 160 se abre de sólo
+lectura y se vuelve. Con un experimento activo sobre «Tienda Sur», 45 min de sesión volvió `409`;
+la sección correctiva quedaba arriba, fuera de la vista —ahora el motivo se enfoca solo—; con
+motivo se publicó la 161 y el aviso dijo «reinició la medición de exp_nliucusmyzzd». Los defaults
+publicados sin tocar nada dijeron «No cambió nada · Sigue la versión 1»: el cuerpo, con la política
+de decisión copiada, es el que rige. El experimento se cerró. Escenario 5: no se ve en el navegador
+—la sesión falsa no manda credencial y la vista recibe `401`—; lo afirman la prueba de los niveles
+globales (sin alcance total no hay «publicar», en los dos) y la de `capabilitiesOf`. La sesión falsa
+tiene el papel `acotado` para cuando haya datos de mentira. La columna «Mediciones reiniciadas» queda
+vacía contra el backend: el historial no las devuelve (spec, «Lo que queda abierto»).
+
+**Tramo 5 (2026-10-10)** · `npm test`, `npm run revisar` y `npm run build` en verde.
