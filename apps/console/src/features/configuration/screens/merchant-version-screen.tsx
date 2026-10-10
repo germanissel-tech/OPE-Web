@@ -78,7 +78,7 @@ function VersionView({ version }: { readonly version: MerchantConfigurationVersi
         </Button>
       }
     >
-      <VersionFacts version={version} />
+      <VersionFacts version={version} windowsRestarted={version.windowsRestarted} />
       <TreatmentValues
         values={declared}
         originOf={(path) =>

@@ -7,8 +7,8 @@ import { configurationStrings } from '../strings'
 /**
  * **Quién publicó una versión, cuándo y por qué** (feature 008, research §11):
  * lo que el historial dice en una fila, dicho como campos de sólo lectura
- * (`GR-30`) al abrir esa versión. En los niveles globales, además, el nombre
- * que estampan las decisiones y qué mediciones reinició.
+ * (`GR-30`) al abrir esa versión, y qué mediciones reinició, en los tres
+ * niveles. En los globales, además, el nombre que estampan las decisiones.
  */
 export function VersionFacts({
   version,

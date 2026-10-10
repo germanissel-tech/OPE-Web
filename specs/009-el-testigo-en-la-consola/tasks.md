@@ -52,14 +52,14 @@ recuperarse, pero lo mandan.
 
 **Meta**: las mediciones reiniciadas en todo historial; la versión del merchant de una sola petición.
 
-- [ ] T007 [P] [E2] `features/configuration/data/merchant-configuration.ts`: `useMerchantVersion` pide
+- [x] T007 [P] [E2] `features/configuration/data/merchant-configuration.ts`: `useMerchantVersion` pide
       `getMerchantConfigurationVersion`; un `404` es «esa versión no existe» (research §6)
-- [ ] T008 [P] [E2] `features/configuration/screens/`: el historial del merchant gana «Mediciones reiniciadas»
+- [x] T008 [P] [E2] `features/configuration/screens/`: el historial del merchant gana «Mediciones reiniciadas»
       (la columna de `level-history-columns.tsx` se comparte), y la versión del merchant la muestra en
       `VersionFacts`
-- [ ] T009 [E2] Pruebas: el historial del merchant con un experimento en la columna; la versión por número sin
+- [x] T009 [E2] Pruebas: el historial del merchant con un experimento en la columna; la versión por número sin
       recorrer páginas (el doble cuenta las llamadas a `listConfigurationVersions`: ninguna)
-- [ ] T010 [E2] Commit: `feat(009): el historial dice qué mediciones reinició cada versión`
+- [x] T010 [E2] Commit: `feat(009): el historial dice qué mediciones reinició cada versión`
 
 ---
 

@@ -1,4 +1,4 @@
-import { defineAction, useCollection, useService } from '@ope/core'
+import { defineAction, failedWith, useCollection, useService } from '@ope/core'
 import { useQuery } from '@tanstack/react-query'
 import {
   type MerchantConfiguration,
@@ -65,30 +65,25 @@ export function useConfigurationVersions(
 }
 
 /**
- * **Una versión del merchant, por su número** (research §11).
+ * **Una versión del merchant, por su número** (feature 009, research §6): una
+ * sola petición, la operación que la 042 del backend agregó.
  *
- * El contrato no tiene una operación para leer una sola: cada versión viene
- * entera en la página del historial, así que se recorren las páginas hasta
- * dar con ella. Un merchant publica pocas versiones; si fueran muchas, esto es
- * lo que pediría una operación nueva al backend. Sin versión con ese número,
- * nada.
+ * El `404` tiene dos tipos y se separan por el tipo, nunca por el texto
+ * (`CU-14`): `configuration-version-not-found` es «ese número no existe», y
+ * la pantalla lo dice como un vacío; `merchant-not-found` es otra cosa y queda
+ * como error.
  */
 export function useMerchantVersion(merchantId: string, version: number) {
   const ope = useService(opeService)
   return useQuery({
     queryKey: [...merchantConfigurationVersions(merchantId), version],
     queryFn: async (): Promise<MerchantConfigurationVersion | null> => {
-      let cursor: string | undefined
-      do {
-        const page = await ope.listConfigurationVersions(
-          merchantId,
-          cursor === undefined ? {} : { cursor },
-        )
-        const found = page.items.find((each) => each.version === version)
-        if (found !== undefined) return found
-        cursor = page.nextCursor
-      } while (cursor !== undefined)
-      return null
+      try {
+        return await ope.getMerchantConfigurationVersion(merchantId, version)
+      } catch (error) {
+        if (failedWith(error, 'configuration-version-not-found')) return null
+        throw error
+      }
     },
   })
 }
