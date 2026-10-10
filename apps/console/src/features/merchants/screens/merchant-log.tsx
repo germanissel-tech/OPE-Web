@@ -1,9 +1,9 @@
 import { Badge, Button, Section, Table } from '@granito/ui'
 import { type GridStates, LoadMoreCursor, resultOf, useStrings, useTableQuery } from '@ope/core'
+import { When } from '../../../components/when'
 import { useMerchantLog } from '../data/merchant-log'
 import type { AdminEntry } from '../data/merchants'
 import { merchantsStrings } from '../strings'
-import { When } from './when'
 
 /**
  * **La sección del registro en la ficha**: quién hizo qué sobre este merchant.

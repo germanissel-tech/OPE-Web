@@ -134,6 +134,17 @@ function MerchantCard({
           </Button>
           {/* Editar la identidad es un desenlace (feature 007): exige llegar a la
               pantalla de edición (`merchants:write`), también sobre un desactivado. */}
+          {/* La configuración es una pantalla aparte (feature 008): se ve con
+              `configuration:read`, y el flujo dice cuál es. */}
+          <ActionButton
+            type="button"
+            {...flow.toReach(merchants.outcomes.configurationRequested)}
+            onClick={() =>
+              emit(merchants.outcomes.configurationRequested({ merchantId: merchant.merchantId }))
+            }
+          >
+            {merchantsStrings.configuration}
+          </ActionButton>
           <ActionButton
             type="button"
             {...flow.toReach(merchants.outcomes.identityEditRequested)}

@@ -1,5 +1,5 @@
 import type { ApplicationManifest, BaseConfig } from '@ope/core'
-import { ADMIN_CAPABILITIES, fetchOperator } from '../api/ope/identity'
+import { capabilitiesOf, fetchOperator } from '../api/ope/identity'
 import { appStrings } from './strings'
 
 /**
@@ -21,6 +21,10 @@ import { appStrings } from './strings'
  * capacidad: un operador con alcance acotado ve los mismos botones y el backend
  * le rechaza los merchants ajenos (`merchant-out-of-scope`). El día que el
  * contrato tenga capacidades por operador, esto deja de ser una constante.
+ *
+ * La excepción es lo que alcanza a todos: publicar plataforma o defaults exige
+ * alcance `*`, y ese alcance llega como una capacidad más (`ALL_MERCHANTS`,
+ * feature 008).
  */
 export function identity(config: BaseConfig): Pick<
   ApplicationManifest,
@@ -29,15 +33,7 @@ export function identity(config: BaseConfig): Pick<
   readonly identify: (authorize: (request: Request) => Promise<Request>) => Promise<Claims>
 } {
   return {
-    toCapabilities: (claims) => {
-      if (Array.isArray(claims.capabilities)) {
-        return new Set(
-          claims.capabilities.filter((each): each is string => typeof each === 'string'),
-        )
-      }
-      if ('scope' in claims) return ADMIN_CAPABILITIES
-      return new Set()
-    },
+    toCapabilities: capabilitiesOf,
 
     /** El rótulo de abajo en la barra: el alcance del operador (`CU-27`). */
     userCaption: (claims) => {

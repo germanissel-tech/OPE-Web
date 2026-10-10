@@ -19,11 +19,11 @@ import {
   useScreenParams,
 } from '@ope/core'
 import { type FormEvent, useState } from 'react'
+import { When } from '../../../components/when'
 import { type CredentialIssued, type CredentialKind, isCredentialKind } from '../data/merchants'
 import { rotateCredential, rotationConstraints } from '../data/rotate-credential'
 import { merchants } from '../feature'
 import { merchantsStrings } from '../strings'
-import { When } from './when'
 
 /**
  * **Rotar una credencial, en dos pasos y en una pantalla** (`GR-37`, `OW-8`).

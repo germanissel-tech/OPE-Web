@@ -53,6 +53,8 @@ export const merchantsStrings = {
     'La persona con la que se lleva la relación comercial. Si hay contacto, nombre y email van; teléfono y rol son opcionales.',
   notesWhy:
     'Texto libre del operador: por qué se dio de alta, en qué etapa está, con quién se habla.',
+  /* La configuración del merchant (feature 008): la ficha la ofrece; la vista es de la configuración. */
+  configuration: 'Configuración',
   /* La edición de la identidad (feature 007): una pantalla que guarda la identidad entera. */
   editIdentity: 'Editar identidad',
   editIdentityTitle: (name: string) => `Editar la identidad de ${name}`,
@@ -102,8 +104,6 @@ export const merchantsStrings = {
   notIssued: 'Sin acuñar',
   credentialsWhy:
     'Por clase y fecha de emisión, nunca el valor. Sin secreto de firma, el merchant no firma sus notificaciones; crearlo lo acuña.',
-  /* La hora de un instante, en UTC y dicho así: granito formatea fechas, no instantes. */
-  timeUtc: (time: string) => ` ${time} UTC`,
   rotateTitle: (kind: 'ingest' | 'platform' | 'signing') =>
     ({
       ingest: 'Rotar la llave del tag',

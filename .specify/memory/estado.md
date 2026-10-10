@@ -5,7 +5,7 @@ Lo que una sesión nueva necesita saber y **no puede deducir del código**.
 Esto cambia; la [constitución](constitution.md) no. Si algo de acá contradice al repositorio,
 manda el repositorio.
 
-*Última revisión: 2026-10-09.*
+*Última revisión: 2026-10-10.*
 
 ## Dónde está cada cosa
 
@@ -36,18 +36,30 @@ la identidad entera desde la ficha con `updateMerchantProfile`. Trajo al núcleo
 como función de los valores y la forma `email` en `useForm`. Los cuatro tramos están en
 `specs/007-la-identidad-en-el-panel/tasks.md`, con sus notas fechadas.
 
+**La feature 008 —la configuración versionada— está construida**: los tres niveles se ven, se
+recorren y se publican. La configuración de un merchant se alcanza desde su ficha, con el origen de
+cada valor, y se publica heredando o declarando cada uno; plataforma y defaults son el grupo
+«Configuración» del menú, y publicarlos exige alcance sobre todos los merchants (la capacidad
+`scope:all-merchants`, que `capabilitiesOf` deriva del alcance). Un `409 configuration-frozen`
+pasa la pantalla a correctiva sin perder lo cargado; un `422` cae en su campo, también en una lista.
+Trajo al núcleo las unidades (tasas en porcentaje, duraciones en su unidad, exactas por
+construcción), `constraintsOf` que sigue los `ref`, y una lista como destino de su error. Los cinco
+tramos están en `specs/008-la-configuracion-versionada/tasks.md`, con sus notas fechadas.
+
 **Los números no se escriben acá.** `npm test` informa cuántas decisiones hay, cuántas abiertas,
 cuántas citas resuelven, y cuántas operaciones, capacidades y esquemas tiene el módulo del contrato.
 
 ## Lo que sigue
 
-1. **La configuración versionada** (merchant, plataforma, defaults de tratamiento): la feature
-   siguiente del panel, con el alcance que decida el dueño. Copia de `features/merchants` la forma de
-   una pantalla de alta, una acción con confirmación y una grilla de registro. Después, experimentos
-   y textos; y el registro de toda la plataforma (`listAdminLog`) con la pantalla que tenga a la
-   plataforma por sujeto.
-2. **El portal** (`apps/portal`), copiando `apps/console` según `docs/segunda-aplicacion.md`.
-3. **Granito en npm**, que se prepara aparte y reemplaza el `file:`.
+1. **Experimentos y textos**, las features siguientes del panel; y el registro de toda la
+   plataforma (`listAdminLog`) con la pantalla que tenga a la plataforma por sujeto. Lo que la 008
+   dejó afuera —editar la política de decisión, el riesgo de devolución, los anclajes y las
+   etiquetas, y «partir de una versión anterior»— espera a que el dueño lo ordene.
+2. **Tres pedidos al backend** que la 008 dejó con evidencia: `windowsRestarted` en el historial de un
+   nivel global (hoy sólo lo trae publicar), leer una versión del merchant por su número, y el
+   testigo de concurrencia de la configuración.
+3. **El portal** (`apps/portal`), copiando `apps/console` según `docs/segunda-aplicacion.md`.
+4. **Granito en npm**, que se prepara aparte y reemplaza el `file:`.
 
 ## Lo que la 040 y la 041 trajeron
 
@@ -71,6 +83,10 @@ muestra y edita.
   aparecer**: `SecretOnce` compone `Value` y `Button` dentro de un `Field`, y granito no tiene una
   pieza para «un valor que se copia y se va» (`OW-8`, propuesta). Se ve correcto; no se parece a un
   control.
+- **Las pruebas del backend escriben en el almacén de desarrollo**: dejan versiones de plataforma
+  (`platform-160`, con valores como `524907 ms`) y cierran el experimento de la semilla, así que
+  «Tienda de desarrollo» ya no congela la configuración. Para ver un `409 configuration-frozen` se
+  abre y activa un experimento por la API sobre otro merchant, y se cierra al terminar.
 - **Un almacén de desarrollo puede traer una versión de plataforma de pruebas** (pasó el
   2026-10-09: `platform-85` con `rotationGraceMaxMs: 1`, y toda gracia mayor que cero daba `422`).
   Se limpió borrando `data/ope.db*` con el backend parado; con `config/platform.json` el máximo

@@ -62,3 +62,23 @@ grilla», con el mismo lugar y el mismo borde.
 
 **Qué se borra acá cuando llegue.** Nada: la grilla cambia un atributo. Cuando el contrato filtre,
 la barra vuelve a tener filtros y esto deja de importar.
+
+## 4 · Una acción al lado del dato de un campo (feature 008)
+
+**Qué pasa.** Un `Field` apila lo que recibe y lo estira al ancho de su columna, que es lo que un
+control necesita y lo que un botón no. En la configuración de un merchant cada valor **se hereda o
+se declara**: heredado es un `Value` con «Declarar», declarado es su control con «Heredar». Puesto
+tal cual, «Declarar» ocupa el ancho entero y se lee como el campo mismo. Es el mismo defecto que
+`SecretOnce` tiene con «Copiar» (§2).
+
+**Qué se compone mientras tanto.** `FieldAction` en
+`apps/console/src/features/configuration/screens/treatment-fields.tsx`: un `<span>` alrededor del
+botón, que se estira él y deja al botón a su ancho. Es estructura, no estilo; el botón queda debajo
+del dato y no a su lado.
+
+**Qué se pide.** Que `Field` acepte una acción propia —por ejemplo `action={<Button …/>}`— y la
+dibuje al costado del dato o del control, a su ancho y alineada a su línea de base. Con eso,
+«Declarar», «Heredar» y «Copiar» son la misma pieza.
+
+**Qué se borra acá cuando llegue.** `FieldAction` y su comentario, y en `SecretOnce` el botón pasa a
+ser la acción del campo.

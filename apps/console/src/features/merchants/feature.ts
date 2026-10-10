@@ -49,5 +49,9 @@ export const merchants = defineFeature({
        edición vuelve, haya guardado o cancelado. */
     identityEditRequested: outcome<{ merchantId: string }>('merchants.identityEditRequested'),
     identityClosed: outcome<{ merchantId: string }>('merchants.identityClosed'),
+
+    /* Ver la configuración (feature 008): la ficha la pide. Qué pantalla es, y
+       que vuelve a la ficha, lo dice el flujo: es de otra funcionalidad. */
+    configurationRequested: outcome<{ merchantId: string }>('merchants.configurationRequested'),
   },
 })

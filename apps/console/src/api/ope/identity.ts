@@ -61,3 +61,31 @@ export const ADMIN_CAPABILITIES: ReadonlySet<string> = new Set(CAPABILITIES)
 export const READ_CAPABILITIES: ReadonlySet<string> = new Set(
   CAPABILITIES.filter((each) => each.endsWith(':read')),
 )
+
+/**
+ * **Alcance sobre todos los merchants, como una capacidad de la consola**
+ * (feature 008, research §8).
+ *
+ * Publicar plataforma o defaults exige `configuration:write` **y** un operador
+ * sobre todo merchant: lo que publica alcanza a todos. El contrato no tiene
+ * una capacidad para eso —lo dice el alcance—, y una pantalla no lee claims:
+ * lee capacidades. Así que el alcance `*` se traduce acá en una más, con un
+ * nombre que no puede chocar con las del contrato (no tiene la forma
+ * `recurso:verbo` de ninguna), y el botón la exige junto a la de escribir.
+ */
+export const ALL_MERCHANTS = 'scope:all-merchants'
+
+/**
+ * **Las capacidades que dan unos claims**: las que traen —la sesión falsa—, o
+ * todas las del consumidor `admin` —el bearer—, más `ALL_MERCHANTS` si el
+ * alcance es `*`.
+ */
+export function capabilitiesOf(claims: Readonly<Record<string, unknown>>): ReadonlySet<string> {
+  const listed = claims['capabilities']
+  const granted = Array.isArray(listed)
+    ? listed.filter((each): each is string => typeof each === 'string')
+    : 'scope' in claims
+      ? [...ADMIN_CAPABILITIES]
+      : []
+  return new Set(claims['scope'] === '*' ? [...granted, ALL_MERCHANTS] : granted)
+}

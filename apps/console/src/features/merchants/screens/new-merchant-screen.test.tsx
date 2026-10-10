@@ -98,6 +98,39 @@ function ope(options: { readonly createFails?: RequestFailed } = {}): OpeClient 
     async updateMerchantProfile() {
       throw new Error('no se prueba acá')
     },
+    async getMerchantConfiguration() {
+      throw new Error('no se prueba acá')
+    },
+    async listConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async publishMerchantConfiguration() {
+      throw new Error('no se prueba acá')
+    },
+    async getPlatformConfiguration() {
+      throw new Error('no se prueba acá')
+    },
+    async listPlatformConfigurationVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getPlatformConfigurationVersion() {
+      throw new Error('no se prueba acá')
+    },
+    async publishPlatformConfiguration() {
+      throw new Error('no se prueba acá')
+    },
+    async getTreatmentDefaults() {
+      throw new Error('no se prueba acá')
+    },
+    async listTreatmentDefaultsVersions() {
+      throw new Error('no se prueba acá')
+    },
+    async getTreatmentDefaultsVersion() {
+      throw new Error('no se prueba acá')
+    },
+    async publishTreatmentDefaults() {
+      throw new Error('no se prueba acá')
+    },
   }
 }
 
@@ -162,6 +195,11 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
       finishes(merchants.outcomes.identityClosed, merchantScreen, ({ merchantId }) => ({
         merchantId,
       })),
+      /* La configuración es de otra funcionalidad: acá basta con que el
+         desenlace tenga paso, y la ficha sirve de destino. */
+      opens(merchants.outcomes.configurationRequested, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
     ],
   })
   const application = createApplication(
@@ -189,6 +227,7 @@ async function mount(client: OpeClient, capabilities: readonly string[], url = '
           merchants.outcomes.merchantClosed.id,
           merchants.outcomes.rotationRequested.id,
           merchants.outcomes.identityEditRequested.id,
+          merchants.outcomes.configurationRequested.id,
         ],
         'edit-identity': [merchants.outcomes.identityClosed.id],
         'new-merchant': [

@@ -24,6 +24,10 @@ export type FailureCode =
   | 'declaration.unknownContext'
   | 'declaration.unhandledEvent'
   | 'declaration.brokenTelemetry'
+  /** Una duración declarada en una unidad menor que la del contrato. */
+  | 'declaration.badUnit'
+  /** Una restricción emitida nombra un esquema que no está entre las emitidas. */
+  | 'declaration.unknownConstraint'
   /* Al arrancar */
   | 'startup.missingContainer'
   | 'startup.incompleteConfig'

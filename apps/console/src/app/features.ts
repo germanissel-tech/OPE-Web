@@ -1,4 +1,5 @@
 import type { Feature } from '@ope/core'
+import { configuration } from '../features/configuration/feature'
 import { home } from '../features/home/feature'
 import { merchants } from '../features/merchants/feature'
 
@@ -16,4 +17,4 @@ import { merchants } from '../features/merchants/feature'
  * `merchants` es el hola mundo de OPE-Console: la primera colección real del
  * backend, de la que se copian las pantallas del panel.
  */
-export const features: readonly Feature[] = [home, merchants]
+export const features: readonly Feature[] = [home, merchants, configuration]
