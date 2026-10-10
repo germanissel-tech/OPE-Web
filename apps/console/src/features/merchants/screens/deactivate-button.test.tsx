@@ -143,6 +143,11 @@ async function mount(client: OpeClient) {
       finishes(merchants.outcomes.identityClosed, merchantScreen, ({ merchantId }) => ({
         merchantId,
       })),
+      /* La configuración es de otra funcionalidad: acá basta con que el
+         desenlace tenga paso, y la ficha sirve de destino. */
+      opens(merchants.outcomes.configurationRequested, merchantScreen, ({ merchantId }) => ({
+        merchantId,
+      })),
     ],
   })
   const application = createApplication(
@@ -170,6 +175,7 @@ async function mount(client: OpeClient) {
           merchants.outcomes.merchantClosed.id,
           merchants.outcomes.rotationRequested.id,
           merchants.outcomes.identityEditRequested.id,
+          merchants.outcomes.configurationRequested.id,
         ],
         'edit-identity': [merchants.outcomes.identityClosed.id],
         'new-merchant': [

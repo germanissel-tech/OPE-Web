@@ -12,6 +12,7 @@ import {
   type OpeClient,
   opeService,
 } from '../../../api/ope/client'
+import { dayOf, timeOf } from '../../../lib/instants'
 
 /**
  * Los datos de los merchants.
@@ -64,23 +65,6 @@ export const STATUS_TONE = {
 } as const satisfies Record<Merchant['status'], string>
 
 /**
- * **El día de un instante**, para dibujarlo con el formato de fecha de granito.
- *
- * El contrato devuelve instantes ISO (`2026-10-06T21:00:27.783Z`) y granito
- * formatea fechas (`YYYY-MM-DD`): un formato se define una sola vez (`GR-31`),
- * y lo que la pantalla muestra es una fecha, no un instante. La hora se
- * descarta a propósito: un alta se lee por su día.
- */
-export const dayOf = (instant: string) => instant.slice(0, 10)
-
-/**
- * La hora de un instante del contrato, **en UTC y dicho así donde se muestra**:
- * granito formatea fechas y no instantes, y convertir a la zona del navegador
- * sin decirlo es mentir en un registro.
- */
-export const timeOf = (instant: string) => instant.slice(11, 16)
-
-/**
  * **Todas las listas de merchants**, sea cual sea el tramo.
  *
  * La clave de caché va de lo general a lo particular —sistema, recurso,
@@ -121,3 +105,6 @@ export function useMerchant(merchantId: string) {
     queryFn: () => ope.getMerchant(merchantId),
   })
 }
+
+/* El día y la hora de un instante viven en `lib/`: los usa también la configuración. */
+export { dayOf, timeOf }

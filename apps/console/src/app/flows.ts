@@ -1,5 +1,9 @@
-import { TAG } from '@granito/ui'
+import { SETTINGS, TAG } from '@granito/ui'
 import { closes, defineFlow, finishes, group, omits, opens } from '@ope/core'
+import { configuration } from '../features/configuration/feature'
+import { merchantConfigurationScreen } from '../features/configuration/screens/merchant-configuration-screen'
+import { platformScreen } from '../features/configuration/screens/platform-screen'
+import { configurationStrings } from '../features/configuration/strings'
 import { home } from '../features/home/feature'
 import { aboutScreen } from '../features/home/screens/about-screen'
 import { welcomeScreen } from '../features/home/screens/welcome-screen'
@@ -62,7 +66,37 @@ export const merchantsFlow = defineFlow({
     finishes(merchants.outcomes.identityClosed, merchantScreen, ({ merchantId }) => ({
       merchantId,
     })),
+
+    /* Ver la configuración se apila sobre la ficha y vuelve a ella (feature 008). */
+    opens(
+      merchants.outcomes.configurationRequested,
+      merchantConfigurationScreen,
+      ({ merchantId }) => ({
+        merchantId,
+      }),
+    ),
+    finishes(
+      configuration.outcomes.merchantConfigurationClosed,
+      merchantScreen,
+      ({ merchantId }) => ({
+        merchantId,
+      }),
+    ),
   ],
+})
+
+/**
+ * **El recorrido de la configuración global** (feature 008).
+ *
+ * Arranca en la plataforma, que es la raíz de la funcionalidad. La vista de la
+ * configuración de un merchant también es de esta funcionalidad, pero se llega
+ * desde su ficha: está en el recorrido de los merchants, y acá se dice que este
+ * no la ofrece.
+ */
+export const configurationFlow = defineFlow({
+  id: 'configuration',
+  root: platformScreen,
+  steps: [omits(configuration.outcomes.merchantConfigurationClosed)],
 })
 
 /**
@@ -97,7 +131,7 @@ export const systemFlow = defineFlow({
 })
 
 /** Los que esta aplicación tiene. La lee el manifiesto. */
-export const flows = [homeFlow, merchantsFlow, systemFlow]
+export const flows = [homeFlow, merchantsFlow, configurationFlow, systemFlow]
 
 /**
  * **Lo que ofrece el menú lateral, en orden** (`CU-48`).
@@ -105,4 +139,8 @@ export const flows = [homeFlow, merchantsFlow, systemFlow]
  * Está en el menú **el que está acá**: `systemFlow` no figura, y por eso no se
  * ofrece. Un nivel: un grupo toma flujos, no grupos.
  */
-export const menu = [homeFlow, group(merchantsStrings.merchantsSection, [merchantsFlow], TAG)]
+export const menu = [
+  homeFlow,
+  group(merchantsStrings.merchantsSection, [merchantsFlow], TAG),
+  group(configurationStrings.configuration, [configurationFlow], SETTINGS),
+]

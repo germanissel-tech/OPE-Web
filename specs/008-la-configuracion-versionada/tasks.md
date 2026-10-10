@@ -72,28 +72,47 @@ cliente.
 
 **Meta**: desde la ficha, ver con qué se sirve al merchant y de dónde sale cada valor, y su historial.
 
-- [ ] T007 [E2] `apps/console/src/features/merchants/data/merchant-configuration.ts` (NUEVO):
+- [x] T007 [E2] `apps/console/src/features/merchants/data/merchant-configuration.ts` (NUEVO):
       `useMerchantConfiguration`, `useConfigurationVersions` con cursor; `originOf(path, declared)`
       dice «declarado» o «heredado»
-- [ ] T008 [P] [E2] `apps/console/src/components/version-history.tsx` (NUEVO): la tabla del historial
+- [x] T008 [P] [E2] `apps/console/src/components/version-history.tsx` (NUEVO): la tabla del historial
       con cursor y «cargar más»: versión, instante con `When`, operador, correctiva con su motivo, y
       una columna opcional para lo que el nivel agregue (research §11). `When` pasa de merchants a
       `components/`
-- [ ] T009 [E2] `apps/console/src/features/configuration/screens/treatment-values.tsx` (NUEVO): los
+- [x] T009 [E2] `apps/console/src/features/configuration/screens/treatment-values.tsx` (NUEVO): los
       valores de tratamiento de sólo lectura, en sus grupos y su unidad, con el origen al lado cuando
       se lo pasan; lo complejo resumido (data-model §3)
-- [ ] T010 [E2] `apps/console/src/features/merchants/screens/configuration-screen.tsx` (NUEVO):
+- [x] T010 [E2] `apps/console/src/features/merchants/screens/configuration-screen.tsx` (NUEVO):
       `/merchants/:merchantId/configuration`, `configuration:read`; las tres versiones, los valores,
       el historial; «sin versión propia» cuando no hay; al pie «volver» y «publicar una versión»
-- [ ] T011 [E2] Ficha: «Configuración» al pie con `configuration:read`; `feature.ts` con la pantalla y
+- [x] T011 [E2] Ficha: «Configuración» al pie con `configuration:read`; `feature.ts` con la pantalla y
       los desenlaces `configurationRequested`/`configurationClosed`; `app/flows.ts`; los arneses de las
       pruebas de pantalla ganan los pasos
-- [ ] T012 [E2] `configuration-screen.test.tsx`: el origen de cada valor; «sin versión propia»; el
+- [x] T012 [E2] `configuration-screen.test.tsx`: el origen de cada valor; «sin versión propia»; el
       holdout en `%`; la frescura en su unidad; sin `configuration:read` no hay entrada en la ficha
-- [ ] T013 [E2] Contra el backend real (quickstart, escenario 1). Anotar lo visto
+- [x] T013 [E2] Contra el backend real (quickstart, escenario 1). Anotar lo visto
 
 **Punto de control**: escenario 1 a mano; `npm test`. Commit:
 `feat(008): la configuración del merchant se ve, con el origen de cada valor y su historial`.
+
+> **Hecho el 2026-10-09.** Desvíos, y uno cambia la estructura del plan: (1) **una funcionalidad no
+> importa de otra**; la comprobación de límites lo rechaza y dice que se componen en `app/`. El plan
+> suponía lo contrario. Así que la vista de la configuración del merchant **vive en
+> `features/configuration`**, no en `merchants`: la ficha emite `configurationRequested`, la vista
+> emite `merchantConfigurationClosed`, y `app/flows.ts` los une en el recorrido de los merchants. El
+> nombre del merchant, para el título, lo pide la configuración por `getMerchant` sin importar la
+> funcionalidad de merchants. La publicación del merchant (tramo 3) va también ahí. (2) **La vista de
+> plataforma se adelantó del tramo 4**: el arranque exige que la raíz de cada funcionalidad sea la de
+> un flujo, y una raíz no puede tener parámetros. La plataforma es la raíz, con su flujo y el grupo
+> «Configuración» del menú. (3) **Ninguna prueba lo vio**: cada pantalla monta un flujo propio, y la
+> consola quedó en blanco en el navegador. Nace `app/manifest.test.tsx`, que arma la aplicación con
+> su manifiesto real; reprodujo la falla antes de corregirla. (4) `When` pasó a `components/` y
+> `dayOf`/`timeOf` a `lib/instants.ts`: los usan el registro, la rotación y el historial. (5) Abrir
+> una versión del historial del merchant pasa al tramo 4, con la vista de una versión global. Contra
+> el backend: «Tienda Sur» sin versión propia, todo «Heredado de defaults-1», la frescura en `36 h` y
+> `15 min`, la política de decisión en `default-1` con 15 reglas; la plataforma en `platform-160`
+> —el almacén de desarrollo tiene versiones escritas por las pruebas del backend—, con valores que no
+> entran exactos en su unidad mostrados en milisegundos, como el diseño pide.
 
 ---
 
