@@ -182,9 +182,11 @@ el contrato sincronizado desde la 007.
     `marginShare`) → se muestra y se carga como porcentaje: `0.05` se lee «5 %» y se escribe `5`. Viaja
     como `0.05`.
 
-16. **Una duración** (todo `…Ms`, `cooldownSeconds`) → se muestra en la unidad mayor que la representa
-    exacta —`129600000` se lee «36 h», no «1,5 días»— y se carga con su unidad a la vista. Viaja en la
-    unidad del contrato.
+16. **Una duración** (todo `…Ms`, `cooldownSeconds`) → cada valor tiene su unidad, declarada una vez:
+    la frescura del catálogo en horas, la de stock en minutos, la gracia de rotación en días. La vista,
+    la edición y el historial la usan las tres, así que `129600000` se lee siempre «36 h». Viaja en la
+    unidad del contrato. *(Ajustado en el plan, research §5: «la unidad mayor exacta» cambiaba de unidad
+    entre la vista y la edición.)*
 
 ## Lo que puede salir mal *(obligatoria)*
 
@@ -207,7 +209,7 @@ el contrato sincronizado desde la 007.
 - **Una conversión que redondea.** `0.07 × 100` en punto flotante es `7.000000000000001`, y una tasa que
   el reparto cuantiza tiene que ser exactamente la de su balde (`ADR-035`). Las tasas se convierten
   **corriendo la coma sobre el texto**, nunca multiplicando un número; una duración que no es exacta en la
-  unidad elegida no se redondea, se muestra en una menor. Lo verifican pruebas con los casos que rompen.
+  unidad del valor no se redondea: es un error de forma en el campo. Lo verifican pruebas con los casos que rompen.
 - **`403` al publicar un nivel global** → no debería pasar, porque sin alcance total no se ofrece. Si
   pasa, es un defecto del panel: aviso con su identificador de pedido.
 - **`503` al leer o publicar** → aviso con «reintentar»; publicar no se reintenta solo.
@@ -251,9 +253,8 @@ sí, es biblioteca.
 - **Lo que no se edita sale de la versión que rige al abrir la pantalla.** Sin testigo en el contrato no
   hay otra fuente.
 - **Las tasas se leen como porcentaje y las duraciones en su unidad.** `ADR-035` deja eso al frontend.
-- **Plataforma y defaults se ven con `configuration:read` aunque el alcance sea acotado.** Si el backend
-  los niega a un operador acotado, la entrada del menú se esconde también para él; lo verifica el plan
-  contra el backend.
+- **Plataforma y defaults se ven con `configuration:read` aunque el alcance sea acotado.** Verificado
+  en el backend (research §8): leer un nivel global no mira el alcance; publicarlo exige alcance total.
 - **El nombre de una versión global lo acuña el backend**; la consola no lo propone.
 
 ## Lo que queda abierto
