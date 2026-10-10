@@ -84,7 +84,7 @@ recuperarse, pero lo mandan.
   - con cruce, se ve el choque y lo tecleado sigue;
   - en el merchant, el reintento lleva el anclaje de la versión nueva;
   - en la identidad, un cambio del interruptor en el medio no es choque.
-- [ ] T016 [E3] Romper a propósito, una vez cada una: comparar textos en vez de hojas, lo no editado de la
+- [x] T016 [E3] Romper a propósito, una vez cada una: comparar textos en vez de hojas, lo no editado de la
       versión de al abrir, el testigo olvidado. Commit:
       `feat(009): las cuatro escrituras mandan su testigo y se recuperan cuando otro escribió en el medio`
 
