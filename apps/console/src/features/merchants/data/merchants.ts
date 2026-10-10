@@ -79,7 +79,6 @@ export const dayOf = (instant: string) => instant.slice(0, 10)
  * sin decirlo es mentir en un registro.
  */
 export const timeOf = (instant: string) => instant.slice(11, 16)
-export const whenOf = (instant: string) => `${dayOf(instant)} ${timeOf(instant)} UTC`
 
 /**
  * **Todas las listas de merchants**, sea cual sea el tramo.

@@ -229,7 +229,11 @@ describe('el registro del merchant', () => {
     )
 
     await screen.findByText('setKillSwitch')
-    expect(screen.getAllByText('2026-10-08 15:04 UTC')).toHaveLength(2)
+    expect(
+      screen.getAllByText(
+        (_, element) => element?.tagName === 'TD' && element.textContent === '08/10/2026 15:04 UTC',
+      ),
+    ).toHaveLength(2)
     expect(screen.getByText(merchantsStrings.rejected)).toBeDefined()
     expect(screen.getByText(merchantsStrings.accepted)).toBeDefined()
     expect(screen.getByText('merchant-deactivated')).toBeDefined()

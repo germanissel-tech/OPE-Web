@@ -271,7 +271,13 @@ describe('rotar una credencial', () => {
     await screen.findByText('ope_ik_SECRETA_NUEVA')
     expect(rotated).toEqual([{ kind: 'ingest', graceSeconds: 3600 }])
     expect(screen.getByRole('button', { name: DEFAULT_STRINGS.copy })).toBeDefined()
-    expect(screen.getByText('2026-10-08 13:00 UTC')).toBeDefined()
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.classList.contains('granito-value') === true &&
+          element.textContent === '08/10/2026 13:00 UTC',
+      ),
+    ).toBeDefined()
 
     await waitFor(() => expect(noticed.length).toBeGreaterThan(0))
     expect(JSON.stringify({ recorded, noticed })).not.toContain('SECRETA')

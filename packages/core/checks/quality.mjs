@@ -833,6 +833,57 @@ for (const d of degradaciones) {
   )
 }
 
+/**
+ * **14 · Un campo compone lo que granito decidió para él** (`GR-30`, `GR-38`).
+ *
+ * Dos composiciones que se ven bien y están mal, y que sólo una persona
+ * mirando la pantalla distingue —que es justo lo que esto existe para evitar:
+ *
+ * - **Un dato formateado suelto adentro de un campo.** `FormattedValue` es el
+ *   dato «en cualquier parte» —una celda, un total— y no lleva línea de base;
+ *   en un campo de sólo lectura la línea la pone `Value`, y sin ella el dato
+ *   queda flotando (`GR-30`). Va adentro de `Value`.
+ * - **Un campo que sólo tiene un botón.** Un campo es un rótulo y un dato o un
+ *   control, y estira lo que le pongan: un botón solo ocupa la fila entera. Las
+ *   acciones viven con el bloque sobre el que actúan —el pie del formulario o
+ *   la fila de la grilla— (`GR-38`, `GR-22`).
+ *
+ * Se mira cada `<Field>…</Field>` del código con lo que dibuja adentro. Un botón
+ * **al lado** de un control o de un valor —quitar un renglón, copiar un secreto—
+ * no se marca: es otra discusión, y está en las propuestas a granito.
+ *
+ * **Lo que no ve, declarado**: un campo que un componente propio envuelve, o
+ * uno que se cierra en otro archivo. Y, como todo lo de acá, **si el dibujo es
+ * bueno**: eso lo ve una persona, igual que en granito.
+ */
+const GRANITO_CONTENT =
+  /<(TextInput|TextArea|Select|Checkbox|Radio|MarkGroup|DateInput|MoneyInput|NumberInput|ComboBox|Value|Badge|FormattedValue)\b/
+
+for (const file of checked) {
+  const shortPath = relative(ROOT, file).split(sep).join('/')
+  const code = stripComments(readFileSync(file, 'utf8'))
+
+  for (const [block] of code.matchAll(/<Field\b[\s\S]*?<\/Field>/g)) {
+    const label = block.match(/label=\{?([^}\s>]+)/)?.[1] ?? '(sin rótulo)'
+
+    if (/<FormattedValue\b/.test(block) && !/<Value\b/.test(block)) {
+      fail(
+        'Un dato formateado suelto en un campo (GR-30)',
+        shortPath,
+        `${label}: FormattedValue sin Value no tiene línea de base — va adentro de <Value>`,
+      )
+    }
+
+    if (/<(Button|ActionButton)\b/.test(block) && !GRANITO_CONTENT.test(block)) {
+      fail(
+        'Un campo que sólo tiene un botón (GR-38)',
+        shortPath,
+        `${label}: un botón solo ocupa la fila entera — va al pie del formulario o a la fila de la grilla`,
+      )
+    }
+  }
+}
+
 /* Desde acá el código de salida ya está decidido, y el guardia de `fail` lo
    vuelve explícito en vez de dejarlo librado a que nadie agregue nada abajo. */
 closeGate()
@@ -864,6 +915,7 @@ console.log('  ok     ninguna preferencia cableada por nombre fuera de su archiv
 console.log('  ok     ningún texto de interfaz suelto: todos salen del catálogo')
 console.log('  ok     ningún error del núcleo sin clase')
 console.log('  ok     ningún campo del sobre del registro suena a dato de una persona')
+console.log('  ok     todo campo compone lo que granito decidió: ni dato suelto ni botón solo')
 if (generated.length > 0) {
   console.log(`  --     ${generated.length} generados, sin revisar: se regeneran, no se corrigen`)
 }

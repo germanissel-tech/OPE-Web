@@ -83,6 +83,12 @@ function MerchantScreen() {
   )
 }
 
+/** Una fila de la grilla de credenciales: una que hay, o la firma que falta, sin fecha. */
+type CredentialRow = {
+  readonly kind: CredentialKind
+  readonly issuedAt?: string
+}
+
 function MerchantCard({
   merchant,
   refresh,
@@ -97,6 +103,11 @@ function MerchantCard({
   const requestRotation = (kind: CredentialKind) =>
     emit(merchants.outcomes.rotationRequested({ merchantId: merchant.merchantId, kind }))
   const hasSigning = merchant.credentials.some((each) => each.kind === 'signing')
+  /* Lo que tiene, y —vivo y sin firma— la firma que le falta como una fila sin acuñar. */
+  const rows: CredentialRow[] =
+    alive && !hasSigning
+      ? [...merchant.credentials, { kind: 'signing' }]
+      : [...merchant.credentials]
 
   return (
     <Form
@@ -153,78 +164,78 @@ function MerchantCard({
         <Field label={merchantsStrings.origins} size="fill">
           {() => <Value>{merchant.origins.join(', ')}</Value>}
         </Field>
-        {/* El mismo formato que la grilla: un formato se define una vez (`GR-31`). */}
+        {/* El mismo formato que la grilla —un formato se define una vez (`GR-31`)—
+            y adentro de `Value`: en sólo lectura el dato lleva su línea de base
+            (`GR-30`); `FormattedValue` solo es el dato de una celda, y flota. */}
         <Field label={merchantsStrings.createdAt} size="date">
-          {() => <FormattedValue format="date" value={dayOf(merchant.createdAt)} />}
+          {() => (
+            <Value>
+              <FormattedValue format="date" value={dayOf(merchant.createdAt)} />
+            </Value>
+          )}
         </Field>
       </Section>
 
       {/* Las credenciales, **por clase e instante y nunca por valor**: es lo que
           el contrato devuelve, y es lo que un operador necesita para saber qué
-          rotar. Una grilla y no campos, porque son varias y de la misma forma. */}
-      <Section title={merchantsStrings.credentials}>
+          rotar. Una grilla y no campos, porque son varias y de la misma forma.
+          **El secreto de firma que falta es una fila más**, sin acuñar y con
+          «crear» donde las otras tienen «rotar»: la acción vive con el bloque
+          sobre el que actúa (`GR-38`) y la fila de la grilla es su lugar
+          (`GR-22`); un campo es un rótulo y un dato, no un lugar para una
+          acción. */}
+      <Section title={merchantsStrings.credentials} why={merchantsStrings.credentialsWhy}>
         <Table
-          rows={[...merchant.credentials]}
-          state={merchant.credentials.length > 0 ? 'ready' : 'empty'}
+          rows={rows}
+          state={rows.length > 0 ? 'ready' : 'empty'}
           empty={{ title: merchantsStrings.noCredentials }}
           noResults={{ title: merchantsStrings.noCredentials }}
           error={{ title: merchantsStrings.noCredentials }}
-          rowId={(credential) => credential.kind}
+          rowId={(row) => row.kind}
           columns={[
             {
               id: 'kind',
               header: merchantsStrings.kind,
               width: '200px',
-              cell: (credential) => credential.kind,
+              cell: (row) => row.kind,
             },
+            /* El mismo formato que la ficha: un formato se define una vez
+               (`GR-31`). La fila sin acuñar no tiene fecha, y lo dice. */
             {
               id: 'issuedAt',
               header: merchantsStrings.issuedAt,
               width: '160px',
-              format: 'date',
-              cell: (credential) => dayOf(credential.issuedAt),
+              cell: (row) =>
+                row.issuedAt === undefined ? (
+                  merchantsStrings.notIssued
+                ) : (
+                  <FormattedValue format="date" value={dayOf(row.issuedAt)} />
+                ),
             },
             /* **Rotar es un desenlace**: la fila no sabe que la rotación es una
                pantalla ni cuál; qué exige llegar se lo pregunta al flujo
-               (`CU-47`, `CU-3`). Sobre un desactivado no se ofrece. */
+               (`CU-47`, `CU-3`). Crear el secreto que falta es la misma
+               rotación (contrato de `rotatePlatformSecret`): acuña lo que no
+               hay. Sobre un desactivado no se ofrece. */
             {
               id: 'rotate',
               header: '',
               width: '120px',
-              cell: (credential) =>
+              cell: (row) =>
                 alive ? (
                   <ActionButton
                     type="button"
                     size="compact"
                     {...flow.toReach(merchants.outcomes.rotationRequested)}
-                    onClick={() => requestRotation(credential.kind)}
+                    onClick={() => requestRotation(row.kind)}
                   >
-                    {merchantsStrings.rotate}
+                    {row.issuedAt === undefined ? merchantsStrings.create : merchantsStrings.rotate}
                   </ActionButton>
                 ) : null,
             },
           ]}
           caption={merchantsStrings.credentials}
         />
-        {/* Un merchant creado sin firma puede empezar a firmar: rotar el
-            secreto que no tiene lo acuña (contrato de `rotatePlatformSecret`). */}
-        {alive && !hasSigning ? (
-          <Field
-            label={merchantsStrings.platformSecret}
-            size="fill"
-            help={merchantsStrings.noSigning}
-          >
-            {() => (
-              <ActionButton
-                type="button"
-                {...flow.toReach(merchants.outcomes.rotationRequested)}
-                onClick={() => requestRotation('signing')}
-              >
-                {merchantsStrings.createSigning}
-              </ActionButton>
-            )}
-          </Field>
-        ) : null}
       </Section>
 
       {/* Quién hizo qué sobre este merchant, debajo de lo que se le puede
