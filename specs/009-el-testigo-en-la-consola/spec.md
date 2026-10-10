@@ -1,6 +1,6 @@
 # Especificación · El testigo en la consola
 
-**Carpeta**: `009-el-testigo-en-la-consola` · **Estado**: borrador · **Fecha**: 2026-10-10
+**Carpeta**: `009-el-testigo-en-la-consola` · **Estado**: construida · **Fecha**: 2026-10-10
 
 **Pedido**: consumir las features 042 y 043 de OPE-Backend. La 043 hace **obligatorio** el testigo en las
 cuatro escrituras que reemplazan lo que leyeron —las tres publicaciones de configuración y la edición de la

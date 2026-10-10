@@ -92,10 +92,10 @@ recuperarse, pero lo mandan.
 
 ## Fase 4 · Tramo 4 — El cierre
 
-- [ ] T017 [E4] Contra el backend real, el `quickstart.md` con dos pestañas; «Lo corrido» fechado
-- [ ] T018 [P] [E4] `spec.md`: **Estado**: construida; `.specify/memory/estado.md`: la 009, y la 004 de origen ya
+- [x] T017 [E4] Contra el backend real, el `quickstart.md` con dos pestañas; «Lo corrido» fechado
+- [x] T018 [P] [E4] `spec.md`: **Estado**: construida; `.specify/memory/estado.md`: la 009, y la 004 de origen ya
       despierta
-- [ ] T019 [E4] `npm test`, `npm run revisar`, `npm run build`. Commit: `docs(009): cierre — estado y quickstart`.
+- [x] T019 [E4] `npm test`, `npm run revisar`, `npm run build`. Commit: `docs(009): cierre — estado y quickstart`.
       Push y PR
 
 ---

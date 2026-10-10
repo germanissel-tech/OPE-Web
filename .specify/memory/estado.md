@@ -46,6 +46,15 @@ Trajo al núcleo las unidades (tasas en porcentaje, duraciones en su unidad, exa
 construcción), `constraintsOf` que sigue los `ref`, y una lista como destino de su error. Los cinco
 tramos están en `specs/008-la-configuracion-versionada/tasks.md`, con sus notas fechadas.
 
+**La feature 009 —el testigo en la consola— está construida**: las cuatro escrituras que reemplazan
+lo que leyeron (las tres publicaciones de la configuración y la identidad del merchant) mandan el
+testigo de lo que cargaron, y ante un `412` la puerta de `CU-29` —construida en la 004 y dormida
+hasta ahora— relee, compara y guarda sola si no hay cruce, o muestra el choque. La configuración se
+compara por hoja, en unidades del contrato, y lo no editado del reintento sale de la relectura. Trajo
+también las dos lecturas de la 042 del backend: «Mediciones reiniciadas» en los tres historiales y la
+versión del merchant por su número. Los cuatro tramos están en
+`specs/009-el-testigo-en-la-consola/tasks.md`, y lo corrido contra el backend en su `quickstart.md`.
+
 **Los números no se escriben acá.** `npm test` informa cuántas decisiones hay, cuántas abiertas,
 cuántas citas resuelven, y cuántas operaciones, capacidades y esquemas tiene el módulo del contrato.
 
@@ -55,9 +64,9 @@ cuántas citas resuelven, y cuántas operaciones, capacidades y esquemas tiene e
    plataforma (`listAdminLog`) con la pantalla que tenga a la plataforma por sujeto. Lo que la 008
    dejó afuera —editar la política de decisión, el riesgo de devolución, los anclajes y las
    etiquetas, y «partir de una versión anterior»— espera a que el dueño lo ordene.
-2. **Tres pedidos al backend** que la 008 dejó con evidencia: `windowsRestarted` en el historial de un
-   nivel global (hoy sólo lo trae publicar), leer una versión del merchant por su número, y el
-   testigo de concurrencia de la configuración.
+2. **El choque, con formato**: `ConflictDialog` muestra los valores en unidades del contrato y sin
+   formato, y una duración se lee en milisegundos. Pedirle al núcleo que acepte cómo mostrar cada
+   valor, como ya acepta su rótulo (feature 009, `quickstart.md`).
 3. **El portal** (`apps/portal`), copiando `apps/console` según `docs/segunda-aplicacion.md`.
 4. **Granito en npm**, que se prepara aparte y reemplaza el `file:`.
 
