@@ -16,6 +16,7 @@ import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { CorrectiveSection } from '../../../components/corrective-section'
 import { comparableOfContract, comparableOfForm } from '../data/comparable'
 import type { OperativeLeaf } from '../data/groups'
+import { leafLabel } from '../data/leaf-label'
 import {
   declareFrom,
   kindOfLeaf,
@@ -285,12 +286,6 @@ function PublishForm({
       </Section>
     </Form>
   )
-}
-
-/** El rótulo de una hoja en el choque: el mismo que tiene su campo. */
-function leafLabel(field: string): string {
-  const leaf = OPERATIVE_LEAVES.find((each) => each === field)
-  return leaf === undefined ? field : configurationStrings[leaf]
 }
 
 export const publishMerchantConfigurationScreen = defineScreen({

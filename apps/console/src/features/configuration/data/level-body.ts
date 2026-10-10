@@ -6,6 +6,12 @@ import {
   type TreatmentDefaultsContent,
   type TreatmentDefaultsInput,
 } from '../../../api/ope/client'
+import {
+  type Comparable,
+  comparableOfContract,
+  comparableOfForm,
+  contractOfComparable,
+} from './comparable'
 import { TREATMENT_GROUPS } from './groups'
 import { PLATFORM_GROUPS } from './platform-groups'
 import {
@@ -108,6 +114,31 @@ function contentOf(shape: LevelShape, values: Readonly<Record<string, string>>, 
   return content
 }
 
+/**
+ * **Cómo se compara un nivel cuando otro publicó en el medio** (feature 009,
+ * research §3): sus hojas, leídas del contenido de una versión o del
+ * formulario, en unidades del contrato.
+ */
+export type LevelComparison = {
+  readonly ofContent: (content: unknown) => Comparable
+  readonly ofForm: (values: Readonly<Record<string, string>>, shown: Shown) => Comparable
+}
+
+function comparisonOf(shape: LevelShape): LevelComparison {
+  return {
+    ofContent: (content) => comparableOfContract(content, shape.leaves),
+    ofForm: (values, shown) =>
+      comparableOfForm(values, shape.leaves, {
+        nameOf,
+        kindOf: (leaf) => kindOf(shape.emitted.fields[nameOf(leaf)]),
+        shownOf: (leaf) => shown[leaf],
+      }),
+  }
+}
+
+export const platformComparison = comparisonOf(PLATFORM)
+export const defaultsComparison = comparisonOf(DEFAULTS)
+
 /** Correctiva con su motivo, o ninguno de los dos. */
 const correctiveOf = (values: Readonly<Record<string, string>>) =>
   values['corrective'] === 'true' ? { corrective: true, reason: values['reason'] ?? '' } : {}
@@ -131,6 +162,21 @@ export function platformBodyOf(
   }
 }
 
+/**
+ * **El reintento de la plataforma tras un choque**: todo se edita, así que el
+ * contenido son las hojas que fusionó la puerta, y nada sale de la relectura.
+ */
+export function mergedPlatformBodyOf(
+  merged: Readonly<Record<string, unknown>>,
+  values: Readonly<Record<string, string>>,
+): PlatformConfigurationInput {
+  return {
+    /* El mismo `as` que el cuerpo del formulario, por la misma razón. */
+    content: contractOfComparable(merged, PLATFORM.leaves) as PlatformConfigurationContent,
+    ...correctiveOf(values),
+  }
+}
+
 export const defaultsFormOf = (content: TreatmentDefaultsContent) => formOf(DEFAULTS, content)
 
 export const defaultsConstraints = (values: Readonly<Record<string, string>>, shown: Shown) =>
@@ -141,7 +187,27 @@ export function defaultsBodyOf(
   shown: Shown,
   inForce: TreatmentDefaultsContent,
 ): TreatmentDefaultsInput {
-  const content = contentOf(DEFAULTS, values, shown)
+  return defaultsBodyWith(contentOf(DEFAULTS, values, shown), inForce, values)
+}
+
+/**
+ * **El reintento de los defaults tras un choque** (research §4): las hojas que
+ * fusionó la puerta, y la política de decisión y el riesgo de devolución **de
+ * la relectura**. El operador no los edita: son de quien publicó en el medio.
+ */
+export function mergedDefaultsBodyOf(
+  merged: Readonly<Record<string, unknown>>,
+  reread: TreatmentDefaultsContent,
+  values: Readonly<Record<string, string>>,
+): TreatmentDefaultsInput {
+  return defaultsBodyWith(contractOfComparable(merged, DEFAULTS.leaves), reread, values)
+}
+
+function defaultsBodyWith(
+  content: Record<string, unknown>,
+  inForce: TreatmentDefaultsContent,
+  values: Readonly<Record<string, string>>,
+): TreatmentDefaultsInput {
   /* Lo que no se edita, colgado entero y sin tocar: el mismo objeto que vino. */
   content['decisionPolicy'] = inForce.decisionPolicy
   setAt(content, 'commercialPolicy.returnRisk', inForce.commercialPolicy.returnRisk)

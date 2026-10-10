@@ -149,12 +149,34 @@ function answerAt<T>(queue: readonly Answer<T>[] | undefined, at: number): T {
   return next
 }
 
-function ope(answers: {
-  readonly platform?: readonly Answer<PlatformConfigurationVersion>[]
-  readonly defaults?: readonly Answer<TreatmentDefaultsVersion>[]
-}) {
+const stale = () =>
+  new RequestFailed({
+    status: 412,
+    type: 'stale-version',
+    title: 'The resource changed since it was read',
+  })
+
+/**
+ * El servicio de mentira. Con `others`, **otro publica ese nivel en el instante
+ * del primer intento**: desde ahí la lectura devuelve lo suyo con el testigo
+ * nuevo, ese primer intento es `412`, y las respuestas preparadas son las de los
+ * intentos que siguen (feature 009).
+ */
+function ope(
+  answers: {
+    readonly platform?: readonly Answer<PlatformConfigurationVersion>[]
+    readonly defaults?: readonly Answer<TreatmentDefaultsVersion>[]
+  },
+  others: {
+    readonly platform?: PlatformConfigurationContent
+    readonly defaults?: TreatmentDefaultsContent
+  } = {},
+) {
   const sentPlatform: PlatformConfigurationInput[] = []
   const sentDefaults: TreatmentDefaultsInput[] = []
+  const witnesses: string[] = []
+  let platformNow = { version: 'platform-2', ...platform, witness: '"w-1"' }
+  let defaultsNow = { version: 'defaults-1', ...defaults, witness: '"w-1"' }
   const no = () => {
     throw new Error('no se prueba acá')
   }
@@ -181,7 +203,7 @@ function ope(answers: {
     getMerchantConfigurationVersion: no,
     publishMerchantConfiguration: no,
     async getPlatformConfiguration() {
-      return { version: 'platform-2', ...platform, witness: '"w-1"' }
+      return platformNow
     },
     async listPlatformConfigurationVersions() {
       return { items: history }
@@ -191,23 +213,35 @@ function ope(answers: {
       if (found === undefined) throw new Error('sin versión')
       return found
     },
-    async publishPlatformConfiguration(body) {
+    async publishPlatformConfiguration(body, witness) {
       sentPlatform.push(body)
-      return answerAt(answers.platform, sentPlatform.length - 1)
+      witnesses.push(witness)
+      if (others.platform === undefined) return answerAt(answers.platform, sentPlatform.length - 1)
+      if (sentPlatform.length === 1) {
+        platformNow = { version: 'platform-3', ...others.platform, witness: '"w-2"' }
+        throw stale()
+      }
+      return answerAt(answers.platform, sentPlatform.length - 2)
     },
     async getTreatmentDefaults() {
-      return { version: 'defaults-1', ...defaults, witness: '"w-1"' }
+      return defaultsNow
     },
     async listTreatmentDefaultsVersions() {
       return { items: [defaultsVersion(1)] }
     },
     getTreatmentDefaultsVersion: no,
-    async publishTreatmentDefaults(body) {
+    async publishTreatmentDefaults(body, witness) {
       sentDefaults.push(body)
-      return answerAt(answers.defaults, sentDefaults.length - 1)
+      witnesses.push(witness)
+      if (others.defaults === undefined) return answerAt(answers.defaults, sentDefaults.length - 1)
+      if (sentDefaults.length === 1) {
+        defaultsNow = { version: 'defaults-2', ...others.defaults, witness: '"w-2"' }
+        throw stale()
+      }
+      return answerAt(answers.defaults, sentDefaults.length - 2)
     },
   }
-  return { client, sentPlatform, sentDefaults }
+  return { client, sentPlatform, sentDefaults, witnesses }
 }
 
 const noticed: ReturnType<typeof useNoticeHost>['notifications'][number][] = []
@@ -500,5 +534,69 @@ describe('la plataforma y los defaults', () => {
         sawNotice(configurationStrings.published, configurationStrings.publishedDetail(2)),
       ).toBe(true),
     )
+  })
+
+  describe('si otro publicó mientras tanto (feature 009, CU-29)', () => {
+    const typeInto = async (label: string, value: string) => {
+      const field = screen.getByLabelText(new RegExp(`^${label}`)) as HTMLInputElement
+      await act(async () => {
+        fireEvent.change(field, { target: { value } })
+        fireEvent.blur(field)
+      })
+      return field
+    }
+
+    it('la plataforma, sin cruce: guarda sola con el testigo nuevo y los cambios de los dos', async () => {
+      const { client, sentPlatform, witnesses } = ope(
+        { platform: [platformVersion(4)] },
+        { platform: { ...platform, retryAfterSeconds: 7 } },
+      )
+      await mount(client, ALL, '/configuration/platform/publish')
+      await screen.findByText(sharedStrings.correctiveMark)
+      await typeInto(configurationStrings.sessionDurationMs, '45')
+      await act(async () => publish())
+
+      await waitFor(() => expect(sentPlatform).toHaveLength(2))
+      expect(witnesses).toEqual(['"w-1"', '"w-2"'])
+      expect(sentPlatform[1]?.content).toMatchObject({
+        sessionDurationMs: 2700000,
+        retryAfterSeconds: 7,
+      })
+      await waitFor(() => expect(sawNotice(configurationStrings.published)).toBe(true))
+    })
+
+    it('los defaults, sin cruce: lo no editado sale de la relectura', async () => {
+      const theirs: TreatmentDefaultsContent = {
+        ...defaults,
+        freshness: { ...defaults.freshness, catalogMs: 7200000 },
+        decisionPolicy: { ...defaults.decisionPolicy, version: 'decision-default-2' },
+      }
+      const { client, sentDefaults } = ope({ defaults: [defaultsVersion(2)] }, { defaults: theirs })
+      await mount(client, ALL, '/configuration/defaults/publish')
+      await screen.findByText(configurationStrings.carriedSection)
+      await typeInto(configurationStrings.holdoutShare, '8')
+      await act(async () => publish())
+
+      await waitFor(() => expect(sentDefaults).toHaveLength(2))
+      const sent = sentDefaults[1]?.content
+      expect(sent?.holdoutShare).toBe(0.08)
+      expect(sent?.freshness.catalogMs).toBe(7200000)
+      /* La política de decisión no se edita: va la de quien publicó en el medio (research §4). */
+      expect(sent?.decisionPolicy).toEqual(theirs.decisionPolicy)
+    })
+
+    it('los defaults, con cruce: muestra el choque, no guarda, y lo tecleado sigue', async () => {
+      const { client, sentDefaults } = ope({}, { defaults: { ...defaults, holdoutShare: 0.06 } })
+      await mount(client, ALL, '/configuration/defaults/publish')
+      await screen.findByText(configurationStrings.carriedSection)
+      const holdout = await typeInto(configurationStrings.holdoutShare, '8')
+      const typed = holdout.value
+      await act(async () => publish())
+
+      const dialog = await screen.findByRole('dialog')
+      expect(within(dialog).getByText(configurationStrings.holdoutShare)).toBeDefined()
+      expect(sentDefaults).toHaveLength(1)
+      expect(holdout.value).toBe(typed)
+    })
   })
 })

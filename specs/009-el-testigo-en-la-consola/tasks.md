@@ -74,7 +74,7 @@ recuperarse, pero lo mandan.
 - [x] T012 [E3] La publicación del merchant: la `concurrency` de `useAction` —lo cargado, lo que hay, la
       relectura que recuerda lo que rige y el pedido armado con lo no editado de la relectura y la correctiva de
       la pantalla— y el `ConflictDialog` (research §4)
-- [ ] T013 [E3] Las publicaciones de plataforma y de defaults, en `publish-level-form.tsx`: lo mismo, con lo no
+- [x] T013 [E3] Las publicaciones de plataforma y de defaults, en `publish-level-form.tsx`: lo mismo, con lo no
       editado de los defaults tomado de la relectura
 - [ ] T014 [E3] La edición de la identidad (`features/merchants`): sus siete hojas, la relectura del merchant, el
       `ConflictDialog` (research §5)

@@ -82,6 +82,21 @@ export function useDefaultsVersions(options: Cursor) {
   )
 }
 
+/**
+ * **Volver a pedir lo que rige en un nivel, sin tocar la consulta** (feature
+ * 009, `CU-29`): lo que la puerta relee ante un `412`. Por fuera de la caché,
+ * como la del merchant: la pantalla sigue con lo que cargó.
+ */
+export function usePlatformReader() {
+  const ope = useService(opeService)
+  return () => ope.getPlatformConfiguration()
+}
+
+export function useDefaultsReader() {
+  const ope = useService(opeService)
+  return () => ope.getTreatmentDefaults()
+}
+
 /** Una versión de un nivel global, por su número: lo que contenía, de sólo lectura. */
 export function useLevelVersion(level: Level, version: number) {
   const ope = useService(opeService)
